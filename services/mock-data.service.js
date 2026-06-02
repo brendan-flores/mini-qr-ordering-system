@@ -41,7 +41,7 @@ const products = [
     price: 9.0,
     category: "Desserts",
     image_url:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD-PArIVSn0NWLXjJhMxBgd5j_1MWVngP0ZS8N_2DOsDEu_PIRrPlV2_cVby9-YNvTQixNO5RWXTpa3YwPRIifZEHu17wWYspkWysy_cq_JWrk97flexlbnc1mTm5-DTS11FyGhfD-n6kzbpebUYffZKSwf3F_gWKkFowL_G9IvMXWCZDhJnp1Xmhr8mFZfKmgdgoHIf-LgGNb9DR4hDIyHVWqpuiS83QNANuN-3jc_BllBz4LZQsLH7SFj_AiTalUHEMOYAoO8JFS8",
+      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=800&q=80",
     created_at: new Date("2026-01-03T14:00:00.000Z").toISOString(),
   },
   {

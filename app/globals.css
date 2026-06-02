@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@source "../components";
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
 :root {
   --background: #f8f9ff;
   --foreground: #121c2a;
@@ -36,4 +53,34 @@ body {
 .cart-scroll::-webkit-scrollbar-thumb {
   background-color: #e5bdbe;
   border-radius: 999px;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.menu-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.menu-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile menu: explicit 2-column grid (lg:hidden view) */
+.mobile-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.mobile-menu-grid > * {
+  min-width: 0;
 }

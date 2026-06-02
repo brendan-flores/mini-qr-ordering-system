@@ -18,6 +18,20 @@ export function createApp() {
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
 
+  app.get("/api", (_req, res) => {
+    res.json({
+      name: "BrenCravings API",
+      endpoints: {
+        products: { method: "GET", path: "/api/products" },
+        orders: {
+          create: { method: "POST", path: "/api/orders" },
+          list: { method: "GET", path: "/api/orders" },
+          updatePayment: { method: "PATCH", path: "/api/orders/:id/payment" },
+        },
+      },
+    });
+  });
+
   app.use("/api/products", productsRouter);
   app.use("/api/orders", ordersRouter);
 

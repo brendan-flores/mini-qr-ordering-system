@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
-import { listProducts } from "../../../services/products.service.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
+import { listMockProducts } from "../../../services/mock-data.service.js";
 
 export async function GET() {
   try {
-    const products = await listProducts();
-    return NextResponse.json({ data: products });
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ data: listMockProducts() });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("products")
+      .select("id,name,price,category,image_url,created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: { message: error.message } }, { status: 500 });
+    }
+
+    return NextResponse.json({ data: data ?? [] });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Internal Server Error";

@@ -1,15 +1,30 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let cachedClient = null;
 
-const hasSupabaseConfig = Boolean(url && serviceRoleKey);
+function readEnv(name) {
+  // Bracket access avoids Turbopack replacing unknown process.env.* at compile time.
+  return process.env[name]?.trim() ?? "";
+}
 
-export const supabase = hasSupabaseConfig
-  ? createClient(url, serviceRoleKey, {
+/** Read env at call time so Next.js API routes see .env after startup. */
+export function getSupabaseConfig() {
+  const url = readEnv("SUPABASE_URL");
+  const serviceRoleKey = readEnv("SUPABASE_SERVICE_ROLE_KEY");
+  return {
+    url,
+    serviceRoleKey,
+    isConfigured: Boolean(url && serviceRoleKey),
+  };
+}
+
+export function getSupabase() {
+  const { url, serviceRoleKey, isConfigured } = getSupabaseConfig();
+  if (!isConfigured) return null;
+  if (!cachedClient) {
+    cachedClient = createClient(url, serviceRoleKey, {
       auth: { persistSession: false },
-    })
-  : null;
-
-export { hasSupabaseConfig };
-
+    });
+  }
+  return cachedClient;
+}

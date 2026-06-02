@@ -12,7 +12,7 @@ export function CategoryTabs({
   onChange(next: CategoryTab): void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="hide-scrollbar flex gap-2 overflow-x-auto pb-1">
       {tabs.map((t) => {
         const active = t === value;
         return (

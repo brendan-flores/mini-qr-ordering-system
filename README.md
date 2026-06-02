@@ -16,6 +16,7 @@ create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   price numeric not null check (price >= 0),
+  category text not null check (category in ('Starters', 'Mains', 'Desserts', 'Beverages')),
   image_url text,
   created_at timestamptz not null default now()
 );
@@ -58,6 +59,14 @@ npm run dev:api
 ```
 
 Backend runs on `http://localhost:4000`.
+
+**Express API (assignment endpoints):** see **[docs/BACKEND_API.md](docs/BACKEND_API.md)**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/products` | List all products |
+| POST | `/api/orders` | Create order (items, quantities, total) |
+| GET | `/api/orders` | List all orders for admin |
 
 ### 3) Frontend setup (Next.js)
 

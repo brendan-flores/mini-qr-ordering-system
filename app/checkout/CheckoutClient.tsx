@@ -3,23 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../../components/ui/Button";
-import {
-  listOrders,
-  updateOrderPaymentStatus,
-  type Order,
-} from "../../client/services/orders";
+import { listOrders, type Order } from "../../client/services/orders";
+import { getStoredOrder, payOrder } from "../../client/services/payOrder";
 import { formatMoney } from "../../components/cart/cartUtils";
-
-function getStoredOrder(): Order | null {
-  if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem("lastOrder");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as Order;
-  } catch {
-    return null;
-  }
-}
 
 export default function CheckoutClient() {
   const params = useSearchParams();
@@ -59,15 +45,11 @@ export default function CheckoutClient() {
     setPaying(true);
     setError(null);
     try {
-      const success = Math.random() >= 0.3;
-      const next: Order["payment_status"] = success ? "Paid" : "Failed";
-      const { data } = await updateOrderPaymentStatus(order.id, next);
+      const data = await payOrder(order.id);
       setOrder(data);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("lastOrder", JSON.stringify(data));
-      }
-    } catch (e: any) {
-      setError(e?.message ?? "Payment failed");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Payment failed";
+      setError(message);
     } finally {
       setPaying(false);
     }

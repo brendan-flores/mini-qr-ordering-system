@@ -1,26 +1,12 @@
-import { z } from "zod";
+import {
+  CreateOrderSchema,
+  UpdatePaymentSchema,
+} from "../schemas/order.schemas.js";
 import {
   createOrder,
   listOrders,
   updateOrderPaymentStatus,
 } from "../services/orders.service.js";
-
-const OrderItemSchema = z.object({
-  product_id: z.union([z.string().uuid(), z.number()]),
-  name: z.string().min(1),
-  price: z.number().nonnegative(),
-  quantity: z.number().int().min(1),
-  image_url: z.string().url().optional().nullable(),
-});
-
-const CreateOrderSchema = z.object({
-  items: z.array(OrderItemSchema).min(1),
-  total_amount: z.number().positive(),
-});
-
-const UpdatePaymentSchema = z.object({
-  payment_status: z.enum(["Pending", "Paid", "Failed"]),
-});
 
 export async function postOrder(req, res, next) {
   try {

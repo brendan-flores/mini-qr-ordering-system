@@ -1,8 +1,10 @@
-import { hasSupabaseConfig, supabase } from "../config/supabase.js";
+import "../config/env.js";
+import { getSupabase, getSupabaseConfig } from "../config/supabase.js";
 import { listMockProducts } from "./mock-data.service.js";
 
 export async function listProducts() {
-  if (!hasSupabaseConfig || !supabase) {
+  const supabase = getSupabase();
+  if (!getSupabaseConfig().isConfigured || !supabase) {
     return listMockProducts();
   }
 

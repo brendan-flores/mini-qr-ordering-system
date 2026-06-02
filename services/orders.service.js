@@ -1,4 +1,5 @@
-import { hasSupabaseConfig, supabase } from "../config/supabase.js";
+import "../config/env.js";
+import { getSupabase, getSupabaseConfig } from "../config/supabase.js";
 import {
   createMockOrder,
   listMockOrders,
@@ -6,7 +7,8 @@ import {
 } from "./mock-data.service.js";
 
 export async function createOrder({ items, total_amount }) {
-  if (!hasSupabaseConfig || !supabase) {
+  const supabase = getSupabase();
+  if (!getSupabaseConfig().isConfigured || !supabase) {
     return createMockOrder({ items, total_amount });
   }
 
@@ -25,7 +27,8 @@ export async function createOrder({ items, total_amount }) {
 }
 
 export async function listOrders() {
-  if (!hasSupabaseConfig || !supabase) {
+  const supabase = getSupabase();
+  if (!getSupabaseConfig().isConfigured || !supabase) {
     return listMockOrders();
   }
 
@@ -39,7 +42,8 @@ export async function listOrders() {
 }
 
 export async function updateOrderPaymentStatus({ id, payment_status }) {
-  if (!hasSupabaseConfig || !supabase) {
+  const supabase = getSupabase();
+  if (!getSupabaseConfig().isConfigured || !supabase) {
     return updateMockOrderPaymentStatus({ id, payment_status });
   }
 
@@ -53,4 +57,3 @@ export async function updateOrderPaymentStatus({ id, payment_status }) {
   if (error) throw error;
   return data;
 }
-

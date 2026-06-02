@@ -4,7 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createOrder } from "../../client/services/orders";
-import { cartSubtotal, formatMoney } from "./cartUtils";
+import { saveStoredOrder } from "../../client/services/payOrder";
+import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { Button } from "../ui/Button";
@@ -16,9 +17,7 @@ export function CartPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
-  const taxRate = 0.085;
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax;
+  const total = useMemo(() => cartTotal(subtotal), [subtotal]);
 
   async function onCheckout() {
     setSubmitting(true);
@@ -32,13 +31,11 @@ export function CartPanel() {
           quantity: it.quantity,
           image_url: it.product.image_url ?? null,
         })),
-        total_amount: Number(total.toFixed(2)),
+        total_amount: total,
       };
       const { data } = await createOrder(payload);
       clear();
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("lastOrder", JSON.stringify(data));
-      }
+      saveStoredOrder(data);
       router.push(`/checkout?orderId=${encodeURIComponent(String(data.id))}`);
     } catch (e: any) {
       setError(e?.message ?? "Checkout failed");
@@ -120,20 +117,9 @@ export function CartPanel() {
       </div>
 
       <div className="shrink-0 border-t border-[var(--color-surface-line)] bg-white p-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-zinc-600">
-            <span>Subtotal</span>
-            <span>{formatMoney(subtotal)}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm text-zinc-600">
-            <span>Tax (8.5%)</span>
-            <span>{formatMoney(tax)}</span>
-          </div>
-          <div className="my-2 h-px w-full bg-[var(--color-surface-line)]" />
-          <div className="flex items-center justify-between text-base font-semibold text-zinc-900">
-            <span>Total</span>
-            <span className="text-[var(--color-primary)]">{formatMoney(total)}</span>
-          </div>
+        <div className="flex items-center justify-between text-base font-semibold text-zinc-900">
+          <span>Total</span>
+          <span className="text-[var(--color-primary)]">{formatMoney(total)}</span>
         </div>
 
         {error ? (

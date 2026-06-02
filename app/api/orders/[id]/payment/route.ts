@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateOrderPaymentStatus } from "../../../../../services/orders.service.js";
-
-const UpdatePaymentSchema = z.object({
-  payment_status: z.enum(["Pending", "Paid", "Failed"]),
-});
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
+import { UpdatePaymentSchema } from "../../../../../schemas/order.schemas.js";
+import { updateMockOrderPaymentStatus } from "../../../../../services/mock-data.service.js";
 
 export async function PATCH(
   request: NextRequest,
@@ -21,8 +19,25 @@ export async function PATCH(
 
     const body = (await request.json()) as unknown;
     const parsed = UpdatePaymentSchema.parse(body);
-    const updated = await updateOrderPaymentStatus({ id, ...parsed });
-    return NextResponse.json({ data: updated });
+
+    if (!isSupabaseConfigured()) {
+      const updated = updateMockOrderPaymentStatus({ id, ...parsed });
+      return NextResponse.json({ data: updated });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ payment_status: parsed.payment_status })
+      .eq("id", id)
+      .select("id,items,total_amount,payment_status,created_at")
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: { message: error.message } }, { status: 500 });
+    }
+
+    return NextResponse.json({ data });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
