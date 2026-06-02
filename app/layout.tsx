@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BrenCravings",
   description: "Mini QR ordering system",
+  icons: {
+    icon: [{ url: "/brencravings-logo.png", type: "image/png" }],
+    apple: "/brencravings-logo.png",
+  },
 };
 
 export default function RootLayout({

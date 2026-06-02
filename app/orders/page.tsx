@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CartProvider } from "../../components/cart/CartContext";
 import { DesktopHeader } from "../../components/layout/DesktopHeader";
 import { OrdersList } from "../../components/orders/OrdersList";
+import { BrandLogo } from "../../components/brand/BrandLogo";
 import { MaterialIcon } from "../../components/ui/MaterialIcon";
 
 export default function OrdersPage() {
@@ -15,15 +16,18 @@ export default function OrdersPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)]"
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)]"
               aria-label="Back to menu"
             >
               <MaterialIcon name="arrow_back" filled={false} />
             </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-bold text-zinc-900">Your Orders</h1>
+              <BrandLogo
+                href="/"
+                textClassName="text-lg font-bold leading-none text-[var(--color-primary)]"
+              />
               <p className="text-xs text-[var(--color-text-muted)]">
-                Pay or view order details
+                Your orders
               </p>
             </div>
           </div>

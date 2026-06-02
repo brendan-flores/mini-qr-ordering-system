@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../../components/ui/Button";
+import { MaterialIcon } from "../../components/ui/MaterialIcon";
 import { listOrders, type Order } from "../../client/services/orders";
 import { getStoredOrder, payOrder } from "../../client/services/payOrder";
 import { formatMoney } from "../../components/cart/cartUtils";
 
 export default function CheckoutClient() {
+  const router = useRouter();
   const params = useSearchParams();
   const orderId = params.get("orderId");
+  const returnTo = params.get("return");
 
   const [order, setOrder] = useState<Order | null>(() => getStoredOrder());
   const [loading, setLoading] = useState(false);
@@ -31,7 +34,10 @@ export default function CheckoutClient() {
           data.find((o) => String(o.id) === String(orderId)) ?? null;
         setOrder(found);
       })
-      .catch((e: any) => setError(e?.message ?? "Failed to load order"))
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Failed to load order";
+        setError(message);
+      })
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -39,6 +45,18 @@ export default function CheckoutClient() {
     () => order && order.payment_status === "Pending",
     [order]
   );
+
+  function goBack() {
+    if (returnTo?.startsWith("/")) {
+      router.push(returnTo);
+      return;
+    }
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push("/");
+  }
 
   async function simulatePay() {
     if (!order) return;
@@ -59,11 +77,16 @@ export default function CheckoutClient() {
     <div className="min-h-screen bg-zinc-50">
       <header className="border-b border-black/5 bg-white">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-4">
-          <a href="/" className="text-sm font-semibold text-zinc-700">
-            ← Back to menu
-          </a>
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex cursor-pointer items-center gap-1 text-sm font-semibold text-zinc-700 transition hover:text-zinc-900"
+          >
+            <MaterialIcon name="arrow_back" filled={false} className="text-xl" />
+            Back
+          </button>
           <div className="text-base font-extrabold text-rose-700">Checkout</div>
-          <div className="w-[90px]" />
+          <div className="w-[52px]" aria-hidden />
         </div>
       </header>
 
@@ -78,8 +101,11 @@ export default function CheckoutClient() {
               Order not found
             </div>
             <div className="mt-2 text-sm text-zinc-600">
-              Please go back and checkout again.
+              Please go back and try again.
             </div>
+            <Button type="button" className="mt-4" variant="secondary" onClick={goBack}>
+              Back
+            </Button>
           </div>
         ) : (
           <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
@@ -151,4 +177,3 @@ export default function CheckoutClient() {
     </div>
   );
 }
-

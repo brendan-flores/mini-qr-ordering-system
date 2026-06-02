@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "../brand/BrandLogo";
 import { Button } from "../ui/Button";
 
 const navItems = [
@@ -15,15 +16,7 @@ export function DesktopHeader({ onShowQr }: { onShowQr?(): void }) {
   return (
     <header className="fixed top-0 z-40 hidden h-16 w-full border-b border-[var(--color-surface-line)] bg-white lg:block">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between gap-4 px-6">
-        <Link
-          href="/"
-          className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-90"
-        >
-          <span className="text-lg text-[var(--color-primary)]">✕</span>
-          <span className="text-3xl font-extrabold text-[var(--color-primary)]">
-            BrenCravings
-          </span>
-        </Link>
+        <BrandLogo href="/" />
 
         <nav
           className="flex items-center gap-1 rounded-xl bg-[var(--color-surface-subtle)] p-1"

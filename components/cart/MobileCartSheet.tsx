@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createOrder } from "../../client/services/orders";
 import { saveStoredOrder } from "../../client/services/payOrder";
+import { checkoutUrl } from "../../lib/checkout-url";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -45,7 +46,7 @@ export function MobileCartSheet({
       clear();
       saveStoredOrder(data);
       onClose();
-      router.push(`/checkout?orderId=${encodeURIComponent(String(data.id))}`);
+      router.push(checkoutUrl(data.id, "/"));
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Checkout failed";
       setError(message);

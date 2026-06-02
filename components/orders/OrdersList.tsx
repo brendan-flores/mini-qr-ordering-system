@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { listOrders, type Order } from "../../client/services/orders";
 import { payOrder } from "../../client/services/payOrder";
+import { checkoutUrl } from "../../lib/checkout-url";
 import { formatMoney } from "../cart/cartUtils";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
@@ -23,14 +24,16 @@ function OrderCard({
   isPaying,
   onPay,
   layout,
+  checkoutReturn,
 }: {
   order: Order;
   isPaying: boolean;
   onPay(order: Order): void;
   layout: "compact" | "desktop";
+  checkoutReturn: string;
 }) {
   const isPending = order.payment_status === "Pending";
-  const checkoutHref = `/checkout?orderId=${encodeURIComponent(String(order.id))}`;
+  const checkoutHref = checkoutUrl(order.id, checkoutReturn);
 
   return (
     <article
@@ -99,8 +102,11 @@ function OrderCard({
 
 export function OrdersList({
   variant = "compact",
+  checkoutReturn = "/orders",
 }: {
   variant?: "compact" | "desktop";
+  /** Where checkout “Back” returns to (e.g. /orders or /?tab=orders) */
+  checkoutReturn?: string;
 }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,6 +202,7 @@ export function OrdersList({
             isPaying={payingId === String(order.id)}
             onPay={onPayNow}
             layout={variant}
+            checkoutReturn={checkoutReturn}
           />
         </li>
       ))}

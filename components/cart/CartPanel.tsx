@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createOrder } from "../../client/services/orders";
 import { saveStoredOrder } from "../../client/services/payOrder";
+import { checkoutUrl } from "../../lib/checkout-url";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -36,7 +37,7 @@ export function CartPanel() {
       const { data } = await createOrder(payload);
       clear();
       saveStoredOrder(data);
-      router.push(`/checkout?orderId=${encodeURIComponent(String(data.id))}`);
+      router.push(checkoutUrl(data.id, "/"));
     } catch (e: any) {
       setError(e?.message ?? "Checkout failed");
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { CartProvider } from "../components/cart/CartContext";
 import { CartPanel } from "../components/cart/CartPanel";
 import { CategoryTabs, type CategoryTab } from "../components/menu/CategoryTabs";
@@ -70,16 +70,18 @@ export default function Home() {
 
   return (
     <CartProvider>
-      <MobileMenuView
-        loading={loading}
-        error={error}
-        tab={tab}
-        onTabChange={setTab}
-        search={search}
-        onSearchChange={setSearch}
-        filtered={filtered}
-        onOpenQr={openQr}
-      />
+      <Suspense fallback={null}>
+        <MobileMenuView
+          loading={loading}
+          error={error}
+          tab={tab}
+          onTabChange={setTab}
+          search={search}
+          onSearchChange={setSearch}
+          filtered={filtered}
+          onOpenQr={openQr}
+        />
+      </Suspense>
 
       <div className="hidden min-h-screen flex-col bg-[var(--color-background)] lg:flex">
         <DesktopHeader onShowQr={openQr} />

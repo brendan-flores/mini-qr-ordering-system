@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Product } from "../../client/services/products";
 import type { CategoryTab, ProductCategory } from "./CategoryTabs";
 import { MobileCategoryTabs } from "./MobileCategoryTabs";
@@ -10,6 +11,7 @@ import { MobileCartSheet } from "../cart/MobileCartSheet";
 import { MobileOrdersPanel } from "./MobileOrdersPanel";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { BrandLogo } from "../brand/BrandLogo";
 
 const POPULAR_NAME = "Dark Chocolate Lava Cake";
 
@@ -97,9 +99,16 @@ export function MobileMenuView({
   filtered: Product[];
   onOpenQr(): void;
 }) {
+  const searchParams = useSearchParams();
   const { items } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [navTab, setNavTab] = useState<"menu" | "orders">("menu");
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "orders") {
+      setNavTab("orders");
+    }
+  }, [searchParams]);
 
   const cartCount = items.reduce((sum, it) => sum + it.quantity, 0);
 
@@ -149,9 +158,11 @@ export function MobileMenuView({
         >
           <MaterialIcon name="qr_code_2" filled={false} />
         </button>
-        <h1 className="truncate text-center text-2xl font-bold text-[var(--color-primary)]">
-          BrenCravings
-        </h1>
+        <BrandLogo
+          href="/"
+          textClassName="text-xl font-bold leading-none text-[var(--color-primary)]"
+          className="justify-center"
+        />
       </header>
 
       {navTab === "menu" ? (

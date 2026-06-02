@@ -11,7 +11,7 @@ export function MobileOrdersPanel() {
       <p className="mb-4 px-1 text-sm text-[var(--color-text-muted)]">
         Complete payment for pending orders or tap for details.
       </p>
-      <OrdersList variant="compact" />
+      <OrdersList variant="compact" checkoutReturn="/?tab=orders" />
     </div>
   );
 }

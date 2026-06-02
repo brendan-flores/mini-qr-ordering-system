@@ -63,8 +63,14 @@ export default function AdminPage() {
     <div className="min-h-screen bg-zinc-50">
       <header className="border-b border-black/5 bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4">
-          <a href="/" className="text-sm font-semibold text-zinc-700">
-            ← Back to menu
+          <a
+            href={
+              process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+              "https://brencravings.vercel.app"
+            }
+            className="text-sm font-semibold text-zinc-700"
+          >
+            ← Customer menu
           </a>
           <div className="text-base font-extrabold text-rose-700">Admin Dashboard</div>
           <div className="flex items-center gap-2">
