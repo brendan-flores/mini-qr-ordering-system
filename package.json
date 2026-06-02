@@ -1,21 +1,30 @@
 {
-  "name": "mini-qr-ordering-system",
-  "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:api": "node --watch server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "cors": "^2",
+    "dotenv": "^16",
+    "express": "^4",
+    "helmet": "^7",
     "next": "16.2.7",
+    "morgan": "^1",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
