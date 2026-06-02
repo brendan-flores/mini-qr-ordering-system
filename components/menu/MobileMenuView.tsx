@@ -12,6 +12,7 @@ import { MobileOrdersPanel } from "./MobileOrdersPanel";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { BrandLogo } from "../brand/BrandLogo";
+import { TableBadge } from "../table/TableBadge";
 
 const POPULAR_NAME = "Dark Chocolate Lava Cake";
 
@@ -100,7 +101,7 @@ export function MobileMenuView({
   onOpenQr(): void;
 }) {
   const searchParams = useSearchParams();
-  const { items } = useCart();
+  const { pieceCount } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [navTab, setNavTab] = useState<"menu" | "orders">("menu");
 
@@ -110,7 +111,7 @@ export function MobileMenuView({
     }
   }, [searchParams]);
 
-  const cartCount = items.reduce((sum, it) => sum + it.quantity, 0);
+  const cartCount = pieceCount;
 
   const sections = useMemo(() => {
     if (tab !== "All Items" || search.trim()) {
@@ -185,6 +186,9 @@ export function MobileMenuView({
               placeholder="Search menu..."
               className="h-12 w-full rounded-xl border border-[var(--color-surface-line)] bg-white py-0 pl-11 pr-4 text-base text-zinc-900 shadow-sm outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
+          </div>
+          <div className="mt-3 flex justify-center">
+            <TableBadge />
           </div>
           <MobileCategoryTabs value={tab} onChange={onTabChange} />
         </div>

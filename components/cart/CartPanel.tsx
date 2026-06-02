@@ -3,9 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { createOrder } from "../../client/services/orders";
-import { saveStoredOrder } from "../../client/services/payOrder";
-import { checkoutUrl } from "../../lib/checkout-url";
+import { cartCheckoutUrl } from "../../lib/checkout-url";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -13,36 +11,15 @@ import { Button } from "../ui/Button";
 
 export function CartPanel() {
   const router = useRouter();
-  const { items, setQty, remove, clear } = useCart();
-  const [submitting, setSubmitting] = useState(false);
+  const { items, lineCount, setQty, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
   const total = useMemo(() => cartTotal(subtotal), [subtotal]);
 
-  async function onCheckout() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const payload = {
-        items: items.map((it) => ({
-          product_id: it.product.id,
-          name: it.product.name,
-          price: it.product.price,
-          quantity: it.quantity,
-          image_url: it.product.image_url ?? null,
-        })),
-        total_amount: total,
-      };
-      const { data } = await createOrder(payload);
-      clear();
-      saveStoredOrder(data);
-      router.push(checkoutUrl(data.id, "/"));
-    } catch (e: any) {
-      setError(e?.message ?? "Checkout failed");
-    } finally {
-      setSubmitting(false);
-    }
+  function onCheckout() {
+    if (items.length === 0) return;
+    router.push(cartCheckoutUrl("/"));
   }
 
   return (
@@ -52,12 +29,18 @@ export function CartPanel() {
           <span className="text-[var(--color-primary)]">🛒</span>
           <span className="text-xl">Your Order</span>
         </div>
-        <div className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white">
-          {items.length} {items.length === 1 ? "item" : "items"}
+        <div
+          className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white"
+          suppressHydrationWarning
+        >
+          {lineCount} {lineCount === 1 ? "item" : "items"}
         </div>
       </div>
 
-      <div className="cart-scroll flex-1 overflow-y-auto bg-[var(--color-surface-subtle)] p-4">
+      <div
+        className="cart-scroll flex-1 overflow-y-auto bg-[var(--color-surface-subtle)] p-4"
+        suppressHydrationWarning
+      >
         {items.length === 0 ? (
           <div className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
             Your cart is empty.
@@ -120,7 +103,9 @@ export function CartPanel() {
       <div className="shrink-0 border-t border-[var(--color-surface-line)] bg-white p-4">
         <div className="flex items-center justify-between text-base font-semibold text-zinc-900">
           <span>Total</span>
-          <span className="text-[var(--color-primary)]">{formatMoney(total)}</span>
+          <span className="text-[var(--color-primary)]" suppressHydrationWarning>
+            {formatMoney(total)}
+          </span>
         </div>
 
         {error ? (
@@ -132,13 +117,12 @@ export function CartPanel() {
         <Button
           type="button"
           className="mt-4 w-full py-3 text-base"
-          disabled={items.length === 0 || submitting}
+          disabled={items.length === 0}
           onClick={onCheckout}
         >
-          {submitting ? "Processing..." : "Proceed to Checkout →"}
+          Review Payment →
         </Button>
       </div>
     </aside>
   );
 }
-

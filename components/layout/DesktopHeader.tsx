@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
+import { TableBadge } from "../table/TableBadge";
 import { Button } from "../ui/Button";
 
 const navItems = [
@@ -16,7 +17,10 @@ export function DesktopHeader({ onShowQr }: { onShowQr?(): void }) {
   return (
     <header className="fixed top-0 z-40 hidden h-16 w-full border-b border-[var(--color-surface-line)] bg-white lg:block">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between gap-4 px-6">
-        <BrandLogo href="/" />
+        <div className="flex items-center gap-3">
+          <BrandLogo href="/" />
+          <TableBadge className="hidden sm:inline-flex" />
+        </div>
 
         <nav
           className="flex items-center gap-1 rounded-xl bg-[var(--color-surface-subtle)] p-1"

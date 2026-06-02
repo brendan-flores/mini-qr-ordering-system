@@ -1,20 +1,30 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useReducer } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import type { Product } from "../../client/services/products";
 import type { CartItem, CartState } from "./cartTypes";
-
-type Action =
-  | { type: "add"; product: Product }
-  | { type: "setQty"; productId: Product["id"]; quantity: number }
-  | { type: "remove"; productId: Product["id"] }
-  | { type: "clear" };
+import {
+  cartItemCount,
+  cartLineCount,
+  clearCartStorage,
+  emitCartUpdate,
+  getCartSnapshot,
+  getEmptyCart,
+  saveCartToStorage,
+  subscribeToCart,
+} from "./cartStorage";
 
 function key(id: Product["id"]) {
   return String(id);
 }
 
-function reducer(state: CartState, action: Action): CartState {
+function applyCartAction(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "add": {
       const k = key(action.product.id);
@@ -51,14 +61,22 @@ function reducer(state: CartState, action: Action): CartState {
       return { items: rest };
     }
     case "clear":
-      return { items: {} };
+      return getEmptyCart();
     default:
       return state;
   }
 }
 
+type CartAction =
+  | { type: "add"; product: Product }
+  | { type: "setQty"; productId: Product["id"]; quantity: number }
+  | { type: "remove"; productId: Product["id"] }
+  | { type: "clear" };
+
 type CartContextValue = {
   items: CartItem[];
+  lineCount: number;
+  pieceCount: number;
   add(product: Product): void;
   setQty(productId: Product["id"], quantity: number): void;
   remove(productId: Product["id"]): void;
@@ -68,19 +86,34 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, { items: {} });
+  const cart = useSyncExternalStore(
+    subscribeToCart,
+    getCartSnapshot,
+    getEmptyCart
+  );
+
+  const commit = useCallback((next: CartState) => {
+    saveCartToStorage(next);
+    emitCartUpdate();
+  }, []);
 
   const value = useMemo<CartContextValue>(() => {
-    const items = Object.values(state.items);
+    const items = Object.values(cart.items);
     return {
       items,
-      add: (product) => dispatch({ type: "add", product }),
+      lineCount: cartLineCount(cart),
+      pieceCount: cartItemCount(cart),
+      add: (product) => commit(applyCartAction(cart, { type: "add", product })),
       setQty: (productId, quantity) =>
-        dispatch({ type: "setQty", productId, quantity }),
-      remove: (productId) => dispatch({ type: "remove", productId }),
-      clear: () => dispatch({ type: "clear" }),
+        commit(applyCartAction(cart, { type: "setQty", productId, quantity })),
+      remove: (productId) =>
+        commit(applyCartAction(cart, { type: "remove", productId })),
+      clear: () => {
+        clearCartStorage();
+        emitCartUpdate();
+      },
     };
-  }, [state.items]);
+  }, [cart, commit]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
@@ -90,4 +123,3 @@ export function useCart() {
   if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }
-

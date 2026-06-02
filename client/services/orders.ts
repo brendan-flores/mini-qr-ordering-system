@@ -1,6 +1,25 @@
 import { apiFetch } from "./api";
 import type { Product } from "./products";
 
+export type PaymentMethod = "cod" | "gcash";
+
+export type PaymentStatus = "Pending" | "Paid" | "Failed";
+
+/** Legacy rows may still return Completed until DB migration runs. */
+export type PaymentStatusLegacy = PaymentStatus | "Completed";
+
+export type OrderStatus =
+  | "received"
+  | "preparing"
+  | "serving"
+  | "served"
+  | "completed"
+  | "cancelled";
+
+export type AdminKitchenStatus = Exclude<OrderStatus, "cancelled">;
+
+export type ServiceType = "dine_in" | "takeout";
+
 export type OrderItem = {
   product_id: Product["id"];
   name: string;
@@ -13,27 +32,57 @@ export type Order = {
   id: string | number;
   items: OrderItem[];
   total_amount: number;
-  payment_status: "Pending" | "Paid" | "Failed";
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatusLegacy;
+  table_number?: string | null;
+  service_type?: ServiceType;
+  order_status?: OrderStatus;
   created_at: string;
 };
 
-export async function createOrder(payload: {
+export type CreateOrderPayload = {
   items: OrderItem[];
   total_amount: number;
-}) {
+  payment_method: PaymentMethod;
+  payment_status?: PaymentStatus;
+  table_number?: string;
+  service_type?: ServiceType;
+};
+
+export async function createOrder(payload: CreateOrderPayload) {
+  const body =
+    payload.payment_method === "cod"
+      ? { ...payload, payment_status: "Pending" as const }
+      : payload;
+
   return apiFetch<{ data: Order }>("/api/orders", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 }
 
-export async function listOrders() {
-  return apiFetch<{ data: Order[] }>("/api/orders");
+export async function getOrder(id: Order["id"]) {
+  return apiFetch<{ data: Order }>(`/api/orders/${id}`);
+}
+
+/** One request for all stored order ids (used on Your Orders). */
+export async function getOrdersByIds(ids: Order["id"][]) {
+  if (ids.length === 0) {
+    return { data: [] as Order[] };
+  }
+  return apiFetch<{ data: Order[] }>("/api/orders/history", {
+    method: "POST",
+    body: JSON.stringify({ ids: ids.map(String) }),
+  });
+}
+
+export async function listAdminOrders() {
+  return apiFetch<{ data: Order[] }>("/api/admin/orders");
 }
 
 export async function updateOrderPaymentStatus(
   id: Order["id"],
-  payment_status: Order["payment_status"]
+  payment_status: PaymentStatus
 ) {
   return apiFetch<{ data: Order }>(`/api/orders/${id}/payment`, {
     method: "PATCH",
@@ -41,3 +90,44 @@ export async function updateOrderPaymentStatus(
   });
 }
 
+export async function updateOrderStatus(
+  id: Order["id"],
+  order_status: AdminKitchenStatus
+) {
+  return apiFetch<{ data: Order }>(`/api/orders/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ order_status }),
+  });
+}
+
+export function paymentMethodLabel(
+  method: PaymentMethod,
+  serviceType: ServiceType = "dine_in"
+) {
+  if (method === "gcash") return "GCash";
+  return serviceType === "takeout"
+    ? "Pay at the counter (cash)"
+    : "Pay at table (cash)";
+}
+
+export function serviceTypeLabel(type: ServiceType) {
+  return type === "takeout" ? "Take out" : "Dine in";
+}
+
+export function orderStatusLabel(status: OrderStatus) {
+  const labels: Record<OrderStatus, string> = {
+    received: "Received",
+    preparing: "Preparing",
+    serving: "Serving",
+    served: "Served",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+  return labels[status];
+}
+
+export async function cancelOrder(id: Order["id"]) {
+  return apiFetch<{ data: Order }>(`/api/orders/${id}/cancel`, {
+    method: "POST",
+  });
+}

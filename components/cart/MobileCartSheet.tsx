@@ -3,9 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { createOrder } from "../../client/services/orders";
-import { saveStoredOrder } from "../../client/services/payOrder";
-import { checkoutUrl } from "../../lib/checkout-url";
+import { cartCheckoutUrl } from "../../lib/checkout-url";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -20,39 +18,16 @@ export function MobileCartSheet({
   onClose(): void;
 }) {
   const router = useRouter();
-  const { items, setQty, remove, clear } = useCart();
-  const [submitting, setSubmitting] = useState(false);
+  const { items, pieceCount, setQty, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
   const total = useMemo(() => cartTotal(subtotal), [subtotal]);
-  const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
 
-  async function onCheckout() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const payload = {
-        items: items.map((it) => ({
-          product_id: it.product.id,
-          name: it.product.name,
-          price: it.product.price,
-          quantity: it.quantity,
-          image_url: it.product.image_url ?? null,
-        })),
-        total_amount: total,
-      };
-      const { data } = await createOrder(payload);
-      clear();
-      saveStoredOrder(data);
-      onClose();
-      router.push(checkoutUrl(data.id, "/"));
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Checkout failed";
-      setError(message);
-    } finally {
-      setSubmitting(false);
-    }
+  function onCheckout() {
+    if (items.length === 0) return;
+    onClose();
+    router.push(cartCheckoutUrl("/"));
   }
 
   useEffect(() => {
@@ -73,22 +48,18 @@ export function MobileCartSheet({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  if (!open) {
+    return (
+      <div className="fixed inset-0 z-[60] pointer-events-none lg:hidden" aria-hidden />
+    );
+  }
+
   return (
-    <div
-      className={[
-        "fixed inset-0 z-[60] lg:hidden",
-        open ? "pointer-events-auto" : "pointer-events-none",
-      ].join(" ")}
-      aria-hidden={!open}
-    >
+    <div className="fixed inset-0 z-[60] pointer-events-auto lg:hidden">
       <button
         type="button"
-        className={[
-          "absolute inset-0 cursor-pointer bg-black/35 transition-opacity duration-300",
-          open ? "opacity-100" : "opacity-0",
-        ].join(" ")}
+        className="absolute inset-0 cursor-pointer bg-black/35"
         aria-label="Close cart"
-        tabIndex={open ? 0 : -1}
         onClick={onClose}
       />
 
@@ -96,10 +67,7 @@ export function MobileCartSheet({
         role="dialog"
         aria-modal="true"
         aria-label="Your order"
-        className={[
-          "absolute bottom-0 left-0 right-0 flex max-h-[min(82vh,100%)] flex-col rounded-t-2xl bg-white shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out",
-          open ? "translate-y-0" : "translate-y-full",
-        ].join(" ")}
+        className="absolute bottom-0 left-0 right-0 flex max-h-[min(82vh,100%)] flex-col rounded-t-2xl bg-white shadow-[0_-8px_32px_rgba(0,0,0,0.12)]"
       >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-zinc-300" aria-hidden />
@@ -112,9 +80,12 @@ export function MobileCartSheet({
               className="text-[var(--color-primary)]"
             />
             <span>Your Order</span>
-            {itemCount > 0 ? (
-              <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]">
-                {itemCount}
+            {pieceCount > 0 ? (
+              <span
+                className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]"
+                suppressHydrationWarning
+              >
+                {pieceCount}
               </span>
             ) : null}
           </div>
@@ -183,7 +154,7 @@ export function MobileCartSheet({
         <div className="shrink-0 border-t border-[var(--color-surface-line)] bg-white px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex justify-between text-base font-semibold text-zinc-900">
             <span>Total</span>
-            <span className="text-[var(--color-primary)]">
+            <span className="text-[var(--color-primary)]" suppressHydrationWarning>
               {formatMoney(total)}
             </span>
           </div>
@@ -193,10 +164,10 @@ export function MobileCartSheet({
           <Button
             type="button"
             className="mt-4 w-full py-3"
-            disabled={items.length === 0 || submitting}
+            disabled={items.length === 0}
             onClick={onCheckout}
           >
-            {submitting ? "Processing..." : `Checkout (${itemCount})`}
+            {`Review Payment (${pieceCount})`}
           </Button>
         </div>
       </div>

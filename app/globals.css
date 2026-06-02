@@ -73,6 +73,60 @@ body {
   display: none;
 }
 
+@keyframes gcash-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gcash-pay-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes gcash-dot-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gcash-pay-spinner {
+  animation: gcash-spin 0.9s linear infinite;
+}
+
+.gcash-pay-pop {
+  animation: gcash-pay-pop 0.35s ease-out;
+}
+
+.gcash-pay-dot {
+  animation: gcash-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.gcash-pay-dot-2 {
+  animation-delay: 0.15s;
+}
+
+.gcash-pay-dot-3 {
+  animation-delay: 0.3s;
+}
+
+.gcash-pay-card {
+  animation: gcash-pay-pop 0.3s ease-out;
+}
+
 /* Mobile menu: explicit 2-column grid (lg:hidden view) */
 .mobile-menu-grid {
   display: grid;
@@ -83,4 +137,34 @@ body {
 
 .mobile-menu-grid > * {
   min-width: 0;
+}
+
+@keyframes checkout-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.checkout-animate-in {
+  animation: checkout-fade-up 0.45s ease-out both;
+}
+
+.checkout-animate-in-delay-1 {
+  animation-delay: 0.06s;
+}
+
+.checkout-animate-in-delay-2 {
+  animation-delay: 0.12s;
+}
+
+.checkout-hero-glow {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(255, 218, 218, 0.55), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 90% 20%, rgba(230, 238, 255, 0.9), transparent 45%),
+    linear-gradient(180deg, #ffffff 0%, var(--background) 100%);
 }

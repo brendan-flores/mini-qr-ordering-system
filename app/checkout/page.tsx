@@ -5,11 +5,11 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-zinc-50">
-          <header className="border-b border-black/5 bg-white">
-            <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-4">
+        <div className="min-h-screen bg-[var(--background)]">
+          <header className="border-b border-[var(--color-surface-line)] bg-white">
+            <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4">
               <span className="text-sm font-semibold text-zinc-700">Back</span>
-              <div className="text-base font-extrabold text-rose-700">
+              <div className="text-base font-extrabold text-[var(--color-primary)]">
                 Checkout
               </div>
               <div className="w-[90px]" />

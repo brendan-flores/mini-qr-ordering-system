@@ -6,10 +6,24 @@ import {
   updateMockOrderPaymentStatus,
 } from "./mock-data.service.js";
 
-export async function createOrder({ items, total_amount }) {
+export async function createOrder({
+  items,
+  total_amount,
+  payment_method = "cod",
+  payment_status,
+}) {
   const supabase = getSupabase();
+  const status =
+    payment_status ??
+    (payment_method === "cod" ? "Pending" : "Paid");
+
   if (!getSupabaseConfig().isConfigured || !supabase) {
-    return createMockOrder({ items, total_amount });
+    return createMockOrder({
+      items,
+      total_amount,
+      payment_method,
+      payment_status: status,
+    });
   }
 
   const { data, error } = await supabase
@@ -17,9 +31,12 @@ export async function createOrder({ items, total_amount }) {
     .insert({
       items,
       total_amount,
-      payment_status: "Pending",
+      payment_method,
+      payment_status: status,
     })
-    .select("id,items,total_amount,payment_status,created_at")
+    .select(
+      "id,items,total_amount,payment_method,payment_status,created_at"
+    )
     .single();
 
   if (error) throw error;
@@ -34,7 +51,9 @@ export async function listOrders() {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("id,items,total_amount,payment_status,created_at")
+    .select(
+      "id,items,total_amount,payment_method,payment_status,created_at"
+    )
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -51,7 +70,9 @@ export async function updateOrderPaymentStatus({ id, payment_status }) {
     .from("orders")
     .update({ payment_status })
     .eq("id", id)
-    .select("id,items,total_amount,payment_status,created_at")
+    .select(
+      "id,items,total_amount,payment_method,payment_status,created_at"
+    )
     .single();
 
   if (error) throw error;

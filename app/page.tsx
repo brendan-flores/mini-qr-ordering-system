@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { CartProvider } from "../components/cart/CartContext";
 import { CartPanel } from "../components/cart/CartPanel";
 import { CategoryTabs, type CategoryTab } from "../components/menu/CategoryTabs";
 import { MobileMenuView } from "../components/menu/MobileMenuView";
@@ -9,15 +8,13 @@ import { ProductCard } from "../components/menu/ProductCard";
 import { QrModal } from "../components/qr/QrModal";
 import { DesktopHeader } from "../components/layout/DesktopHeader";
 import { getProducts, type Product } from "../client/services/products";
-import QRCode from "qrcode";
-
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<CategoryTab>("All Items");
   const [search, setSearch] = useState("");
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -51,25 +48,21 @@ export default function Home() {
     return list;
   }, [products, search, tab]);
 
-  async function openQr() {
-    const url =
-      process.env.NEXT_PUBLIC_APP_URL ?? `${window.location.origin}/`;
-    const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 220 });
-    setQrDataUrl(dataUrl);
+  function openQr() {
+    setQrOpen(true);
   }
 
-  function downloadQr() {
-    if (!qrDataUrl) return;
+  function downloadQr(dataUrl: string) {
     const link = document.createElement("a");
-    link.href = qrDataUrl;
-    link.download = "brenfoods-menu-qr.png";
+    link.href = dataUrl;
+    link.download = "brencravings-table-qr.png";
     document.body.appendChild(link);
     link.click();
     link.remove();
   }
 
   return (
-    <CartProvider>
+    <>
       <Suspense fallback={null}>
         <MobileMenuView
           loading={loading}
@@ -129,13 +122,12 @@ export default function Home() {
         </div>
       </div>
 
-      {qrDataUrl ? (
+      {qrOpen ? (
         <QrModal
-          qrDataUrl={qrDataUrl}
-          onClose={() => setQrDataUrl(null)}
+          onClose={() => setQrOpen(false)}
           onDownload={downloadQr}
         />
       ) : null}
-    </CartProvider>
+    </>
   );
 }

@@ -70,16 +70,35 @@ export function listMockProducts() {
   return [...products].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 }
 
-export function createMockOrder({ items, total_amount }) {
+export function createMockOrder({
+  items,
+  total_amount,
+  payment_method = "cod",
+  payment_status,
+  table_number = "1",
+  service_type = "dine_in",
+  order_status = "received",
+}) {
+  const status =
+    payment_status ??
+    (payment_method === "cod" ? "Pending" : "Paid");
   const order = {
     id: crypto.randomUUID(),
     items,
     total_amount,
-    payment_status: "Pending",
+    payment_method,
+    payment_status: status,
+    table_number: service_type === "takeout" ? null : table_number,
+    service_type,
+    order_status,
     created_at: new Date().toISOString(),
   };
   orders.unshift(order);
   return order;
+}
+
+export function getMockOrderById(id) {
+  return orders.find((order) => String(order.id) === String(id)) ?? null;
 }
 
 export function listMockOrders() {
@@ -94,5 +113,16 @@ export function updateMockOrderPaymentStatus({ id, payment_status }) {
     throw error;
   }
   orders[index] = { ...orders[index], payment_status };
+  return orders[index];
+}
+
+export function updateMockOrderStatus({ id, order_status }) {
+  const index = orders.findIndex((order) => String(order.id) === String(id));
+  if (index < 0) {
+    const error = new Error("Order not found");
+    error.status = 404;
+    throw error;
+  }
+  orders[index] = { ...orders[index], order_status };
   return orders[index];
 }

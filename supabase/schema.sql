@@ -18,6 +18,23 @@ create table if not exists public.orders (
   payment_status text not null check (
     payment_status in ('Pending', 'Paid', 'Failed')
   ),
+  payment_method text not null default 'cod' check (
+    payment_method in ('cod', 'gcash')
+  ),
+  table_number text,
+  service_type text not null default 'dine_in' check (
+    service_type in ('dine_in', 'takeout')
+  ),
+  order_status text not null default 'received' check (
+    order_status in (
+      'received',
+      'preparing',
+      'serving',
+      'served',
+      'completed',
+      'cancelled'
+    )
+  ),
   created_at timestamptz not null default now()
 );
 

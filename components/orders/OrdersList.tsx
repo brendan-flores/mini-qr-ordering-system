@@ -1,45 +1,72 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { listOrders, type Order } from "../../client/services/orders";
-import { payOrder } from "../../client/services/payOrder";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  cancelOrder,
+  orderStatusLabel,
+  paymentMethodLabel,
+  serviceTypeLabel,
+  type Order,
+} from "../../client/services/orders";
+import { fetchOrdersFromHistory } from "../../client/services/order-history-fetch";
+import {
+  canCustomerCancel,
+  effectivePaymentStatus,
+  isOrderCancelled,
+  orderNeedsStatusPolling,
+} from "../../lib/orders/order-rules";
+import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
+import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
 import { checkoutUrl } from "../../lib/checkout-url";
 import { formatMoney } from "../cart/cartUtils";
-import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
+
+/** Refresh in-progress orders only; completed/cancelled stay static. */
+const POLL_MS = 30_000;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
-function statusClass(status: Order["payment_status"]) {
-  if (status === "Paid") return "bg-green-100 text-green-800";
-  if (status === "Failed") return "bg-rose-100 text-rose-800";
+function paymentStatusClass(status: Order["payment_status"]) {
+  const label = effectivePaymentStatus(status);
+  if (label === "Paid") return "bg-green-100 text-green-800";
+  if (label === "Failed") return "bg-rose-100 text-rose-800";
   return "bg-amber-100 text-amber-900";
+}
+
+function kitchenStatusClass(status: Order["order_status"]) {
+  const s = status ?? "received";
+  if (s === "preparing") return "bg-amber-100 text-amber-900";
+  if (s === "serving") return "bg-violet-100 text-violet-900";
+  if (s === "served" || s === "completed") return "bg-emerald-100 text-emerald-900";
+  if (s === "cancelled") return "bg-zinc-200 text-zinc-700";
+  return "bg-sky-100 text-sky-900";
 }
 
 function OrderCard({
   order,
-  isPaying,
-  onPay,
   layout,
   checkoutReturn,
+  onCancel,
+  cancelling,
 }: {
   order: Order;
-  isPaying: boolean;
-  onPay(order: Order): void;
   layout: "compact" | "desktop";
   checkoutReturn: string;
+  onCancel?(order: Order): void;
+  cancelling?: boolean;
 }) {
-  const isPending = order.payment_status === "Pending";
   const checkoutHref = checkoutUrl(order.id, checkoutReturn);
+  const method = order.payment_method ?? "cod";
+  const kitchen = order.order_status ?? "received";
 
   return (
     <article
       className={[
         "rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-sm",
-        layout === "desktop" ? "p-5" : "p-4",
+        layout === "compact" ? "p-4" : "p-5",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">
@@ -47,47 +74,74 @@ function OrderCard({
           <p
             className={[
               "font-semibold text-zinc-900",
-              layout === "desktop" ? "text-base" : "text-sm",
+              layout === "compact" ? "text-sm" : "text-base",
             ].join(" ")}
           >
             Order #{String(order.id).slice(0, 8)}
           </p>
           <p className="mt-0.5 text-xs text-zinc-500">
             {formatDate(order.created_at)}
+            {order.service_type === "takeout"
+              ? ` · ${serviceTypeLabel("takeout")}`
+              : order.table_number
+                ? ` · Table ${order.table_number}`
+                : ""}
           </p>
         </div>
         <span
           className={[
             "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-            statusClass(order.payment_status),
+            paymentStatusClass(order.payment_status),
           ].join(" ")}
         >
-          {order.payment_status}
+          {effectivePaymentStatus(order.payment_status)}
         </span>
       </div>
 
-      <p className="mt-2 text-sm text-zinc-600">
+      <div className="mt-2 flex flex-wrap gap-2">
+        <span
+          className={[
+            "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+            kitchenStatusClass(kitchen),
+          ].join(" ")}
+        >
+          Kitchen: {orderStatusLabel(kitchen)}
+        </span>
+      </div>
+
+      <p className="mt-2 text-xs font-medium text-[var(--color-text-muted)]">
+        {paymentMethodLabel(method, order.service_type ?? "dine_in")}
+      </p>
+      <p className="mt-1 text-sm text-zinc-600">
         {order.items.length} {order.items.length === 1 ? "item" : "items"}
       </p>
       <p
         className={[
           "mt-1 font-bold text-[var(--color-primary)]",
-          layout === "desktop" ? "text-lg" : "text-base",
+          layout === "compact" ? "text-base" : "text-lg",
         ].join(" ")}
       >
         {formatMoney(order.total_amount)}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {isPending ? (
-          <Button
-            type="button"
-            className="py-2 text-sm"
-            disabled={isPaying}
-            onClick={() => onPay(order)}
+        {order.payment_status === "Failed" && method === "gcash" ? (
+          <Link
+            href={checkoutHref}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            {isPaying ? "Processing…" : "Pay Now"}
-          </Button>
+            Try payment again
+          </Link>
+        ) : null}
+        {canCustomerCancel(order) && onCancel ? (
+          <button
+            type="button"
+            disabled={cancelling}
+            onClick={() => onCancel(order)}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 disabled:opacity-50"
+          >
+            {cancelling ? "Cancelling…" : "Cancel order"}
+          </button>
         ) : null}
         <Link
           href={checkoutHref}
@@ -103,52 +157,109 @@ function OrderCard({
 export function OrdersList({
   variant = "compact",
   checkoutReturn = "/orders",
+  pollEnabled = true,
 }: {
-  variant?: "compact" | "desktop";
-  /** Where checkout “Back” returns to (e.g. /orders or /?tab=orders) */
+  variant?: "compact" | "desktop" | "responsive";
   checkoutReturn?: string;
+  /** Set false when the panel is not visible (e.g. hidden tab). */
+  pollEnabled?: boolean;
 }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [payingId, setPayingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const initialLoad = useRef(true);
+  const refreshing = useRef(false);
 
-  const refresh = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    return listOrders()
-      .then(({ data }) => setOrders(data))
-      .catch((e: unknown) => {
-        const message = e instanceof Error ? e.message : "Failed to load orders";
-        setError(message);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    function onOrderUpdated() {
-      refresh();
+  async function handleCancel(order: Order) {
+    if (
+      !window.confirm(
+        "Cancel this order? It will be removed from the kitchen queue."
+      )
+    ) {
+      return;
     }
-    window.addEventListener("order-updated", onOrderUpdated);
-    return () => window.removeEventListener("order-updated", onOrderUpdated);
-  }, [refresh]);
-
-  async function onPayNow(order: Order) {
-    setPayingId(String(order.id));
+    setCancellingId(String(order.id));
     setError(null);
     try {
-      await payOrder(order.id);
-      await refresh();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Payment failed";
+      const { data } = await cancelOrder(order.id);
+      saveStoredOrder(data);
+      setOrders((prev) =>
+        prev.map((o) => (String(o.id) === String(data.id) ? data : o))
+      );
+      window.dispatchEvent(new Event(ORDER_UPDATED_EVENT));
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Could not cancel order";
       setError(message);
     } finally {
-      setPayingId(null);
+      setCancellingId(null);
     }
   }
 
-  if (loading) {
+  const refresh = useCallback(async (showLoading: boolean) => {
+    if (refreshing.current) return;
+    refreshing.current = true;
+    if (showLoading) {
+      setLoading(true);
+      setError(null);
+    }
+    try {
+      const valid = await fetchOrdersFromHistory();
+      setOrders(valid);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to load orders";
+      if (showLoading) setError(message);
+    } finally {
+      refreshing.current = false;
+      if (showLoading) setLoading(false);
+    }
+  }, []);
+
+  const hasActivePolling = orders.some(orderNeedsStatusPolling);
+
+  useEffect(() => {
+    if (!pollEnabled) return;
+    void refresh(true).finally(() => {
+      initialLoad.current = false;
+    });
+  }, [refresh, pollEnabled]);
+
+  useEffect(() => {
+    if (!pollEnabled) return;
+
+    function onRefresh() {
+      void refresh(false);
+    }
+
+    window.addEventListener(ORDER_UPDATED_EVENT, onRefresh);
+    return () => window.removeEventListener(ORDER_UPDATED_EVENT, onRefresh);
+  }, [refresh, pollEnabled]);
+
+  useEffect(() => {
+    if (!pollEnabled || !hasActivePolling) return;
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refresh(false);
+      }
+    }, POLL_MS);
+
+    return () => clearInterval(interval);
+  }, [refresh, pollEnabled, hasActivePolling]);
+
+  useEffect(() => {
+    if (!pollEnabled) return;
+
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      void refresh(false);
+    }
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refresh, pollEnabled]);
+
+  if (loading && initialLoad.current) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-sm text-zinc-600">Loading orders…</p>
@@ -156,7 +267,7 @@ export function OrdersList({
     );
   }
 
-  if (error) {
+  if (error && orders.length === 0) {
     return (
       <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-800">
         {error}
@@ -176,7 +287,7 @@ export function OrdersList({
           No orders yet
         </p>
         <p className="mt-1 text-sm text-zinc-600">
-          Items you order from the menu will appear here.
+          Orders you place from this device will appear here.
         </p>
         <Link
           href="/"
@@ -189,23 +300,56 @@ export function OrdersList({
   }
 
   const listClass =
-    variant === "desktop"
-      ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-      : "flex flex-col gap-3";
+    variant === "responsive"
+      ? "flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3"
+      : variant === "desktop"
+        ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        : "flex flex-col gap-3";
+
+  const activeOrders = orders.filter((o) => !isOrderCancelled(o));
+  const cancelledOrders = orders.filter((o) => isOrderCancelled(o));
+
+  function renderList(items: Order[]) {
+    return (
+      <ul className={listClass}>
+        {items.map((order) => (
+          <li key={String(order.id)}>
+            <OrderCard
+              order={order}
+              layout={variant === "desktop" ? "desktop" : "compact"}
+              checkoutReturn={checkoutReturn}
+              onCancel={handleCancel}
+              cancelling={cancellingId === String(order.id)}
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
-    <ul className={listClass}>
-      {orders.map((order) => (
-        <li key={String(order.id)}>
-          <OrderCard
-            order={order}
-            isPaying={payingId === String(order.id)}
-            onPay={onPayNow}
-            layout={variant}
-            checkoutReturn={checkoutReturn}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-8">
+      {error ? (
+        <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-800">
+          {error}
+        </div>
+      ) : null}
+      {activeOrders.length > 0 ? (
+        <section>
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+            Active orders
+          </h2>
+          {renderList(activeOrders)}
+        </section>
+      ) : null}
+      {cancelledOrders.length > 0 ? (
+        <section>
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+            Cancelled
+          </h2>
+          {renderList(cancelledOrders)}
+        </section>
+      ) : null}
+    </div>
   );
 }

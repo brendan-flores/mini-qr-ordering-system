@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
+import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
+import {
+  getOrderById,
+  patchOrderPayment,
+} from "@/lib/orders/order-service";
 import { UpdatePaymentSchema } from "../../../../../schemas/order.schemas.js";
-import { updateMockOrderPaymentStatus } from "../../../../../services/mock-data.service.js";
+
+const CustomerGcashPaymentSchema = z.object({
+  payment_status: z.enum(["Paid", "Failed"]),
+});
 
 export async function PATCH(
   request: NextRequest,
@@ -18,25 +25,36 @@ export async function PATCH(
     }
 
     const body = (await request.json()) as unknown;
-    const parsed = UpdatePaymentSchema.parse(body);
+    const admin = isAdminRequest(request);
 
-    if (!isSupabaseConfigured()) {
-      const updated = updateMockOrderPaymentStatus({ id, ...parsed });
-      return NextResponse.json({ data: updated });
+    if (admin) {
+      const parsed = UpdatePaymentSchema.parse(body);
+      const data = await patchOrderPayment(id, parsed.payment_status);
+      return NextResponse.json({ data });
     }
 
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("orders")
-      .update({ payment_status: parsed.payment_status })
-      .eq("id", id)
-      .select("id,items,total_amount,payment_status,created_at")
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: { message: error.message } }, { status: 500 });
+    const parsed = CustomerGcashPaymentSchema.parse(body);
+    const existing = await getOrderById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { error: { message: "Order not found" } },
+        { status: 404 }
+      );
+    }
+    if (existing.payment_method !== "gcash") {
+      return adminUnauthorized();
+    }
+    if (
+      existing.payment_status !== "Pending" &&
+      existing.payment_status !== "Failed"
+    ) {
+      return NextResponse.json(
+        { error: { message: "Payment cannot be updated for this order" } },
+        { status: 403 }
+      );
     }
 
+    const data = await patchOrderPayment(id, parsed.payment_status);
     return NextResponse.json({ data });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
@@ -45,8 +63,15 @@ export async function PATCH(
         { status: 400 }
       );
     }
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      typeof (error as { status: number }).status === "number"
+        ? (error as { status: number }).status
+        : 500;
     const message =
       error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: { message } }, { status: 500 });
+    return NextResponse.json({ error: { message } }, { status });
   }
 }
