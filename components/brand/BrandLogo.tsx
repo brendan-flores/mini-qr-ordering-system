@@ -7,8 +7,7 @@ export function BrandLogo({
   textClassName = "text-3xl font-extrabold leading-none text-[var(--color-primary)]",
   className = "",
   showText = true,
-  /** Logo mark size relative to the text line (1 = same cap height) */
-  markScale = 1.1,
+  markScale = 1.45,
 }: {
   href?: string;
   textClassName?: string;
@@ -16,28 +15,27 @@ export function BrandLogo({
   showText?: boolean;
   markScale?: number;
 }) {
-  const markStyle = {
-    width: `${markScale}em`,
-    height: `${markScale}em`,
-  };
-
   const content = (
     <span
       className={[
-        "inline-flex min-w-0 items-center gap-2.5",
+        "inline-flex min-w-0 items-center gap-1.5",
         textClassName,
         className,
       ].join(" ")}
     >
-      {/* Native img avoids Next/Image optimizer flattening PNG alpha to black */}
       <img
         src={LOGO_SRC}
         alt={showText ? "" : "BrenCravings"}
-        className="shrink-0 object-contain"
-        style={markStyle}
+        className="shrink-0 object-contain [margin-right:-0.15em]"
+        style={{
+          height: `${markScale}em`,
+          width: `${markScale}em`,
+        }}
         decoding="async"
       />
-      {showText ? <span className="truncate leading-none">BrenCravings</span> : null}
+      {showText ? (
+        <span className="truncate leading-none">BrenCravings</span>
+      ) : null}
     </span>
   );
 

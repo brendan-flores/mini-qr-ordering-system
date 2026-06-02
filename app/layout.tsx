@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   title: "BrenCravings",
   description: "Mini QR ordering system",
   icons: {
-    icon: [{ url: "/brencravings-logo.png", type: "image/png" }],
+    icon: "/brencravings-logo.png",
+    shortcut: "/brencravings-logo.png",
     apple: "/brencravings-logo.png",
   },
 };
@@ -32,6 +33,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/brencravings-logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/brencravings-logo.png" />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap"

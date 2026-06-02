@@ -153,24 +153,14 @@ export default function CheckoutClient() {
               </div>
             ) : null}
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <Button
-                type="button"
-                className="w-full py-3"
-                disabled={!canPay || paying}
-                onClick={simulatePay}
-              >
-                {paying ? "Processing…" : "Pay Now"}
-              </Button>
-              <Button
-                type="button"
-                className="w-full py-3"
-                variant="secondary"
-                onClick={() => (window.location.href = "/admin")}
-              >
-                View in Admin
-              </Button>
-            </div>
+            <Button
+              type="button"
+              className="mt-5 w-full py-3"
+              disabled={!canPay || paying}
+              onClick={simulatePay}
+            >
+              {paying ? "Processing…" : "Pay Now"}
+            </Button>
           </div>
         )}
       </main>
