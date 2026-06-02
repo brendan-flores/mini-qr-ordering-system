@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8f9ff;
+  --foreground: #121c2a;
 }
 
 @theme inline {
@@ -10,17 +10,30 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: #b80035;
+  --color-primary-dark: #920028;
+  --color-primary-soft: #ffdada;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f3f6ff;
+  --color-surface-line: #e6eeff;
+  --color-text-muted: #5c3f40;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+.cart-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cart-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cart-scroll::-webkit-scrollbar-thumb {
+  background-color: #e5bdbe;
+  border-radius: 999px;
 }

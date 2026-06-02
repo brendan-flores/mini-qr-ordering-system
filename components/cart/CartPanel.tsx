@@ -48,18 +48,18 @@ export function CartPanel() {
   }
 
   return (
-    <aside className="sticky top-6 h-fit w-full rounded-2xl border border-black/5 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-black/5 p-4">
+    <aside className="hidden h-full min-h-0 w-[360px] shrink-0 overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-[0_12px_24px_rgba(0,0,0,0.08)] lg:flex lg:flex-col">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-surface-line)] bg-white p-4">
         <div className="flex items-center gap-2 font-semibold text-zinc-900">
-          <span>🛒</span>
-          <span>Your Order</span>
+          <span className="text-[var(--color-primary)]">🛒</span>
+          <span className="text-xl">Your Order</span>
         </div>
-        <div className="rounded-full bg-rose-700 px-3 py-1 text-xs font-semibold text-white">
+        <div className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white">
           {items.length} {items.length === 1 ? "item" : "items"}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 p-4">
+      <div className="cart-scroll flex-1 overflow-y-auto bg-[var(--color-surface-subtle)] p-4">
         {items.length === 0 ? (
           <div className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
             Your cart is empty.
@@ -67,8 +67,11 @@ export function CartPanel() {
         ) : (
           <div className="flex flex-col gap-3">
             {items.map((it) => (
-              <div key={String(it.product.id)} className="flex gap-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-zinc-100">
+              <div
+                key={String(it.product.id)}
+                className="group flex items-start gap-3 border-b border-[var(--color-surface-line)] py-2 last:border-b-0"
+              >
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                   {it.product.image_url ? (
                     <Image
                       src={it.product.image_url}
@@ -80,18 +83,18 @@ export function CartPanel() {
                   ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-zinc-900">
+                      <div className="truncate text-base font-semibold text-zinc-900">
                         {it.product.name}
                       </div>
                       {it.note ? (
-                        <div className="truncate text-xs text-zinc-500">
+                        <div className="truncate text-xs text-[var(--color-text-muted)]">
                           {it.note}
                         </div>
                       ) : null}
                     </div>
-                    <div className="text-sm font-semibold text-rose-700">
+                    <div className="text-sm font-semibold text-[var(--color-primary)]">
                       {formatMoney(it.product.price)}
                     </div>
                   </div>
@@ -103,10 +106,10 @@ export function CartPanel() {
                     <Button
                       type="button"
                       variant="ghost"
-                      className="text-xs text-zinc-500"
+                      className="px-1 text-xs text-zinc-500 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
                       onClick={() => remove(it.product.id)}
                     >
-                      Remove
+                      Delete
                     </Button>
                   </div>
                 </div>
@@ -114,36 +117,39 @@ export function CartPanel() {
             ))}
           </div>
         )}
+      </div>
 
-        <div className="border-t border-black/5 pt-4">
+      <div className="shrink-0 border-t border-[var(--color-surface-line)] bg-white p-4">
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-zinc-600">
             <span>Subtotal</span>
             <span>{formatMoney(subtotal)}</span>
           </div>
-          <div className="mt-2 flex items-center justify-between text-sm text-zinc-600">
+          <div className="flex items-center justify-between text-sm text-zinc-600">
             <span>Tax (8.5%)</span>
             <span>{formatMoney(tax)}</span>
           </div>
-          <div className="mt-3 flex items-center justify-between text-base font-semibold text-zinc-900">
+          <div className="my-2 h-px w-full bg-[var(--color-surface-line)]" />
+          <div className="flex items-center justify-between text-base font-semibold text-zinc-900">
             <span>Total</span>
-            <span className="text-rose-700">{formatMoney(total)}</span>
+            <span className="text-[var(--color-primary)]">{formatMoney(total)}</span>
           </div>
-
-          {error ? (
-            <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">
-              {error}
-            </div>
-          ) : null}
-
-          <Button
-            type="button"
-            className="mt-4 w-full py-3 text-base"
-            disabled={items.length === 0 || submitting}
-            onClick={onCheckout}
-          >
-            {submitting ? "Processing..." : "Proceed to Checkout →"}
-          </Button>
         </div>
+
+        {error ? (
+          <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">
+            {error}
+          </div>
+        ) : null}
+
+        <Button
+          type="button"
+          className="mt-4 w-full py-3 text-base"
+          disabled={items.length === 0 || submitting}
+          onClick={onCheckout}
+        >
+          {submitting ? "Processing..." : "Proceed to Checkout →"}
+        </Button>
       </div>
     </aside>
   );

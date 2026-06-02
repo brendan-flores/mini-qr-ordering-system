@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gourmet QR",
+  title: "BrenFoods",
   description: "Mini QR ordering system",
 };
 

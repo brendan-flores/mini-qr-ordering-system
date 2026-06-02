@@ -1,12 +1,16 @@
 {
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "dev:api": "node --watch server.js"
+    "dev:api": "node --watch server.js",
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

@@ -1,6 +1,15 @@
-import { supabase } from "../config/supabase.js";
+import { hasSupabaseConfig, supabase } from "../config/supabase.js";
+import {
+  createMockOrder,
+  listMockOrders,
+  updateMockOrderPaymentStatus,
+} from "./mock-data.service.js";
 
 export async function createOrder({ items, total_amount }) {
+  if (!hasSupabaseConfig || !supabase) {
+    return createMockOrder({ items, total_amount });
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .insert({
@@ -16,6 +25,10 @@ export async function createOrder({ items, total_amount }) {
 }
 
 export async function listOrders() {
+  if (!hasSupabaseConfig || !supabase) {
+    return listMockOrders();
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .select("id,items,total_amount,payment_status,created_at")
@@ -26,6 +39,10 @@ export async function listOrders() {
 }
 
 export async function updateOrderPaymentStatus({ id, payment_status }) {
+  if (!hasSupabaseConfig || !supabase) {
+    return updateMockOrderPaymentStatus({ id, payment_status });
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .update({ payment_status })
