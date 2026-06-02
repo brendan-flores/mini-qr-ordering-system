@@ -10,21 +10,23 @@ export function QuantityStepper({
   onChange(next: number): void;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-zinc-100 p-1">
+    <div className="flex items-center rounded-md border border-black/10 bg-[var(--color-surface-subtle)]">
       <Button
         type="button"
         variant="ghost"
-        className="h-8 w-8 px-0"
+        className="h-8 w-8 rounded-md px-0 text-zinc-600 hover:bg-transparent hover:text-[var(--color-primary)]"
         onClick={() => onChange(value - 1)}
         aria-label="Decrease quantity"
       >
         –
       </Button>
-      <div className="min-w-6 text-center text-sm font-semibold">{value}</div>
+      <div className="min-w-6 text-center text-sm font-semibold text-zinc-900">
+        {value}
+      </div>
       <Button
         type="button"
         variant="ghost"
-        className="h-8 w-8 px-0"
+        className="h-8 w-8 rounded-md px-0 text-zinc-600 hover:bg-transparent hover:text-[var(--color-primary)]"
         onClick={() => onChange(value + 1)}
         aria-label="Increase quantity"
       >

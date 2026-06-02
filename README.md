@@ -113,3 +113,12 @@ Body:
 
 - QR code is generated in the frontend and links to the menu URL.
 - Input validation uses `zod`, errors are returned as JSON.
+
+## Deploy to Vercel
+
+This app is configured for [Vercel](https://vercel.com) (see `vercel.json`, `.env.example`, and **[docs/VERCEL.md](docs/VERCEL.md)**).
+
+1. Push the repo to GitHub and import it in Vercel (Next.js preset).
+2. Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://your-app.vercel.app`).
+3. Leave `NEXT_PUBLIC_API_BASE_URL` empty so `/api/*` runs on the same deployment.
+4. Deploy — only `npm run build` is required; `server.js` is not used on Vercel.
