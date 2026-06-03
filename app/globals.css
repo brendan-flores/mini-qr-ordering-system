@@ -36,6 +36,21 @@
   --color-text-muted: #5c3f40;
 }
 
+.admin-qr-panel {
+  animation: admin-qr-enter 0.45s ease-out both;
+}
+
+@keyframes admin-qr-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

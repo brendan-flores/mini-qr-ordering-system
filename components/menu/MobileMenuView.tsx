@@ -13,6 +13,7 @@ import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { BrandLogo } from "../brand/BrandLogo";
 import { TableBadge } from "../table/TableBadge";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 const POPULAR_NAME = "Dark Chocolate Lava Cake";
 
@@ -32,9 +33,11 @@ function tabLabel(tab: CategoryTab) {
 function MobileProductCard({
   product,
   badge,
+  orderingEnabled,
 }: {
   product: Product;
   badge?: string;
+  orderingEnabled: boolean;
 }) {
   const { add } = useCart();
 
@@ -67,14 +70,16 @@ function MobileProductCard({
           <span className="text-base font-semibold text-[var(--color-primary)]">
             {formatMoney(product.price)}
           </span>
-          <button
-            type="button"
-            onClick={() => add(product)}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition-transform active:scale-90 hover:bg-[var(--color-primary)]/10"
-            aria-label={`Add ${product.name}`}
-          >
-            <MaterialIcon name="add" className="text-[20px]" />
-          </button>
+          {orderingEnabled ? (
+            <button
+              type="button"
+              onClick={() => add(product)}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition-transform active:scale-90 hover:bg-[var(--color-primary)]/10"
+              aria-label={`Add ${product.name}`}
+            >
+              <MaterialIcon name="add" className="text-[20px]" />
+            </button>
+          ) : null}
         </div>
       </div>
     </article>
@@ -89,7 +94,7 @@ export function MobileMenuView({
   search,
   onSearchChange,
   filtered,
-  onOpenQr,
+  orderingEnabled,
 }: {
   loading: boolean;
   error: string | null;
@@ -98,7 +103,7 @@ export function MobileMenuView({
   search: string;
   onSearchChange(value: string): void;
   filtered: Product[];
-  onOpenQr(): void;
+  orderingEnabled: boolean;
 }) {
   const searchParams = useSearchParams();
   const { pieceCount } = useCart();
@@ -106,10 +111,17 @@ export function MobileMenuView({
   const [navTab, setNavTab] = useState<"menu" | "orders">("menu");
 
   useEffect(() => {
-    if (searchParams.get("tab") === "orders") {
+    if (orderingEnabled && searchParams.get("tab") === "orders") {
       setNavTab("orders");
     }
-  }, [searchParams]);
+  }, [searchParams, orderingEnabled]);
+
+  useEffect(() => {
+    if (!orderingEnabled) {
+      setNavTab("menu");
+      setCartOpen(false);
+    }
+  }, [orderingEnabled]);
 
   const cartCount = pieceCount;
 
@@ -143,26 +155,19 @@ export function MobileMenuView({
     setCartOpen(false);
   }
 
+  const mainPadding = orderingEnabled ? "pb-28" : "pb-6";
+
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden pt-16 lg:hidden">
       <header
         className={[
-          "fixed top-0 z-50 grid h-16 w-full grid-cols-[2.5rem_1fr_2.5rem] items-center bg-[var(--background)] px-4 shadow-sm transition-[filter] duration-300",
+          "fixed top-0 z-50 flex h-16 w-full items-center justify-center bg-[var(--background)] px-4 shadow-sm transition-[filter] duration-300",
           cartOpen ? "pointer-events-none brightness-[0.92]" : "",
         ].join(" ")}
       >
-        <button
-          type="button"
-          onClick={onOpenQr}
-          className="-ml-2 cursor-pointer justify-self-start rounded-full p-2 text-[var(--color-primary)] transition-opacity hover:opacity-80 active:scale-95"
-          aria-label="Show QR code"
-        >
-          <MaterialIcon name="qr_code_2" filled={false} />
-        </button>
         <BrandLogo
-          href="/"
+          href={MENU_PAGE_PATH}
           textClassName="text-xl font-bold leading-none text-[var(--color-primary)]"
-          className="justify-center"
         />
       </header>
 
@@ -187,20 +192,23 @@ export function MobileMenuView({
               className="h-12 w-full rounded-xl border border-[var(--color-surface-line)] bg-white py-0 pl-11 pr-4 text-base text-zinc-900 shadow-sm outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </div>
-          <div className="mt-3 flex justify-center">
-            <TableBadge />
-          </div>
+          {orderingEnabled ? (
+            <div className="mt-3 flex justify-center">
+              <TableBadge />
+            </div>
+          ) : null}
           <MobileCategoryTabs value={tab} onChange={onTabChange} />
         </div>
       ) : null}
 
       <main
         className={[
-          "menu-scroll mx-auto min-h-0 w-full max-w-[1280px] flex-1 overflow-y-auto px-4 pb-28 pt-4 transition-[filter] duration-300",
+          "menu-scroll mx-auto min-h-0 w-full max-w-[1280px] flex-1 overflow-y-auto px-4 pt-4 transition-[filter] duration-300",
+          mainPadding,
           cartOpen ? "pointer-events-none scale-[0.98] brightness-[0.92]" : "",
         ].join(" ")}
       >
-        {navTab === "orders" ? (
+        {orderingEnabled && navTab === "orders" ? (
           <MobileOrdersPanel />
         ) : loading ? (
           <p className="mt-6 text-sm text-zinc-600">Loading menu…</p>
@@ -223,6 +231,7 @@ export function MobileMenuView({
                     <MobileProductCard
                       key={String(product.id)}
                       product={product}
+                      orderingEnabled={orderingEnabled}
                       badge={
                         product.name === POPULAR_NAME ? "Popular" : undefined
                       }
@@ -235,7 +244,7 @@ export function MobileMenuView({
         )}
       </main>
 
-      {navTab === "menu" && cartCount > 0 && !cartOpen ? (
+      {orderingEnabled && navTab === "menu" && cartCount > 0 && !cartOpen ? (
         <div className="fixed bottom-24 right-4 z-40 lg:hidden">
           <button
             type="button"
@@ -251,52 +260,56 @@ export function MobileMenuView({
         </div>
       ) : null}
 
-      <nav className="fixed bottom-0 z-50 flex w-full items-center justify-around rounded-t-xl border-t border-[#e5bdbe] bg-[var(--background)] px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:hidden">
-        <button
-          type="button"
-          onClick={openMenu}
-          className={[
-            "flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
-            navTab === "menu"
-              ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
-              : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
-          ].join(" ")}
-        >
-          <MaterialIcon name="menu_book" className="mb-1" />
-          <span className="text-xs font-semibold">Menu</span>
-        </button>
-        <button
-          type="button"
-          onClick={toggleCart}
-          className={[
-            "relative flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
-            cartOpen
-              ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
-              : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
-          ].join(" ")}
-        >
-          <MaterialIcon name="shopping_cart" filled={false} className="mb-1" />
-          <span className="text-xs font-semibold">Cart</span>
-          {cartCount > 0 ? (
-            <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-[var(--color-primary)]" />
-          ) : null}
-        </button>
-        <button
-          type="button"
-          onClick={openOrders}
-          className={[
-            "flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
-            navTab === "orders"
-              ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
-              : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
-          ].join(" ")}
-        >
-          <MaterialIcon name="receipt_long" filled={false} className="mb-1" />
-          <span className="text-xs font-semibold">Orders</span>
-        </button>
-      </nav>
+      {orderingEnabled ? (
+        <nav className="fixed bottom-0 z-50 flex w-full items-center justify-around rounded-t-xl border-t border-[#e5bdbe] bg-[var(--background)] px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:hidden">
+          <button
+            type="button"
+            onClick={openMenu}
+            className={[
+              "flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
+              navTab === "menu"
+                ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
+            ].join(" ")}
+          >
+            <MaterialIcon name="menu_book" className="mb-1" />
+            <span className="text-xs font-semibold">Menu</span>
+          </button>
+          <button
+            type="button"
+            onClick={toggleCart}
+            className={[
+              "relative flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
+              cartOpen
+                ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
+            ].join(" ")}
+          >
+            <MaterialIcon name="shopping_cart" filled={false} className="mb-1" />
+            <span className="text-xs font-semibold">Cart</span>
+            {cartCount > 0 ? (
+              <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-[var(--color-primary)]" />
+            ) : null}
+          </button>
+          <button
+            type="button"
+            onClick={openOrders}
+            className={[
+              "flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
+              navTab === "orders"
+                ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
+            ].join(" ")}
+          >
+            <MaterialIcon name="receipt_long" filled={false} className="mb-1" />
+            <span className="text-xs font-semibold">Orders</span>
+          </button>
+        </nav>
+      ) : null}
 
-      <MobileCartSheet open={cartOpen} onClose={closeCart} />
+      {orderingEnabled ? (
+        <MobileCartSheet open={cartOpen} onClose={closeCart} />
+      ) : null}
     </div>
   );
 }

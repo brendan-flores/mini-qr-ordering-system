@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { OrderingGuard } from "../../components/ordering/OrderingGuard";
 import CheckoutClient from "./CheckoutClient";
 
 export default function CheckoutPage() {
@@ -23,7 +24,9 @@ export default function CheckoutPage() {
         </div>
       }
     >
-      <CheckoutClient />
+      <OrderingGuard>
+        <CheckoutClient />
+      </OrderingGuard>
     </Suspense>
   );
 }

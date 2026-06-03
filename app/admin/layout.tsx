@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Live Orders — BrenCravings Admin",
+  title: "BrenCravings Admin Page",
   description: "Admin dashboard for BrenCravings QR ordering",
 };
 

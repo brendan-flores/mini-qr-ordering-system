@@ -20,6 +20,7 @@ import {
 } from "./checkoutParts";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 function confirmationTitle(order: Order) {
   if (order.payment_method === "gcash" && order.payment_status === "Paid") {
@@ -44,7 +45,7 @@ export default function ConfirmationClient() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const homePath = returnTo?.startsWith("/") ? returnTo : "/";
+  const homePath = returnTo?.startsWith("/") ? returnTo : MENU_PAGE_PATH;
 
   useEffect(() => {
     if (!orderId) {
@@ -88,7 +89,7 @@ export default function ConfirmationClient() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="w-20" aria-hidden />
           <BrandLogo
-            href="/"
+            href={MENU_PAGE_PATH}
             textClassName="text-lg font-bold text-[var(--color-primary)]"
             markScale={1.25}
           />
@@ -108,7 +109,10 @@ export default function ConfirmationClient() {
         ) : !order ? (
           <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
             <p className="font-semibold text-zinc-900">Order not found</p>
-            <Link href="/" className="mt-4 inline-block text-[var(--color-primary)]">
+            <Link
+              href={MENU_PAGE_PATH}
+              className="mt-4 inline-block text-[var(--color-primary)]"
+            >
               Back to menu
             </Link>
           </div>

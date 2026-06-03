@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { cartCheckoutUrl } from "../../lib/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -19,7 +20,7 @@ export function CartPanel() {
 
   function onCheckout() {
     if (items.length === 0) return;
-    router.push(cartCheckoutUrl("/"));
+    router.push(cartCheckoutUrl(MENU_PAGE_PATH));
   }
 
   return (

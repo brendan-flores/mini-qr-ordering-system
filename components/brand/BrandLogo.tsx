@@ -1,9 +1,9 @@
 import Link from "next/link";
-
-const LOGO_SRC = "/brencravings-logo.png";
+import { BRAND_LOGO_PATH } from "@/lib/brand";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 export function BrandLogo({
-  href = "/",
+  href = MENU_PAGE_PATH,
   textClassName = "text-3xl font-extrabold leading-none text-[var(--color-primary)]",
   subtitleClassName = "text-sm text-[var(--color-text-muted)]",
   className = "",
@@ -24,7 +24,7 @@ export function BrandLogo({
 
   const mark = (
     <img
-      src={LOGO_SRC}
+      src={BRAND_LOGO_PATH}
       alt={showText && !subtitle ? "" : "BrenCravings"}
       className="shrink-0 object-contain object-center"
       style={{

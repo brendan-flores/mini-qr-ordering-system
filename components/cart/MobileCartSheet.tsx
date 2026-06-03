@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cartCheckoutUrl } from "../../lib/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
@@ -27,7 +28,7 @@ export function MobileCartSheet({
   function onCheckout() {
     if (items.length === 0) return;
     onClose();
-    router.push(cartCheckoutUrl("/"));
+    router.push(cartCheckoutUrl(MENU_PAGE_PATH));
   }
 
   useEffect(() => {

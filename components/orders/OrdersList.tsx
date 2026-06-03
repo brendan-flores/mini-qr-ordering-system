@@ -19,6 +19,7 @@ import {
 import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
 import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
 import { checkoutUrl } from "../../lib/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
@@ -290,7 +291,7 @@ export function OrdersList({
           Orders you place from this device will appear here.
         </p>
         <Link
-          href="/"
+          href={MENU_PAGE_PATH}
           className="mt-5 inline-flex cursor-pointer rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
         >
           Browse menu

@@ -38,6 +38,7 @@ import {
 } from "../../lib/gcash-payment-flow";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 type GcashSimResult = "success" | "failure";
 
@@ -105,7 +106,7 @@ export default function CheckoutClient() {
     !isCartMode && order?.payment_status === "Failed";
 
   function homePath() {
-    return returnTo?.startsWith("/") ? returnTo : "/";
+    return returnTo?.startsWith("/") ? returnTo : MENU_PAGE_PATH;
   }
 
   useEffect(() => {
@@ -195,7 +196,7 @@ export default function CheckoutClient() {
   function checkoutUrlWithReturn(id: Order["id"]) {
     const q = new URLSearchParams({
       orderId: String(id),
-      return: returnTo?.startsWith("/") ? returnTo : "/",
+      return: returnTo?.startsWith("/") ? returnTo : MENU_PAGE_PATH,
     });
     return `/checkout?${q.toString()}`;
   }
@@ -271,7 +272,7 @@ export default function CheckoutClient() {
             Back
           </button>
           <BrandLogo
-            href="/"
+            href={MENU_PAGE_PATH}
             textClassName="text-lg font-bold text-[var(--color-primary)]"
             markScale={1.25}
           />
@@ -308,7 +309,11 @@ export default function CheckoutClient() {
               className="mx-auto text-5xl text-zinc-300"
             />
             <p className="mt-4 font-semibold text-zinc-900">Your cart is empty</p>
-            <Button type="button" className="mt-6" onClick={() => router.push("/")}>
+            <Button
+              type="button"
+              className="mt-6"
+              onClick={() => router.push(MENU_PAGE_PATH)}
+            >
               Browse menu
             </Button>
           </div>

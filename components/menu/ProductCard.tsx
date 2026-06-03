@@ -6,7 +6,13 @@ import { useCart } from "../cart/CartContext";
 import { formatMoney } from "../cart/cartUtils";
 import { Button } from "../ui/Button";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  orderingEnabled = true,
+}: {
+  product: Product;
+  orderingEnabled?: boolean;
+}) {
   const { add } = useCart();
 
   return (
@@ -40,15 +46,16 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="mt-2 line-clamp-2 flex-1 text-sm text-[var(--color-text-muted)]">
           Freshly prepared and served hot from our kitchen.
         </p>
-        <Button
-          type="button"
-          className="mt-4 w-full gap-1 py-2 text-sm"
-          onClick={() => add(product)}
-        >
-          <span className="text-base">+</span> Add to Order
-        </Button>
+        {orderingEnabled ? (
+          <Button
+            type="button"
+            className="mt-4 w-full gap-1 py-2 text-sm"
+            onClick={() => add(product)}
+          >
+            <span className="text-base">+</span> Add to Order
+          </Button>
+        ) : null}
       </div>
     </article>
   );
 }
-

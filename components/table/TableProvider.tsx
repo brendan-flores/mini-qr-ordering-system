@@ -2,21 +2,24 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  persistTableNumber,
+  hasOrderingSession,
+  markOrderingSession,
+  normalizeTableNumber,
   resolveTableNumber,
-  subscribeToTable,
+  subscribeToOrdering,
   tableNumberFromUrl,
 } from "@/lib/table";
 
 type TableContextValue = {
+  orderingEnabled: boolean;
   tableNumber: string;
   setTableNumber: (value: string) => void;
 };
@@ -26,22 +29,36 @@ const TableContext = createContext<TableContextValue | null>(null);
 export function TableProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("table");
+  const tableFromUrl = normalizeTableNumber(fromUrl);
+
+  useEffect(() => {
+    if (tableFromUrl) {
+      markOrderingSession(tableFromUrl);
+    }
+  }, [tableFromUrl]);
+
+  const orderingEnabled = useSyncExternalStore(
+    subscribeToOrdering,
+    () => !!tableFromUrl || hasOrderingSession(),
+    () => !!tableFromUrl
+  );
 
   const tableNumber = useSyncExternalStore(
-    subscribeToTable,
-    () => resolveTableNumber(fromUrl),
-    () => tableNumberFromUrl(fromUrl)
+    subscribeToOrdering,
+    () => (orderingEnabled ? resolveTableNumber(fromUrl) : "1"),
+    () => tableNumberFromUrl(fromUrl) ?? "1"
   );
 
   const value = useMemo(
     () => ({
+      orderingEnabled,
       tableNumber,
       setTableNumber: (value: string) => {
         const trimmed = value.trim() || "1";
-        persistTableNumber(trimmed);
+        markOrderingSession(trimmed);
       },
     }),
-    [tableNumber]
+    [orderingEnabled, tableNumber]
   );
 
   return (

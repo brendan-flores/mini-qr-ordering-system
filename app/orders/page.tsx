@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { DesktopHeader } from "../../components/layout/DesktopHeader";
+import { OrderingGuard } from "../../components/ordering/OrderingGuard";
 import { OrdersList } from "../../components/orders/OrdersList";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { MaterialIcon } from "../../components/ui/MaterialIcon";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 export default function OrdersPage() {
   return (
-    <>
+    <OrderingGuard>
       <header className="sticky top-0 z-40 border-b border-[var(--color-surface-line)] bg-[var(--background)] px-4 py-3 shadow-sm lg:hidden">
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href={MENU_PAGE_PATH}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)]"
             aria-label="Back to menu"
           >
@@ -20,7 +22,7 @@ export default function OrdersPage() {
           </Link>
           <div className="min-w-0 flex-1">
             <BrandLogo
-              href="/"
+              href={MENU_PAGE_PATH}
               textClassName="text-lg font-bold leading-none text-[var(--color-primary)]"
             />
             <p className="text-xs text-[var(--color-text-muted)]">Your orders</p>
@@ -42,6 +44,6 @@ export default function OrdersPage() {
         </div>
         <OrdersList variant="responsive" checkoutReturn="/orders" />
       </main>
-    </>
+    </OrderingGuard>
   );
 }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { OrderingGuard } from "../../../components/ordering/OrderingGuard";
 import ConfirmationClient from "../../../components/checkout/ConfirmationClient";
 
 export default function ConfirmationPage() {
@@ -10,7 +11,9 @@ export default function ConfirmationPage() {
         </div>
       }
     >
-      <ConfirmationClient />
+      <OrderingGuard>
+        <ConfirmationClient />
+      </OrderingGuard>
     </Suspense>
   );
 }
