@@ -14,10 +14,9 @@ create table if not exists public.admin_users (
 
 -- Default admin: username `admin`, password `admin1245` (change in production)
 insert into public.admin_users (username, password_hash)
-select 'admin', extensions.crypt('admin1245', extensions.gen_salt('bf'))
-where not exists (
-  select 1 from public.admin_users where username = 'admin'
-);
+values ('admin', extensions.crypt('admin1245', extensions.gen_salt('bf')))
+on conflict (username) do update
+set password_hash = excluded.password_hash;
 
 -- Returns matching row only when username + password are correct.
 create or replace function public.verify_admin_login(
