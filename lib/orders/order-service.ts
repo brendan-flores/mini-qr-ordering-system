@@ -14,7 +14,7 @@ import {
 } from "../../services/mock-data.service.js";
 
 export const ORDER_COLUMNS_FULL =
-  "id,items,total_amount,payment_method,payment_status,table_number,service_type,order_status,created_at";
+  "id,items,total_amount,payment_method,payment_status,table_number,service_type,order_status,created_at,client_device_id";
 
 export const ORDER_COLUMNS_KITCHEN =
   "id,items,total_amount,payment_method,payment_status,table_number,order_status,created_at";
@@ -129,6 +129,7 @@ export type OrderRecord = {
     | "completed"
     | "cancelled";
   created_at: string;
+  client_device_id?: string | null;
 };
 
 type CreateInput = {
@@ -138,7 +139,36 @@ type CreateInput = {
   payment_status: OrderRecord["payment_status"];
   table_number: string | null;
   service_type: OrderRecord["service_type"];
+  client_device_id?: string | null;
 };
+
+/** Customer may only access orders created on this device (when tagged). */
+export function assertOrderOwnedByDevice(
+  order: OrderRecord,
+  deviceId: string | null | undefined
+) {
+  const owner = order.client_device_id;
+  if (!owner) return;
+  if (!deviceId || owner !== deviceId) {
+    const err = new Error("Order not found");
+    (err as Error & { status: number }).status = 404;
+    throw err;
+  }
+}
+
+export async function listOrdersForDeviceHistory(
+  ids: string[],
+  deviceId: string
+): Promise<OrderRecord[]> {
+  if (ids.length === 0) return [];
+  const idSet = new Set(ids.map(String));
+  const all = await listAllOrders();
+  return all.filter((order) => {
+    if (!idSet.has(String(order.id))) return false;
+    if (!order.client_device_id) return true;
+    return order.client_device_id === deviceId;
+  });
+}
 
 export async function validateAndBuildOrder(
   input: CreateInput
@@ -210,7 +240,7 @@ export async function createOrderRecord(
   const { items, total_amount } = await validateAndBuildOrder(input);
 
   if (!isSupabaseConfigured()) {
-    return createMockOrder({
+    const mockOrder = createMockOrder({
       items,
       total_amount,
       payment_method: input.payment_method,
@@ -221,7 +251,11 @@ export async function createOrderRecord(
           : (input.table_number ?? "1"),
       service_type: input.service_type,
       order_status: "received",
-    }) as OrderRecord;
+    });
+    return {
+      ...(mockOrder as OrderRecord),
+      client_device_id: input.client_device_id ?? null,
+    };
   }
 
   const supabase = getSupabaseAdmin();
@@ -236,6 +270,7 @@ export async function createOrderRecord(
     table_number: input.table_number,
     service_type: input.service_type,
     order_status: "received" as const,
+    client_device_id: input.client_device_id ?? null,
   };
 
   let insertResult = await supabase
@@ -322,13 +357,17 @@ function assertOrderEditable(existing: OrderRecord | null): asserts existing is 
   }
 }
 
-export async function cancelOrderByCustomer(id: string): Promise<OrderRecord> {
+export async function cancelOrderByCustomer(
+  id: string,
+  deviceId?: string | null
+): Promise<OrderRecord> {
   const existing = await getOrderById(id);
   if (!existing) {
     const err = new Error("Order not found");
     (err as Error & { status: number }).status = 404;
     throw err;
   }
+  assertOrderOwnedByDevice(existing, deviceId);
   if (existing.order_status === "cancelled") {
     return existing;
   }

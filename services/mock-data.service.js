@@ -78,6 +78,7 @@ export function createMockOrder({
   table_number = "1",
   service_type = "dine_in",
   order_status = "received",
+  client_device_id = null,
 }) {
   const status =
     payment_status ??
@@ -91,6 +92,7 @@ export function createMockOrder({
     table_number: service_type === "takeout" ? null : table_number,
     service_type,
     order_status,
+    client_device_id,
     created_at: new Date().toISOString(),
   };
   orders.unshift(order);

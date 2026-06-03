@@ -1,4 +1,5 @@
 import { apiFetch } from "./api";
+import { getOrCreateDeviceId } from "@/lib/device-session";
 import type { Product } from "./products";
 
 export type PaymentMethod = "cod" | "gcash";
@@ -50,10 +51,11 @@ export type CreateOrderPayload = {
 };
 
 export async function createOrder(payload: CreateOrderPayload) {
+  const device_id = getOrCreateDeviceId();
   const body =
     payload.payment_method === "cod"
-      ? { ...payload, payment_status: "Pending" as const }
-      : payload;
+      ? { ...payload, payment_status: "Pending" as const, device_id }
+      : { ...payload, device_id };
 
   return apiFetch<{ data: Order }>("/api/orders", {
     method: "POST",
@@ -62,17 +64,22 @@ export async function createOrder(payload: CreateOrderPayload) {
 }
 
 export async function getOrder(id: Order["id"]) {
-  return apiFetch<{ data: Order }>(`/api/orders/${id}`);
+  const device_id = getOrCreateDeviceId();
+  const q = device_id
+    ? `?device_id=${encodeURIComponent(device_id)}`
+    : "";
+  return apiFetch<{ data: Order }>(`/api/orders/${id}${q}`);
 }
 
-/** One request for all stored order ids (used on Your Orders). */
+/** One request for all stored order ids on this device (used on Your Orders). */
 export async function getOrdersByIds(ids: Order["id"][]) {
   if (ids.length === 0) {
     return { data: [] as Order[] };
   }
+  const device_id = getOrCreateDeviceId();
   return apiFetch<{ data: Order[] }>("/api/orders/history", {
     method: "POST",
-    body: JSON.stringify({ ids: ids.map(String) }),
+    body: JSON.stringify({ ids: ids.map(String), device_id }),
   });
 }
 
@@ -129,5 +136,6 @@ export function orderStatusLabel(status: OrderStatus) {
 export async function cancelOrder(id: Order["id"]) {
   return apiFetch<{ data: Order }>(`/api/orders/${id}/cancel`, {
     method: "POST",
+    body: JSON.stringify({ device_id: getOrCreateDeviceId() }),
   });
 }

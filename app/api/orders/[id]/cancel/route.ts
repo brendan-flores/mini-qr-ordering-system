@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { cancelOrderByCustomer } from "@/lib/orders/order-service";
 
+const BodySchema = z.object({
+  device_id: z.string().min(8).max(64).optional(),
+});
+
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,9 +19,24 @@ export async function POST(
       );
     }
 
-    const data = await cancelOrderByCustomer(id);
+    let deviceId = request.nextUrl.searchParams.get("device_id");
+    if (!deviceId) {
+      const raw = await request.text();
+      if (raw) {
+        const parsed = BodySchema.parse(JSON.parse(raw));
+        deviceId = parsed.device_id ?? null;
+      }
+    }
+
+    const data = await cancelOrderByCustomer(id, deviceId);
     return NextResponse.json({ data });
   } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: { message: "Validation error" } },
+        { status: 400 }
+      );
+    }
     const status =
       typeof error === "object" &&
       error !== null &&

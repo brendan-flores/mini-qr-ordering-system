@@ -35,6 +35,7 @@ create table if not exists public.orders (
       'cancelled'
     )
   ),
+  client_device_id text,
   created_at timestamptz not null default now()
 );
 

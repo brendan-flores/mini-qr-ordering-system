@@ -6,9 +6,11 @@ import {
 import { rememberOrderId } from "./order-history";
 import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
 
+const LAST_ORDER_KEY = "brencravings-last-order";
+
 export function getStoredOrder(): Order | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem("lastOrder");
+  const raw = window.sessionStorage.getItem(LAST_ORDER_KEY);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Order;
@@ -27,9 +29,9 @@ export function saveStoredOrder(
 ) {
   if (typeof window === "undefined") return;
   const serialized = JSON.stringify(order);
-  const prev = window.localStorage.getItem("lastOrder");
+  const prev = window.sessionStorage.getItem(LAST_ORDER_KEY);
   const changed = prev !== serialized;
-  window.localStorage.setItem("lastOrder", serialized);
+  window.sessionStorage.setItem(LAST_ORDER_KEY, serialized);
   rememberOrderId(order.id);
   const shouldNotify = options?.notify !== false && changed;
   if (shouldNotify) {

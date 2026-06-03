@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       payment_status,
       table_number,
       service_type,
+      client_device_id: parsed.device_id?.trim() ?? null,
     });
 
     return NextResponse.json({ data }, { status: 201 });

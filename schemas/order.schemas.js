@@ -41,6 +41,8 @@ export const CreateOrderSchema = z
     payment_status: PaymentStatusSchema.optional(),
     table_number: z.string().min(1).max(12).optional(),
     service_type: ServiceTypeSchema.optional().default("dine_in"),
+    /** Per-phone/browser id so order history stays private on shared tables. */
+    device_id: z.string().min(8).max(64).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.payment_method === "cod") {
@@ -69,4 +71,9 @@ export const UpdatePaymentSchema = z.object({
 
 export const UpdateOrderStatusSchema = z.object({
   order_status: AdminKitchenStatusSchema,
+});
+
+export const OrderHistorySchema = z.object({
+  ids: z.array(z.string().min(1)).max(50),
+  device_id: z.string().min(8).max(64),
 });
