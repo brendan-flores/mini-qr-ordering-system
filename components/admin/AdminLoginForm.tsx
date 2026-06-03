@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { ApiError } from "@/client/services/api";
@@ -13,7 +13,6 @@ const inputClass =
   "admin-login-input w-full rounded-lg border border-[#e2bebe] bg-white py-4 pl-12 pr-4 text-base outline-none transition-all placeholder:text-[#8e7070]/80 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/admin";
   const bgRef = useRef<HTMLImageElement>(null);
@@ -61,8 +60,8 @@ export function AdminLoginForm() {
           "Login failed";
         throw new ApiError(message, res.status, json);
       }
-      router.replace(nextPath.startsWith("/admin") ? nextPath : "/admin");
-      router.refresh();
+      const target = nextPath.startsWith("/admin") ? nextPath : "/admin";
+      window.location.assign(target);
     } catch (err: unknown) {
       const message =
         err instanceof ApiError

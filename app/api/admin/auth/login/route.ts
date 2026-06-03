@@ -13,6 +13,8 @@ const LoginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
     const raw = await readRequestJson(request);

@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminSessionFromRequest } from "@/lib/admin-session";
+import {
+  getMenuAppOrigin,
+  isAdminHost,
+  isCustomerPath,
+} from "@/lib/app-hosts";
 
-/** Hostnames that should open the admin dashboard at `/` */
-const ADMIN_HOST_PREFIX = "brencravings-admin";
 const ADMIN_LOGIN = "/admin/login";
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get("host")?.toLowerCase() ?? "";
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+  const onAdminHost = isAdminHost(host);
 
-  if (host.startsWith(ADMIN_HOST_PREFIX) && pathname === "/") {
+  if (onAdminHost && pathname === "/") {
     return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  if (onAdminHost && isCustomerPath(pathname)) {
+    const menuOrigin = getMenuAppOrigin();
+    if (menuOrigin) {
+      return NextResponse.redirect(
+        new URL(`${pathname}${search}`, menuOrigin)
+      );
+    }
   }
 
   const session = await getAdminSessionFromRequest(request);
@@ -54,5 +67,14 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/",
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/menu-page",
+    "/checkout/:path*",
+    "/orders/:path*",
+    "/api/orders/:path*",
+    "/api/products",
+  ],
 };

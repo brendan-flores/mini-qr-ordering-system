@@ -23,7 +23,10 @@ export async function verifyAdminCredentials(
   });
 
   if (error) {
-    throw new Error(error.message);
+    const hint = error.message.includes("verify_admin_login")
+      ? " Run supabase/patch-admin-users.sql in Supabase SQL Editor."
+      : "";
+    throw new Error(`${error.message}${hint}`);
   }
 
   const row = Array.isArray(data) ? data[0] : data;
