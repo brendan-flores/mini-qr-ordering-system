@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { adminApiFetch, apiFetch } from "./api";
 import { getOrCreateDeviceId } from "@/lib/device-session";
 import type { Product } from "./products";
 
@@ -84,14 +84,14 @@ export async function getOrdersByIds(ids: Order["id"][]) {
 }
 
 export async function listAdminOrders() {
-  return apiFetch<{ data: Order[] }>("/api/admin/orders");
+  return adminApiFetch<{ data: Order[] }>("/api/admin/orders");
 }
 
 export async function updateOrderPaymentStatus(
   id: Order["id"],
   payment_status: PaymentStatus
 ) {
-  return apiFetch<{ data: Order }>(`/api/orders/${id}/payment`, {
+  return adminApiFetch<{ data: Order }>(`/api/orders/${id}/payment`, {
     method: "PATCH",
     body: JSON.stringify({ payment_status }),
   });
@@ -101,7 +101,7 @@ export async function updateOrderStatus(
   id: Order["id"],
   order_status: AdminKitchenStatus
 ) {
-  return apiFetch<{ data: Order }>(`/api/orders/${id}/status`, {
+  return adminApiFetch<{ data: Order }>(`/api/orders/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ order_status }),
   });
