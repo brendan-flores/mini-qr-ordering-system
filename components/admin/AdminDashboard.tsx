@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   listAdminOrders,
   updateOrderPaymentStatus,
@@ -17,6 +17,7 @@ import {
   matchesAdminPaymentTab,
 } from "../../lib/orders/order-rules";
 import { notifyOrderUpdated } from "../../lib/order-events";
+import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminShell } from "./AdminShell";
 import { LiveOrdersHeader } from "./LiveOrdersHeader";
@@ -55,29 +56,24 @@ export function AdminDashboard() {
     }
   }
 
-  useEffect(() => {
-    refresh();
-
-    function poll() {
-      if (document.visibilityState !== "visible") return;
-      listAdminOrders()
-        .then(({ data }) => {
-          setOrders(data);
-          setSelectedOrder((prev) => {
-            if (!prev) return null;
-            return data.find((o) => String(o.id) === String(prev.id)) ?? null;
-          });
-        })
-        .catch(() => {});
-    }
-
-    const interval = setInterval(poll, 15000);
-    document.addEventListener("visibilitychange", poll);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", poll);
-    };
+  const syncOrders = useCallback(() => {
+    if (document.visibilityState !== "visible") return;
+    listAdminOrders()
+      .then(({ data }) => {
+        setOrders(data);
+        setSelectedOrder((prev) => {
+          if (!prev) return null;
+          return data.find((o) => String(o.id) === String(prev.id)) ?? null;
+        });
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  useLiveOrderSync(syncOrders, { scope: "admin", scopeKey: "admin" });
 
   const totals = useMemo(
     () => ({
@@ -188,13 +184,13 @@ export function AdminDashboard() {
 
   return (
     <AdminShell>
-      <main className="mx-auto max-w-[1440px] space-y-4 p-3 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:p-4 sm:pb-24 lg:space-y-6 lg:p-6 lg:pb-6">
+      <main className="admin-live mx-auto max-w-[1440px] space-y-4 p-3 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:p-4 sm:pb-24 lg:space-y-6 lg:p-6 lg:pb-6">
         <LiveOrdersSection
           header={
             <LiveOrdersHeader activeTab={activeTab} />
           }
           filters={
-            <div className="space-y-2">
+            <div className="admin-animate-fade-up space-y-2" style={{ animationDelay: "80ms" }}>
               <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]/70">
                 Payment stage
               </p>
@@ -206,9 +202,10 @@ export function AdminDashboard() {
             </div>
           }
         >
+          <div key={activeTab} className="admin-animate-fade-up min-h-[12rem]">
           {error ? (
             <div
-              className="mx-3 mb-3 mt-3 flex items-start gap-2 rounded-lg border border-rose-100 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-800 sm:mx-4 sm:text-sm"
+              className="admin-animate-fade-in mx-3 mb-3 mt-3 flex items-start gap-2 rounded-lg border border-rose-100 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-800 sm:mx-4 sm:text-sm"
               role="alert"
             >
               <MaterialIcon
@@ -221,14 +218,14 @@ export function AdminDashboard() {
           ) : null}
 
           {loading ? (
-            <div className="px-4 py-12 text-center sm:py-14">
-              <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] sm:h-7 sm:w-7" />
+            <div className="admin-animate-fade-in px-4 py-12 text-center sm:py-14">
+              <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] motion-reduce:animate-none sm:h-7 sm:w-7" />
               <p className="mt-3 text-xs text-[var(--color-text-muted)]">
                 Loading orders…
               </p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="px-4 py-12 text-center sm:px-6 sm:py-14">
+            <div className="admin-animate-fade-up px-4 py-12 text-center sm:px-6 sm:py-14">
               <MaterialIcon
                 name="receipt_long"
                 filled={false}
@@ -265,6 +262,7 @@ export function AdminDashboard() {
               embedded
             />
           )}
+          </div>
         </LiveOrdersSection>
       </main>
 

@@ -6,6 +6,7 @@ import { getKitchenStepProgress } from "@/lib/kitchen-step-progress";
 import { isOrderCancelled } from "@/lib/orders/order-rules";
 import { KITCHEN_STATUS_TONES } from "./adminStatusStyles";
 import { FilterTabs } from "./FilterTabs";
+import { KitchenStatusFlow } from "./KitchenStatusFlow";
 
 /** Shown on Pending / Paid — kitchen work in progress only */
 export const KITCHEN_LIVE_TAB_STATUSES: AdminKitchenStatus[] = [
@@ -53,7 +54,7 @@ export function KitchenStatusTabs({
 }) {
   const tabs = statuses.map((id) => ({
     id,
-    label: id === "received" ? "Order received" : orderStatusLabel(id),
+    label: orderStatusLabel(id),
     count: counts[id],
   }));
 
@@ -61,6 +62,18 @@ export function KitchenStatusTabs({
     progressOrder && !isOrderCancelled(progressOrder)
       ? getKitchenStepProgress(progressOrder.order_status)
       : null;
+
+  if (fullWidth) {
+    return (
+      <KitchenStatusFlow
+        tabs={tabs}
+        active={active}
+        onChange={onChange}
+        getTone={(id) => KITCHEN_STATUS_TONES[id]}
+        kitchenProgress={kitchenProgress}
+      />
+    );
+  }
 
   return (
     <FilterTabs
@@ -70,7 +83,7 @@ export function KitchenStatusTabs({
       ariaLabel="Filter orders by kitchen status"
       variant="kitchen"
       getTone={(id) => KITCHEN_STATUS_TONES[id]}
-      fullWidth={fullWidth}
+      fullWidth={false}
       kitchenColumnCount={statuses.length}
       kitchenProgress={kitchenProgress}
     />

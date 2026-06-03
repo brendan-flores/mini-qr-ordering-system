@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+import { withResolvedProductDescriptions } from "@/lib/product-descriptions";
+import { withResolvedProductImages } from "@/lib/product-images";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
 import { listMockProducts } from "../../../services/mock-data.service.js";
 
 export async function GET() {
   try {
     if (!isSupabaseConfigured()) {
-      return NextResponse.json({ data: listMockProducts() });
+      return NextResponse.json({
+        data: withResolvedProductDescriptions(
+          withResolvedProductImages(listMockProducts())
+        ),
+      });
     }
 
     const supabase = getSupabaseAdmin();
@@ -18,7 +24,11 @@ export async function GET() {
       return NextResponse.json({ error: { message: error.message } }, { status: 500 });
     }
 
-    return NextResponse.json({ data: data ?? [] });
+    return NextResponse.json({
+      data: withResolvedProductDescriptions(
+        withResolvedProductImages(data ?? [])
+      ),
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Internal Server Error";

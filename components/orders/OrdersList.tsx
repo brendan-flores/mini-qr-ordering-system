@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cancelOrder,
   orderStatusLabel,
@@ -18,7 +18,8 @@ import {
   orderNeedsStatusPolling,
 } from "../../lib/orders/order-rules";
 import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
-import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
+import { notifyOrderUpdated } from "../../lib/order-events";
+import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import {
   checkoutUrl,
   orderNeedsCheckout,
@@ -30,7 +31,6 @@ import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 /** Refresh in-progress orders only; completed/cancelled stay static. */
-const POLL_MS = 30_000;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString();
@@ -202,7 +202,7 @@ export function OrdersList({
       setOrders((prev) =>
         prev.map((o) => (String(o.id) === String(data.id) ? data : o))
       );
-      window.dispatchEvent(new Event(ORDER_UPDATED_EVENT));
+      notifyOrderUpdated();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Could not cancel order";
       setError(message);
@@ -230,7 +230,13 @@ export function OrdersList({
     }
   }, []);
 
-  const hasActivePolling = orders.some(orderNeedsStatusPolling);
+  const trackedOrderIds = useMemo(
+    () =>
+      orders
+        .filter(orderNeedsStatusPolling)
+        .map((o) => String(o.id)),
+    [orders]
+  );
 
   useEffect(() => {
     if (!pollEnabled) return;
@@ -239,40 +245,16 @@ export function OrdersList({
     });
   }, [refresh, pollEnabled]);
 
-  useEffect(() => {
-    if (!pollEnabled) return;
-
-    function onRefresh() {
+  useLiveOrderSync(
+    () => {
       void refresh(false);
+    },
+    {
+      enabled: pollEnabled && trackedOrderIds.length > 0,
+      scope: { orderIds: trackedOrderIds },
+      scopeKey: trackedOrderIds.join(","),
     }
-
-    window.addEventListener(ORDER_UPDATED_EVENT, onRefresh);
-    return () => window.removeEventListener(ORDER_UPDATED_EVENT, onRefresh);
-  }, [refresh, pollEnabled]);
-
-  useEffect(() => {
-    if (!pollEnabled || !hasActivePolling) return;
-
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        void refresh(false);
-      }
-    }, POLL_MS);
-
-    return () => clearInterval(interval);
-  }, [refresh, pollEnabled, hasActivePolling]);
-
-  useEffect(() => {
-    if (!pollEnabled) return;
-
-    function onVisible() {
-      if (document.visibilityState !== "visible") return;
-      void refresh(false);
-    }
-
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refresh, pollEnabled]);
+  );
 
   if (loading && initialLoad.current) {
     return (

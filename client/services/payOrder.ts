@@ -4,7 +4,7 @@ import {
   type PaymentStatus,
 } from "./orders";
 import { rememberOrderId } from "./order-history";
-import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
+import { notifyOrderUpdated } from "../../lib/order-events";
 
 const LAST_ORDER_KEY = "brencravings-last-order";
 
@@ -35,7 +35,7 @@ export function saveStoredOrder(
   rememberOrderId(order.id);
   const shouldNotify = options?.notify !== false && changed;
   if (shouldNotify) {
-    window.dispatchEvent(new Event(ORDER_UPDATED_EVENT));
+    notifyOrderUpdated();
   }
 }
 

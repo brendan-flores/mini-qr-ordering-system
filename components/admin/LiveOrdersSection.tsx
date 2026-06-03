@@ -13,7 +13,7 @@ export function LiveOrdersSection({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-[var(--color-surface-line)] bg-white shadow-[0_1px_2px_rgba(18,28,42,0.04)] sm:rounded-2xl">
+    <section className="admin-animate-fade-up overflow-hidden rounded-xl border border-[var(--color-surface-line)] bg-white shadow-[0_1px_2px_rgba(18,28,42,0.04)] sm:rounded-2xl">
       {header}
       <div className="border-t border-[var(--color-surface-line)]/80 bg-[var(--color-surface-subtle)]/25 px-3 py-3 sm:px-4 sm:py-3.5">
         {filters}

@@ -10,6 +10,7 @@ import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useTable } from "../table/TableProvider";
+import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
 import { useCart } from "./CartContext";
 
 export function MobileCartSheet({
@@ -66,7 +67,7 @@ export function MobileCartSheet({
     <div className="fixed inset-0 z-[60] pointer-events-auto lg:hidden">
       <button
         type="button"
-        className="absolute inset-0 cursor-pointer bg-black/35"
+        className={`${UI_MOTION.modalBackdrop} absolute inset-0 cursor-pointer bg-black/35`}
         aria-label="Close cart"
         onClick={onClose}
       />
@@ -75,7 +76,7 @@ export function MobileCartSheet({
         role="dialog"
         aria-modal="true"
         aria-label="Your order"
-        className="absolute bottom-0 left-0 right-0 flex max-h-[min(82vh,100%)] flex-col rounded-t-2xl bg-white shadow-[0_-8px_32px_rgba(0,0,0,0.12)]"
+        className={`${UI_MOTION.modalPanel} absolute bottom-0 left-0 right-0 flex max-h-[min(82vh,100%)] flex-col rounded-t-2xl bg-white shadow-[0_-8px_32px_rgba(0,0,0,0.12)]`}
       >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-zinc-300" aria-hidden />
@@ -114,10 +115,11 @@ export function MobileCartSheet({
             </p>
           ) : (
             <ul className="flex flex-col gap-3">
-              {items.map((it) => (
+              {items.map((it, index) => (
                 <li
                   key={String(it.product.id)}
-                  className="flex gap-3 rounded-xl border border-[var(--color-surface-line)]/60 bg-[var(--color-surface-subtle)]/40 p-2.5"
+                  className={`${UI_MOTION.fadeUp} flex gap-3 rounded-xl border border-[var(--color-surface-line)]/60 bg-[var(--color-surface-subtle)]/40 p-2.5`}
+                  style={{ animationDelay: uiStaggerMs(index, 45) }}
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
                     {it.product.image_url ? (

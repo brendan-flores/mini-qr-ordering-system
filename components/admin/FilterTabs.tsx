@@ -78,13 +78,14 @@ export function FilterTabs<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
     >
-      {tabs.map((tab) => (
+      {tabs.map((tab, index) => (
         <TabButton
           key={tab.id}
           tab={tab}
           selected={active === tab.id}
           tone={getTone(tab.id)}
           variant={variant}
+          enterDelayMs={index * 50}
           onSelect={() => onChange(tab.id)}
         />
       ))}
@@ -102,6 +103,7 @@ function TabButton<T extends string>({
   fullWidth = false,
   isLast = false,
   kitchenStep,
+  enterDelayMs = 0,
   onSelect,
 }: {
   tab: FilterTabConfig<T>;
@@ -111,6 +113,7 @@ function TabButton<T extends string>({
   fullWidth?: boolean;
   isLast?: boolean;
   kitchenStep?: "done" | "active" | "upcoming";
+  enterDelayMs?: number;
   onSelect(): void;
 }) {
   const isKitchen = variant === "kitchen";
@@ -197,8 +200,10 @@ function TabButton<T extends string>({
       role="tab"
       aria-selected={selected}
       onClick={onSelect}
+      style={{ animationDelay: `${enterDelayMs}ms` }}
       className={[
-        "flex min-w-0 flex-col items-stretch gap-0.5 rounded-lg border px-2.5 py-2 text-left transition sm:gap-1 sm:px-3 sm:py-2.5",
+        "admin-animate-scale-in admin-transition-smooth flex min-w-0 flex-col items-stretch gap-0.5 rounded-lg border px-2.5 py-2 text-left sm:gap-1 sm:px-3 sm:py-2.5",
+        "hover:-translate-y-px motion-reduce:hover:translate-y-0",
         selected
           ? [
               tone.activeBg,

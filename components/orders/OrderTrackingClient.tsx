@@ -21,7 +21,8 @@ import {
   showCustomerCancelButton,
   orderNeedsStatusPolling,
 } from "@/lib/orders/order-rules";
-import { ORDER_UPDATED_EVENT } from "@/lib/order-events";
+import { notifyOrderUpdated } from "@/lib/order-events";
+import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import { MENU_PAGE_PATH } from "@/lib/routes";
 import { TableBadge } from "../table/TableBadge";
 import { BrandLogo } from "../brand/BrandLogo";
@@ -30,8 +31,6 @@ import { OrderLineItem, GcashLogoMark } from "../checkout/checkoutParts";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { OrderStatusStepper } from "./OrderStatusStepper";
-
-const POLL_MS = 15_000;
 
 export function OrderTrackingClient({ orderId }: { orderId: string }) {
   const router = useRouter();
@@ -80,22 +79,21 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
     void loadOrder(false);
   }, [loadOrder]);
 
-  useEffect(() => {
-    if (!order || !orderNeedsStatusPolling(order)) return;
+  const shouldSync =
+    Boolean(order) && orderNeedsStatusPolling(order!);
 
-    const tick = () => {
+  useLiveOrderSync(
+    () => {
       if (document.visibilityState === "visible") {
         void loadOrder(true);
       }
-    };
-
-    const interval = setInterval(tick, POLL_MS);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [order, loadOrder]);
+    },
+    {
+      enabled: shouldSync,
+      scope: { orderId: String(orderId) },
+      scopeKey: String(orderId),
+    }
+  );
 
   async function handleCancel() {
     if (!order || !canCustomerCancel(order)) return;
@@ -112,7 +110,7 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
       const { data } = await cancelOrder(order.id);
       setOrder(data);
       saveStoredOrder(data);
-      window.dispatchEvent(new Event(ORDER_UPDATED_EVENT));
+      notifyOrderUpdated();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Could not cancel order";
       setError(message);

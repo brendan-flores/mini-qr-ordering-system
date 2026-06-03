@@ -7,6 +7,7 @@ export type Product = {
   price: number;
   category: ProductCategory;
   image_url?: string | null;
+  description?: string | null;
   created_at: string;
 };
 

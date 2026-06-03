@@ -8,6 +8,7 @@ import { ProductCard } from "../../components/menu/ProductCard";
 import { DesktopHeader } from "../../components/layout/DesktopHeader";
 import { getProducts, type Product } from "../../client/services/products";
 import { useTable } from "../../components/table/TableProvider";
+import { UI_MOTION } from "@/lib/ui-motion";
 
 export default function MenuPage() {
   const { orderingEnabled } = useTable();
@@ -64,7 +65,9 @@ export default function MenuPage() {
         />
       </Suspense>
 
-      <div className="hidden min-h-screen flex-col bg-[var(--color-background)] lg:flex">
+      <div
+        className={`menu-live ui-live hidden min-h-screen flex-col bg-[var(--color-background)] lg:flex`}
+      >
         <DesktopHeader />
 
         <div
@@ -76,8 +79,10 @@ export default function MenuPage() {
           ].join(" ")}
         >
           <main className="menu-scroll flex min-h-0 flex-col overflow-y-auto pb-8">
-            <div className="sticky top-0 z-10 space-y-4 bg-[var(--color-background)]/95 pb-2 backdrop-blur-sm">
-              <div className="relative w-full">
+            <div
+              className={`${UI_MOTION.fadeIn} sticky top-0 z-10 space-y-4 bg-[var(--color-background)]/95 pb-2 backdrop-blur-sm`}
+            >
+              <div className={`${UI_MOTION.fadeUp} relative w-full`} style={{ animationDelay: "40ms" }}>
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
                   🔍
                 </span>
@@ -85,36 +90,43 @@ export default function MenuPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search menu items..."
-                  className="w-full rounded-xl border border-[var(--color-surface-line)] bg-white py-3 pl-10 pr-4 text-sm text-zinc-800 outline-none transition focus:border-[var(--color-primary)]"
+                  className={`${UI_MOTION.smooth} w-full rounded-xl border border-[var(--color-surface-line)] bg-white py-3 pl-10 pr-4 text-sm text-zinc-800 outline-none focus:border-[var(--color-primary)]`}
                 />
               </div>
               <CategoryTabs value={tab} onChange={setTab} />
             </div>
 
+            <div key={`${tab}-${search.trim()}`} className={UI_MOTION.fadeUp}>
             {loading ? (
-              <div className="mt-6 rounded-2xl bg-white p-6 text-sm text-zinc-600">
+              <div className={`${UI_MOTION.fadeIn} mt-6 rounded-2xl bg-white p-6 text-sm text-zinc-600`}>
                 Loading menu…
               </div>
             ) : error ? (
-              <div className="mt-6 rounded-2xl bg-rose-50 p-6 text-sm text-rose-800">
+              <div className={`${UI_MOTION.fadeIn} mt-6 rounded-2xl bg-rose-50 p-6 text-sm text-rose-800`}>
                 {error}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="mt-6 rounded-2xl bg-white p-6 text-sm text-zinc-600">
+              <div className={`${UI_MOTION.fadeUp} mt-6 rounded-2xl bg-white p-6 text-sm text-zinc-600`}>
                 No items found in {tab}
                 {search.trim() ? ` matching "${search.trim()}"` : ""}.
               </div>
             ) : (
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((p) => (
-                  <ProductCard
+              <div className="mt-5 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((p, index) => (
+                  <div
                     key={String(p.id)}
-                    product={p}
-                    orderingEnabled={orderingEnabled}
-                  />
+                    className={`${UI_MOTION.scaleIn} h-full min-h-0`}
+                    style={{ animationDelay: `${Math.min(index, 11) * 50}ms` }}
+                  >
+                    <ProductCard
+                      product={p}
+                      orderingEnabled={orderingEnabled}
+                    />
+                  </div>
                 ))}
               </div>
             )}
+            </div>
           </main>
 
           {orderingEnabled ? <CartPanel /> : null}

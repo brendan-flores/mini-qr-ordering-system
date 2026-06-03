@@ -62,7 +62,7 @@ function OrderCardGrid({
 }) {
   if (orders.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[var(--color-surface-line)]/80 bg-[var(--color-surface-subtle)]/30 px-4 py-8 text-center sm:py-10">
+      <div className="admin-animate-fade-up rounded-lg border border-dashed border-[var(--color-surface-line)]/80 bg-[var(--color-surface-subtle)]/30 px-4 py-8 text-center sm:py-10">
         <MaterialIcon
           name="inbox"
           filled={false}
@@ -75,22 +75,27 @@ function OrderCardGrid({
 
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-      {orders.map((order) => {
+      {orders.map((order, index) => {
         const id = String(order.id);
         const updating =
           updatingId === id ||
           updatingId === `kitchen-${id}` ||
           updatingId === `payment-${id}`;
         return (
-          <AdminOrderCard
+          <div
             key={id}
-            order={order}
-            updating={updating}
-            readOnly={readOnly}
-            onSelect={() => onSelectOrder(order)}
-            onPaymentChange={(status) => onPaymentChange(order, status)}
-            onKitchenChange={(status) => onKitchenChange(order, status)}
-          />
+            className="admin-animate-scale-in"
+            style={{ animationDelay: `${Math.min(index, 11) * 45}ms` }}
+          >
+            <AdminOrderCard
+              order={order}
+              updating={updating}
+              readOnly={readOnly}
+              onSelect={() => onSelectOrder(order)}
+              onPaymentChange={(status) => onPaymentChange(order, status)}
+              onKitchenChange={(status) => onKitchenChange(order, status)}
+            />
+          </div>
         );
       })}
     </div>
@@ -155,15 +160,17 @@ export function KitchenLiveOrdersBoard({
           embedded ? "bg-[var(--color-surface-subtle)]/20" : "bg-[var(--color-surface-subtle)]/30",
         ].join(" ")}
       >
-        <OrderCardGrid
-          orders={laneOrders}
-          updatingId={updatingId}
-          readOnly={readOnly}
-          emptyLabel={`No ${orderStatusLabel(activeKitchen).toLowerCase()} orders`}
-          onSelectOrder={onSelectOrder}
-          onPaymentChange={onPaymentChange}
-          onKitchenChange={onKitchenChange}
-        />
+        <div key={activeKitchen} className="admin-animate-fade-up">
+          <OrderCardGrid
+            orders={laneOrders}
+            updatingId={updatingId}
+            readOnly={readOnly}
+            emptyLabel={`No ${orderStatusLabel(activeKitchen).toLowerCase()} orders`}
+            onSelectOrder={onSelectOrder}
+            onPaymentChange={onPaymentChange}
+            onKitchenChange={onKitchenChange}
+          />
+        </div>
       </div>
     </section>
   );

@@ -219,6 +219,7 @@ body {
 
 .mobile-menu-grid > * {
   min-width: 0;
+  height: 100%;
 }
 
 @keyframes checkout-fade-up {
@@ -249,4 +250,216 @@ body {
     radial-gradient(ellipse 80% 60% at 10% 0%, rgba(255, 218, 218, 0.55), transparent 50%),
     radial-gradient(ellipse 60% 50% at 90% 20%, rgba(230, 238, 255, 0.9), transparent 45%),
     linear-gradient(180deg, #ffffff 0%, var(--background) 100%);
+}
+
+/* —— Admin live orders: smooth enter / exit motion —— */
+@keyframes admin-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes admin-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes admin-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes admin-modal-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-modal-center {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes admin-count-pop {
+  0% {
+    transform: scale(0.88);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.admin-animate-fade-up {
+  animation: admin-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-animate-fade-in {
+  animation: admin-fade-in 0.4s ease-out both;
+}
+
+.admin-animate-scale-in {
+  animation: admin-scale-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-animate-modal-backdrop {
+  animation: admin-backdrop-in 0.28s ease-out both;
+}
+
+.admin-animate-modal-panel {
+  animation: admin-modal-sheet 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 640px) {
+  .admin-animate-modal-panel {
+    animation-name: admin-modal-center;
+    animation-duration: 0.38s;
+  }
+}
+
+.admin-animate-count-pop {
+  animation: admin-count-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-transition-smooth {
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+
+.admin-live button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Shared UI motion (menu, admin, orders) */
+.ui-animate-fade-up,
+.menu-animate-fade-up {
+  animation: admin-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ui-animate-fade-in,
+.menu-animate-fade-in {
+  animation: admin-fade-in 0.4s ease-out both;
+}
+
+.ui-animate-scale-in,
+.menu-animate-scale-in {
+  animation: admin-scale-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ui-animate-modal-backdrop,
+.menu-animate-modal-backdrop {
+  animation: admin-backdrop-in 0.28s ease-out both;
+}
+
+.ui-animate-modal-panel,
+.menu-animate-modal-panel {
+  animation: admin-modal-sheet 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 640px) {
+  .ui-animate-modal-panel,
+  .menu-animate-modal-panel {
+    animation-name: admin-modal-center;
+    animation-duration: 0.38s;
+  }
+}
+
+.ui-animate-count-pop,
+.menu-animate-count-pop {
+  animation: admin-count-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ui-transition-smooth,
+.menu-transition-smooth {
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+
+.ui-live button:active:not(:disabled),
+.menu-live button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-animate-fade-up,
+  .admin-animate-fade-in,
+  .admin-animate-scale-in,
+  .admin-animate-modal-backdrop,
+  .admin-animate-modal-panel,
+  .admin-animate-count-pop,
+  .ui-animate-fade-up,
+  .ui-animate-fade-in,
+  .ui-animate-scale-in,
+  .ui-animate-modal-backdrop,
+  .ui-animate-modal-panel,
+  .ui-animate-count-pop,
+  .menu-animate-fade-up,
+  .menu-animate-fade-in,
+  .menu-animate-scale-in,
+  .menu-animate-modal-backdrop,
+  .menu-animate-modal-panel,
+  .menu-animate-count-pop {
+    animation: none !important;
+  }
+
+  .admin-transition-smooth,
+  .ui-transition-smooth,
+  .menu-transition-smooth {
+    transition: none;
+  }
+
+  .admin-live button:active:not(:disabled),
+  .ui-live button:active:not(:disabled),
+  .menu-live button:active:not(:disabled) {
+    transform: none;
+  }
 }

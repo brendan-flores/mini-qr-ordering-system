@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchOrdersFromHistory } from "@/client/services/order-history-fetch";
 import { orderNeedsStatusPolling } from "@/lib/orders/order-rules";
-import { ORDER_UPDATED_EVENT } from "@/lib/order-events";
+import { subscribeToOrderUpdates } from "@/lib/order-events";
+import { LIVE_ORDER_POLL_MS } from "@/lib/order-polling";
 
 /** In-progress orders on this device (for nav badge). */
 export function useActiveOrderCount(enabled = true) {
@@ -28,11 +29,16 @@ export function useActiveOrderCount(enabled = true) {
 
   useEffect(() => {
     if (!enabled) return;
-    function onUpdate() {
+    const unsub = subscribeToOrderUpdates(() => {
       void refresh();
-    }
-    window.addEventListener(ORDER_UPDATED_EVENT, onUpdate);
-    return () => window.removeEventListener(ORDER_UPDATED_EVENT, onUpdate);
+    });
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, LIVE_ORDER_POLL_MS);
+    return () => {
+      unsub();
+      clearInterval(interval);
+    };
   }, [refresh, enabled]);
 
   return count;

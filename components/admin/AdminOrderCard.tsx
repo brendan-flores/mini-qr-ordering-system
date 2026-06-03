@@ -93,11 +93,11 @@ export function AdminOrderCard({
   const locationLabel = orderLocationLabel(order);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border border-[var(--color-surface-line)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-md sm:rounded-xl">
+    <article className="admin-transition-smooth flex flex-col overflow-hidden rounded-lg border border-[var(--color-surface-line)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 sm:rounded-xl">
       <button
         type="button"
         onClick={onSelect}
-        className="cursor-pointer p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)]/40 sm:p-3.5"
+        className="admin-transition-smooth cursor-pointer p-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)]/40 sm:p-3.5"
       >
         <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0">

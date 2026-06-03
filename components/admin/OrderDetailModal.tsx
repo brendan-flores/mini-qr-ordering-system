@@ -68,7 +68,7 @@ export function OrderDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
+      className="admin-animate-modal-backdrop fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
       role="presentation"
       onClick={onClose}
     >
@@ -76,7 +76,7 @@ export function OrderDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-detail-title"
-        className="flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+        className="admin-animate-modal-panel flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-surface-line)] px-5 py-4">
@@ -101,7 +101,7 @@ export function OrderDetailModal({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <div className="admin-animate-fade-in min-h-0 flex-1 overflow-y-auto px-5 py-4" style={{ animationDelay: "60ms" }}>
           <PaymentMethodBadge
             method={order.payment_method ?? "cod"}
             serviceType={order.service_type}
@@ -139,7 +139,7 @@ export function OrderDetailModal({
           ) : null}
 
           {!isOrderCancelled(order) ? (
-            <div className="mt-4">
+            <div className="admin-animate-fade-up mt-4" style={{ animationDelay: "120ms" }}>
               <AdminKitchenProgress order={order} />
             </div>
           ) : null}

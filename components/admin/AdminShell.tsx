@@ -39,7 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div className="admin-live flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <aside className="fixed left-0 top-0 z-40 hidden h-full w-80 flex-col border-r border-[var(--color-surface-line)] bg-gradient-to-b from-[#eef2fc] to-[#e8ecf8] lg:flex">
         <div className="shrink-0 border-b border-[var(--color-surface-line)]/80 bg-white/80 px-5 py-4 backdrop-blur-sm">
           <BrandLogo
@@ -96,11 +96,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         >
           <button
             type="button"
-            className="absolute inset-0 cursor-pointer bg-black/50 backdrop-blur-[2px]"
+            className="admin-animate-modal-backdrop absolute inset-0 cursor-pointer bg-black/50 backdrop-blur-[2px]"
             aria-label="Close"
             onClick={() => setQrSheetOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[92dvh] overflow-y-auto rounded-t-2xl bg-[var(--background)] px-3 pb-[max(4.5rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_48px_rgba(0,0,0,0.2)] sm:px-4">
+          <div className="admin-animate-modal-panel absolute bottom-0 left-0 right-0 max-h-[92dvh] overflow-y-auto rounded-t-2xl bg-[var(--background)] px-3 pb-[max(4.5rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_48px_rgba(0,0,0,0.2)] sm:px-4">
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-base font-bold text-zinc-900">Table QR codes</h2>
               <button
@@ -159,11 +159,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         >
           <button
             type="button"
-            className="absolute inset-0 cursor-pointer bg-black/45 backdrop-blur-[2px]"
+            className="admin-animate-modal-backdrop absolute inset-0 cursor-pointer bg-black/45 backdrop-blur-[2px]"
             aria-label="Cancel"
             onClick={() => !signingOut && setLogoutConfirmOpen(false)}
           />
-          <div className="relative w-full max-w-sm rounded-2xl border border-[var(--color-surface-line)] bg-white p-5 shadow-xl sm:p-6">
+          <div className="admin-animate-modal-panel relative w-full max-w-sm rounded-2xl border border-[var(--color-surface-line)] bg-white p-5 shadow-xl sm:p-6">
             <h2
               id="logout-confirm-title"
               className="text-base font-semibold text-[var(--foreground)]"

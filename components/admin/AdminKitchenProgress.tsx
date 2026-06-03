@@ -1,6 +1,7 @@
 "use client";
 
 import type { Order, OrderStatus } from "@/client/services/orders";
+import { adminStaggerMs } from "@/lib/admin-motion";
 import { orderStatusLabel } from "@/client/services/orders";
 import { CUSTOMER_KITCHEN_STEPS } from "@/lib/customer-order-flow";
 import {
@@ -51,13 +52,14 @@ export function AdminKitchenProgress({
             <li
               key={step.key}
               className={[
-                "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left",
+                "admin-transition-smooth admin-animate-fade-up flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left",
                 state === "done"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-900"
                   : state === "active"
                     ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-zinc-900 ring-1 ring-[var(--color-primary)]/25"
                     : "border-[var(--color-surface-line)] bg-white text-zinc-500",
               ].join(" ")}
+              style={{ animationDelay: adminStaggerMs(index, 40) }}
               aria-current={state === "active" ? "step" : undefined}
             >
               <span

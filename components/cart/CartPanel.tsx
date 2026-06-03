@@ -9,6 +9,7 @@ import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
 import { useTable } from "../table/TableProvider";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
+import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
 import { Button } from "../ui/Button";
 
 export function CartPanel() {
@@ -31,14 +32,18 @@ export function CartPanel() {
   }
 
   return (
-    <aside className="hidden h-full min-h-0 w-[360px] shrink-0 overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-[0_12px_24px_rgba(0,0,0,0.08)] lg:flex lg:flex-col">
+    <aside
+      className={`${UI_MOTION.scaleIn} hidden h-full min-h-0 w-[360px] shrink-0 overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-[0_12px_24px_rgba(0,0,0,0.08)] lg:flex lg:flex-col`}
+      style={{ animationDelay: "100ms" }}
+    >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-surface-line)] bg-white p-4">
         <div className="flex items-center gap-2 font-semibold text-zinc-900">
           <span className="text-[var(--color-primary)]">🛒</span>
           <span className="text-xl">Your Order</span>
         </div>
         <div
-          className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white"
+          key={lineCount}
+          className={`${UI_MOTION.countPop} rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white`}
           suppressHydrationWarning
         >
           {lineCount} {lineCount === 1 ? "item" : "items"}
@@ -55,10 +60,11 @@ export function CartPanel() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {items.map((it) => (
+            {items.map((it, index) => (
               <div
                 key={String(it.product.id)}
-                className="group flex items-start gap-3 border-b border-[var(--color-surface-line)] py-2 last:border-b-0"
+                className={`${UI_MOTION.fadeUp} group flex items-start gap-3 border-b border-[var(--color-surface-line)] py-2 last:border-b-0`}
+                style={{ animationDelay: uiStaggerMs(index, 40) }}
               >
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                   {it.product.image_url ? (
