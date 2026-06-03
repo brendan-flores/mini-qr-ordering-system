@@ -14,6 +14,7 @@ import { MaterialIcon } from "../ui/MaterialIcon";
 import { BrandLogo } from "../brand/BrandLogo";
 import { TableBadge } from "../table/TableBadge";
 import { MENU_PAGE_PATH } from "@/lib/routes";
+import { useActiveOrderCount } from "../orders/useActiveOrderCount";
 
 const POPULAR_NAME = "Dark Chocolate Lava Cake";
 
@@ -124,6 +125,7 @@ export function MobileMenuView({
   }, [orderingEnabled]);
 
   const cartCount = pieceCount;
+  const activeOrderCount = useActiveOrderCount(orderingEnabled);
 
   const sections = useMemo(() => {
     if (tab !== "All Items" || search.trim()) {
@@ -295,7 +297,7 @@ export function MobileMenuView({
             type="button"
             onClick={openOrders}
             className={[
-              "flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
+              "relative flex cursor-pointer flex-col items-center justify-center rounded-full px-4 py-1 transition-transform active:scale-90",
               navTab === "orders"
                 ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
                 : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
@@ -303,6 +305,11 @@ export function MobileMenuView({
           >
             <MaterialIcon name="receipt_long" filled={false} className="mb-1" />
             <span className="text-xs font-semibold">Orders</span>
+            {activeOrderCount > 0 ? (
+              <span className="absolute right-3 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[9px] font-bold text-white">
+                {activeOrderCount > 9 ? "9+" : activeOrderCount}
+              </span>
+            ) : null}
           </button>
         </nav>
       ) : null}

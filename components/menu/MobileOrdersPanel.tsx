@@ -9,7 +9,7 @@ export function MobileOrdersPanel() {
         Your Orders
       </h2>
       <p className="mb-4 px-1 text-sm text-[var(--color-text-muted)]">
-        Complete payment for pending orders or tap for details.
+        Orders from this phone only. Tap Track order for kitchen updates.
       </p>
       <OrdersList variant="compact" checkoutReturn="/menu-page?tab=orders" />
     </div>

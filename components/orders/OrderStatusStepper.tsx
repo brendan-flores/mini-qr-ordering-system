@@ -1,0 +1,86 @@
+"use client";
+
+import type { OrderStatus } from "@/client/services/orders";
+import {
+  CUSTOMER_KITCHEN_STEPS,
+  customerKitchenStepIndex,
+} from "@/lib/customer-order-flow";
+import { isOrderCancelled } from "@/lib/orders/order-rules";
+import { MaterialIcon } from "../ui/MaterialIcon";
+
+export function OrderStatusStepper({
+  orderStatus,
+  compact = false,
+}: {
+  orderStatus?: OrderStatus;
+  compact?: boolean;
+}) {
+  const cancelled = isOrderCancelled({
+    order_status: orderStatus,
+    payment_status: "Pending",
+  });
+  const activeIndex = customerKitchenStepIndex(orderStatus);
+
+  if (cancelled) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-3 text-sm font-medium text-zinc-700">
+        <MaterialIcon name="cancel" className="text-lg text-zinc-500" />
+        This order was cancelled.
+      </div>
+    );
+  }
+
+  return (
+    <ol
+      className={[
+        "grid gap-2",
+        compact ? "grid-cols-1" : "sm:grid-cols-5",
+      ].join(" ")}
+      aria-label="Order progress"
+    >
+      {CUSTOMER_KITCHEN_STEPS.map((step, index) => {
+        const done = activeIndex > index;
+        const current = activeIndex === index;
+        return (
+          <li
+            key={step.key}
+            className={[
+              "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left",
+              done
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : current
+                  ? "border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] text-zinc-900"
+                  : "border-[var(--color-surface-line)] bg-white text-zinc-500",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                done
+                  ? "bg-emerald-600 text-white"
+                  : current
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-zinc-200 text-zinc-600",
+              ].join(" ")}
+              aria-hidden
+            >
+              {done ? (
+                <MaterialIcon name="check" className="text-base" />
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span
+              className={[
+                "text-xs font-semibold leading-tight",
+                current ? "text-[var(--color-primary)]" : "",
+              ].join(" ")}
+            >
+              {step.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

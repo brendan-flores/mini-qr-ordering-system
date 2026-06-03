@@ -19,6 +19,33 @@ export function confirmationUrl(orderId: string | number, returnTo: string) {
   return `/checkout/confirmation?${params.toString()}`;
 }
 
+/** Primary post-checkout destination: live order tracking. */
+export function orderTrackUrl(
+  orderId: string | number,
+  options?: { placed?: boolean; returnTo?: string }
+) {
+  const params = new URLSearchParams();
+  if (options?.placed) params.set("placed", "1");
+  if (options?.returnTo?.startsWith("/")) {
+    params.set("return", options.returnTo);
+  }
+  const q = params.toString();
+  return `/orders/${encodeURIComponent(String(orderId))}${q ? `?${q}` : ""}`;
+}
+
+/** Pending GCash payment or failed retry — checkout, not tracking. */
+export function orderNeedsCheckout(order: {
+  payment_method: string;
+  payment_status: string;
+}) {
+  if (order.payment_method === "gcash") {
+    return (
+      order.payment_status === "Pending" || order.payment_status === "Failed"
+    );
+  }
+  return false;
+}
+
 /** Whether the customer should see the confirmation screen */
 export function isOrderConfirmed(order: {
   payment_method: string;

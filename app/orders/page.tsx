@@ -38,8 +38,9 @@ export default function OrdersPage() {
         <div className="mb-8 hidden border-b border-[var(--color-surface-line)] pb-6 lg:block">
           <h1 className="text-3xl font-bold text-zinc-900">Your Orders</h1>
           <p className="mt-2 max-w-xl text-sm text-[var(--color-text-muted)]">
-            Review past orders, complete pending payments, or open checkout for
-            full details.
+            Orders placed on this device appear here for up to 72 hours. Each
+            new checkout creates a separate order — use Order more after
+            tracking to add another round.
           </p>
         </div>
         <OrdersList variant="responsive" checkoutReturn="/orders" />

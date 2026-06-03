@@ -18,7 +18,12 @@ import {
 } from "../../lib/orders/order-rules";
 import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
 import { ORDER_UPDATED_EVENT } from "../../lib/order-events";
-import { checkoutUrl } from "../../lib/checkout-url";
+import {
+  checkoutUrl,
+  orderNeedsCheckout,
+  orderTrackUrl,
+} from "../../lib/checkout-url";
+import { shortOrderId } from "@/lib/customer-order-flow";
 import { MENU_PAGE_PATH } from "@/lib/routes";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
@@ -59,6 +64,8 @@ function OrderCard({
   onCancel?(order: Order): void;
   cancelling?: boolean;
 }) {
+  const needsCheckout = orderNeedsCheckout(order);
+  const detailHref = orderTrackUrl(order.id, { returnTo: checkoutReturn });
   const checkoutHref = checkoutUrl(order.id, checkoutReturn);
   const method = order.payment_method ?? "cod";
   const kitchen = order.order_status ?? "received";
@@ -78,7 +85,7 @@ function OrderCard({
               layout === "compact" ? "text-sm" : "text-base",
             ].join(" ")}
           >
-            Order #{String(order.id).slice(0, 8)}
+            Order #{shortOrderId(order.id)}
           </p>
           <p className="mt-0.5 text-xs text-zinc-500">
             {formatDate(order.created_at)}
@@ -145,10 +152,10 @@ function OrderCard({
           </button>
         ) : null}
         <Link
-          href={checkoutHref}
+          href={needsCheckout ? checkoutHref : detailHref}
           className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-[var(--color-surface-line)] bg-white px-4 py-2 text-sm font-semibold text-zinc-800 transition hover:bg-[var(--color-surface-subtle)]"
         >
-          View details
+          {needsCheckout ? "Complete payment" : "Track order"}
         </Link>
       </div>
     </article>

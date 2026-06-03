@@ -17,8 +17,8 @@ import { TableBadge } from "../table/TableBadge";
 import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
 import {
   cartCheckoutUrl,
-  confirmationUrl,
   isOrderConfirmed,
+  orderTrackUrl,
 } from "../../lib/checkout-url";
 import { useCart } from "../cart/CartContext";
 import { cartSubtotal, cartTotal, formatMoney } from "../cart/cartUtils";
@@ -115,7 +115,7 @@ export default function CheckoutClient() {
     const stored = getStoredOrder();
     if (stored && String(stored.id) === String(orderId)) {
       if (isOrderConfirmed(stored)) {
-        router.replace(confirmationUrl(stored.id, homePath()));
+        router.replace(orderTrackUrl(stored.id, { returnTo: homePath() }));
         return;
       }
       setOrder(stored);
@@ -128,7 +128,7 @@ export default function CheckoutClient() {
     getOrder(orderId)
       .then(({ data: found }) => {
         if (found && isOrderConfirmed(found)) {
-          router.replace(confirmationUrl(found.id, homePath()));
+          router.replace(orderTrackUrl(found.id, { returnTo: homePath() }));
           return;
         }
         setOrder(found);
@@ -151,7 +151,9 @@ export default function CheckoutClient() {
 
   function goToConfirmation(data: Order) {
     saveStoredOrder(data);
-    router.push(confirmationUrl(data.id, homePath()));
+    router.push(
+      orderTrackUrl(data.id, { placed: true, returnTo: homePath() })
+    );
   }
 
   async function submitCartOrder() {
