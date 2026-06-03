@@ -5,12 +5,68 @@ const ORDERING_SESSION_KEY = "brencravings-ordering-session";
 export const TABLE_UPDATE_EVENT = "brencravings-table-update";
 export const ORDERING_UPDATE_EVENT = "brencravings-ordering-update";
 
-export function normalizeTableNumber(value: string | null | undefined): string | null {
-  if (!value) return null;
+export const INTEGER_TABLE_ERROR_MESSAGE =
+  "Table number must be a whole number (digits only, no letters).";
+
+/** Thrown when a table value is not a positive integer. */
+export class IntegerTableNumberError extends Error {
+  readonly code = "INVALID_TABLE_NUMBER";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "IntegerTableNumberError";
+  }
+}
+
+function integerTableFailure(
+  value: string,
+  reason: "empty" | "not_integer" | "too_small"
+): TableNumberValidation {
+  if (reason === "empty") {
+    return { ok: false, message: "Enter a table number." };
+  }
+  if (reason === "not_integer") {
+    return { ok: false, message: INTEGER_TABLE_ERROR_MESSAGE };
+  }
+  return { ok: false, message: "Table number must be at least 1." };
+}
+
+export type TableNumberValidation =
+  | { ok: true; table: string }
+  | { ok: false; message: string };
+
+/** Non-throwing check for forms and UI. */
+export function validateIntegerTableNumber(
+  value: string
+): TableNumberValidation {
   const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (!/^[a-zA-Z0-9_-]{1,12}$/.test(trimmed)) return null;
-  return trimmed;
+  if (!trimmed) return integerTableFailure(value, "empty");
+  if (!/^\d+$/.test(trimmed)) {
+    return integerTableFailure(value, "not_integer");
+  }
+  const n = Number(trimmed);
+  if (!Number.isSafeInteger(n) || n < 1) {
+    return integerTableFailure(value, "too_small");
+  }
+  return { ok: true, table: String(n) };
+}
+
+/** Throws {@link IntegerTableNumberError} if not a positive integer. */
+export function parseIntegerTableNumber(value: string): string {
+  const result = validateIntegerTableNumber(value);
+  if (!result.ok) {
+    throw new IntegerTableNumberError(result.message);
+  }
+  return result.table;
+}
+
+/** URL / session — only positive integer table ids, else null. */
+export function normalizeTableNumber(
+  value: string | null | undefined
+): string | null {
+  if (!value) return null;
+  const result = validateIntegerTableNumber(value);
+  return result.ok ? result.table : null;
 }
 
 export function getTableFromSearchParam(
@@ -23,7 +79,8 @@ export function getTableFromSearchParam(
 
 export function persistTableNumber(table: string) {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(TABLE_STORAGE_KEY, table);
+  const normalized = parseIntegerTableNumber(table);
+  window.sessionStorage.setItem(TABLE_STORAGE_KEY, normalized);
   window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
 }
 
@@ -50,7 +107,7 @@ export function markOrderingSession(table: string) {
   if (typeof window === "undefined") return;
   const normalized = normalizeTableNumber(table);
   if (!normalized) return;
-  persistTableNumber(normalized);
+  window.sessionStorage.setItem(TABLE_STORAGE_KEY, normalized);
   window.sessionStorage.setItem(ORDERING_SESSION_KEY, "1");
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
 }
@@ -71,7 +128,9 @@ export function hasOrderingSession(): boolean {
 }
 
 /** Server snapshot: no ordering without ?table= in URL. */
-export function tableNumberFromUrl(fromUrl: string | null | undefined): string | null {
+export function tableNumberFromUrl(
+  fromUrl: string | null | undefined
+): string | null {
   return normalizeTableNumber(fromUrl ?? null);
 }
 
@@ -94,9 +153,10 @@ export function menuUrlWithTable(
   baseUrl: string,
   tableNumber: string
 ): string {
+  const table = parseIntegerTableNumber(tableNumber);
   const url = new URL(baseUrl);
   url.pathname = MENU_PAGE_PATH;
   url.search = "";
-  url.searchParams.set("table", tableNumber);
+  url.searchParams.set("table", table);
   return url.toString();
 }

@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { menuUrlWithTable } from "@/lib/table";
+import {
+  IntegerTableNumberError,
+  menuUrlWithTable,
+  validateIntegerTableNumber,
+} from "@/lib/table";
+import { tableQrDownloadLabel } from "@/lib/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
+import { QrDownloadModal } from "./QrDownloadModal";
 
 export function TableQrGenerator({
   initialTable = "1",
@@ -13,6 +19,7 @@ export function TableQrGenerator({
   className = "",
 }: {
   initialTable?: string;
+  /** Called after user confirms download in the preview modal. */
   onDownload?(dataUrl: string, tableNumber: string): void;
   layout?: "default" | "sidebar";
   className?: string;
@@ -22,12 +29,28 @@ export function TableQrGenerator({
   const [scanUrl, setScanUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [tableError, setTableError] = useState<string | null>(null);
 
   const isSidebar = layout === "sidebar";
   const qrSize = isSidebar ? 168 : 220;
+  const validation = validateIntegerTableNumber(tableNumber);
+  const displayTable = validation.ok ? validation.table : "";
+  const tableLabel = validation.ok
+    ? tableQrDownloadLabel(displayTable)
+    : "Table —";
+  const canUseTable = validation.ok;
 
   async function generate() {
-    const table = tableNumber.trim() || "1";
+    const checked = validateIntegerTableNumber(tableNumber);
+    if (!checked.ok) {
+      setTableError(checked.message);
+      setQrDataUrl(null);
+      setScanUrl(null);
+      return;
+    }
+    setTableError(null);
+    const table = checked.table;
     setGenerating(true);
     try {
       const base =
@@ -40,13 +63,26 @@ export function TableQrGenerator({
         width: qrSize * 2,
       });
       setQrDataUrl(dataUrl);
+    } catch (e: unknown) {
+      const message =
+        e instanceof IntegerTableNumberError
+          ? e.message
+          : "Could not generate QR code.";
+      setTableError(message);
+      setQrDataUrl(null);
+      setScanUrl(null);
     } finally {
       setGenerating(false);
     }
   }
 
   useEffect(() => {
-    void generate();
+    const checked = validateIntegerTableNumber(initialTable);
+    if (checked.ok) {
+      void generate();
+    } else {
+      setTableError(checked.message);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,9 +110,26 @@ export function TableQrGenerator({
       <div className="mt-1.5 flex gap-2">
         <input
           value={tableNumber}
-          onChange={(e) => setTableNumber(e.target.value)}
+          onChange={(e) => {
+            setTableNumber(e.target.value);
+            if (tableError) setTableError(null);
+          }}
+          onBlur={() => {
+            const checked = validateIntegerTableNumber(tableNumber);
+            if (!checked.ok) {
+              setTableError(checked.message);
+              setQrDataUrl(null);
+              setScanUrl(null);
+            }
+          }}
+          inputMode="numeric"
+          aria-invalid={!!tableError}
+          aria-describedby={tableError ? "table-number-error" : undefined}
           className={[
-            "min-w-0 flex-1 rounded-xl border border-[var(--color-surface-line)] bg-white font-semibold text-zinc-900 outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15",
+            "min-w-0 flex-1 rounded-xl border bg-white font-semibold text-zinc-900 outline-none transition focus:ring-2",
+            tableError
+              ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/15"
+              : "border-[var(--color-surface-line)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/15",
             isSidebar ? "px-3 py-2 text-sm" : "px-3 py-2 text-sm",
           ].join(" ")}
           placeholder="e.g. 5"
@@ -94,53 +147,83 @@ export function TableQrGenerator({
           {generating ? "…" : "Go"}
         </button>
       </div>
+      {tableError ? (
+        <p
+          id="table-number-error"
+          role="alert"
+          className="mt-2 flex items-start gap-1.5 text-xs font-medium text-rose-700"
+        >
+          <MaterialIcon
+            name="error_outline"
+            filled={false}
+            className="mt-px shrink-0 text-base"
+          />
+          {tableError}
+        </p>
+      ) : null}
 
       <div
         className={[
-          "relative mt-4 flex justify-center overflow-hidden rounded-2xl",
+          "relative mt-4 overflow-hidden rounded-2xl",
           isSidebar
-            ? "bg-gradient-to-b from-zinc-50 to-white p-3 ring-1 ring-[var(--color-surface-line)]"
-            : "rounded-xl bg-zinc-50 p-4",
+            ? "bg-gradient-to-b from-zinc-50 to-white ring-1 ring-[var(--color-surface-line)]"
+            : "rounded-xl bg-zinc-50",
         ].join(" ")}
       >
-        {generating && !qrDataUrl ? (
-          <div
-            className="flex items-center justify-center text-sm text-zinc-500"
-            style={{ width: qrSize, height: qrSize }}
-          >
-            <MaterialIcon
-              name="progress_activity"
-              className="animate-spin text-3xl text-[var(--color-primary)]"
-            />
-          </div>
-        ) : qrDataUrl ? (
-          <div className="relative">
-            <div
-              className={[
-                "absolute -inset-1 rounded-2xl bg-[var(--color-primary)]/10 blur-md",
-                isSidebar ? "opacity-80" : "",
-              ].join(" ")}
-              aria-hidden
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrDataUrl}
-              alt={`QR for table ${tableNumber}`}
-              className="relative rounded-xl bg-white p-1.5 shadow-md"
-              style={{ width: qrSize, height: qrSize }}
-            />
-          </div>
-        ) : (
+        <div className="border-b border-[var(--color-surface-line)] bg-[var(--color-primary-soft)]/50 px-3 py-2.5 text-center">
           <p
-            className="text-sm text-zinc-500"
-            style={{ width: qrSize, height: qrSize }}
+            className={[
+              "font-bold text-[var(--color-primary)]",
+              isSidebar ? "text-lg" : "text-xl",
+            ].join(" ")}
           >
-            Generating…
+            {tableLabel}
           </p>
-        )}
+          <p className="text-[10px] font-medium text-[var(--color-text-muted)]">
+            Scan to order
+          </p>
+        </div>
+
+        <div className="flex justify-center p-3 sm:p-4">
+          {generating && !qrDataUrl ? (
+            <div
+              className="flex items-center justify-center text-sm text-zinc-500"
+              style={{ width: qrSize, height: qrSize }}
+            >
+              <MaterialIcon
+                name="progress_activity"
+                className="animate-spin text-3xl text-[var(--color-primary)]"
+              />
+            </div>
+          ) : qrDataUrl ? (
+            <div className="relative">
+              <div
+                className={[
+                  "absolute -inset-1 rounded-2xl bg-[var(--color-primary)]/10 blur-md",
+                  isSidebar ? "opacity-80" : "",
+                ].join(" ")}
+                aria-hidden
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt={`QR for ${tableLabel}`}
+                className="relative rounded-xl bg-white p-1.5 shadow-md"
+                style={{ width: qrSize, height: qrSize }}
+              />
+            </div>
+          ) : (
+            <p
+              className="text-sm text-zinc-500"
+              style={{ width: qrSize, height: qrSize }}
+            >
+              Generating…
+            </p>
+          )}
+        </div>
       </div>
 
-      {scanUrl ? (
+      {scanUrl && canUseTable ? (
         <div className="mt-3 space-y-2">
           <p
             className={[
@@ -171,23 +254,28 @@ export function TableQrGenerator({
         </div>
       ) : null}
 
-      {onDownload ? (
-        <div className={isSidebar ? "mt-3" : "mt-4"}>
-          <Button
-            type="button"
-            className={[
-              "w-full gap-2",
-              isSidebar ? "py-2.5 text-sm" : "",
-            ].join(" ")}
-            disabled={!qrDataUrl}
-            onClick={() =>
-              qrDataUrl && onDownload(qrDataUrl, tableNumber.trim() || "1")
-            }
-          >
-            <MaterialIcon name="download" filled={false} className="text-lg" />
-            Download PNG
-          </Button>
-        </div>
+      <div className={isSidebar ? "mt-3" : "mt-4"}>
+        <Button
+          type="button"
+          className={["w-full gap-2", isSidebar ? "py-2.5 text-sm" : ""].join(
+            " "
+          )}
+          disabled={!qrDataUrl || !canUseTable}
+          onClick={() => setDownloadOpen(true)}
+        >
+          <MaterialIcon name="download" filled={false} className="text-lg" />
+          Download PNG
+        </Button>
+      </div>
+
+      {downloadOpen && qrDataUrl && canUseTable ? (
+        <QrDownloadModal
+          qrDataUrl={qrDataUrl}
+          tableNumber={displayTable}
+          scanUrl={scanUrl}
+          onClose={() => setDownloadOpen(false)}
+          onDownloaded={onDownload}
+        />
       ) : null}
     </div>
   );

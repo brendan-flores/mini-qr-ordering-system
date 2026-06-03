@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { parseJsonText } from "@/lib/json";
 import { cancelOrderByCustomer } from "@/lib/orders/order-service";
 
 const BodySchema = z.object({
@@ -22,8 +23,9 @@ export async function POST(
     let deviceId = request.nextUrl.searchParams.get("device_id");
     if (!deviceId) {
       const raw = await request.text();
-      if (raw) {
-        const parsed = BodySchema.parse(JSON.parse(raw));
+      const json = parseJsonText(raw);
+      if (json !== null) {
+        const parsed = BodySchema.parse(json);
         deviceId = parsed.device_id ?? null;
       }
     }

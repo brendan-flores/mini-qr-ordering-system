@@ -1,3 +1,5 @@
+import { parseJsonText } from "@/lib/json";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
@@ -37,6 +39,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
@@ -45,14 +48,30 @@ export async function apiFetch<T>(
   });
 
   const text = await res.text();
-  const json = text ? (JSON.parse(text) as unknown) : null;
+  let json: unknown | null = null;
+
+  if (text.trim()) {
+    try {
+      json = parseJsonText(text);
+    } catch {
+      throw new ApiError(
+        "Server returned an invalid response",
+        res.status,
+        text.slice(0, 200)
+      );
+    }
+  }
 
   if (!res.ok) {
     const message =
-      (json as any)?.error?.message ?? `Request failed (${res.status})`;
+      (json as { error?: { message?: string } } | null)?.error?.message ??
+      `Request failed (${res.status})`;
     throw new ApiError(message, res.status, json);
+  }
+
+  if (json === null) {
+    throw new ApiError("Empty response from server", res.status);
   }
 
   return json as T;
 }
-

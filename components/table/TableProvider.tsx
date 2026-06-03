@@ -54,8 +54,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
       orderingEnabled,
       tableNumber,
       setTableNumber: (value: string) => {
-        const trimmed = value.trim() || "1";
-        markOrderingSession(trimmed);
+        markOrderingSession(value);
       },
     }),
     [orderingEnabled, tableNumber]

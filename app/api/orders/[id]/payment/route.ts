@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
+import { readRequestJson } from "@/lib/json";
 import {
   getOrderById,
   patchOrderPayment,
@@ -24,8 +25,14 @@ export async function PATCH(
       );
     }
 
-    const body = (await request.json()) as unknown;
-    const admin = isAdminRequest(request);
+    const body = await readRequestJson(request);
+    if (body === null) {
+      return NextResponse.json(
+        { error: { message: "Request body is required" } },
+        { status: 400 }
+      );
+    }
+    const admin = await isAdminRequest(request);
 
     if (admin) {
       const parsed = UpdatePaymentSchema.parse(body);

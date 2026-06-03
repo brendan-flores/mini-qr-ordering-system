@@ -1,3 +1,7 @@
+import {
+  canMarkKitchenCompleted,
+  KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE,
+} from "@/lib/orders/order-rules";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
 import {
   getErrorMessage,
@@ -400,6 +404,11 @@ async function patchOrderStatusInternal(
       const err = new Error(
         "Cancelled status is set when the customer cancels an order"
       );
+      (err as Error & { status: number }).status = 403;
+      throw err;
+    }
+    if (order_status === "completed" && !canMarkKitchenCompleted(existing)) {
+      const err = new Error(KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE);
       (err as Error & { status: number }).status = 403;
       throw err;
     }

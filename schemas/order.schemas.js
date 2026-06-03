@@ -33,18 +33,40 @@ export const AdminKitchenStatusSchema = z.enum([
 
 export const ServiceTypeSchema = z.enum(["dine_in", "takeout"]);
 
+/** Dine-in table: positive integer string only (e.g. "5", not "5a"). */
+export const IntegerTableNumberSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(12)
+  .refine((val) => /^\d+$/.test(val), {
+    message:
+      "Table number must be a whole number (digits only, no letters).",
+  })
+  .refine((val) => {
+    const n = Number(val);
+    return Number.isSafeInteger(n) && n >= 1;
+  }, { message: "Table number must be at least 1." });
+
 export const CreateOrderSchema = z
   .object({
     items: z.array(OrderItemSchema).min(1),
     total_amount: z.number().positive(),
     payment_method: PaymentMethodSchema,
     payment_status: PaymentStatusSchema.optional(),
-    table_number: z.string().min(1).max(12).optional(),
+    table_number: IntegerTableNumberSchema.optional(),
     service_type: ServiceTypeSchema.optional().default("dine_in"),
     /** Per-phone/browser id so order history stays private on shared tables. */
     device_id: z.string().min(8).max(64).optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.service_type !== "takeout" && data.table_number === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "table_number is required for dine-in orders",
+        path: ["table_number"],
+      });
+    }
     if (data.payment_method === "cod") {
       const status = data.payment_status ?? "Pending";
       if (status !== "Pending") {

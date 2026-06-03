@@ -14,7 +14,11 @@ export function itemsSummary(order: Order, maxItems = 3) {
 
 export type PaymentFilter = "all" | Order["payment_status"];
 
-export { isOrderCancelled, isOrderLocked } from "../../lib/orders/order-rules";
+export {
+  canMarkKitchenCompleted,
+  isOrderCancelled,
+  isOrderLocked,
+} from "../../lib/orders/order-rules";
 
 export function orderLocationLabel(order: Order) {
   if (order.service_type === "takeout") return "Take out";
@@ -25,4 +29,10 @@ export function orderLocationLabel(order: Order) {
 export function orderGroupKey(order: Order) {
   if (order.service_type === "takeout") return "Take out";
   return order.table_number?.trim() || "—";
+}
+
+export function tableSectionTitle(tableKey: string) {
+  if (tableKey === "Take out") return "Take out";
+  if (tableKey === "—") return "Unassigned";
+  return `Table ${tableKey}`;
 }

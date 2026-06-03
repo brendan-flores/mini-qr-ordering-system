@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminQrSidebar } from "./AdminQrSidebar";
@@ -16,23 +17,35 @@ function navLinkClass(active: boolean) {
   return `${navLinkBase} text-[var(--color-text-muted)] hover:bg-[var(--color-primary-soft)] hover:text-[var(--color-primary)]`;
 }
 
-export function AdminShell({
-  children,
-  onRefresh,
-}: {
-  children: React.ReactNode;
-  onRefresh(): void;
-}) {
+export function AdminShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [qrSheetOpen, setQrSheetOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function confirmSignOut() {
+    setSigningOut(true);
+    try {
+      await fetch("/api/admin/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      setLogoutConfirmOpen(false);
+      router.replace("/admin/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <aside className="fixed left-0 top-0 z-40 hidden h-full w-80 flex-col border-r border-[var(--color-surface-line)] bg-gradient-to-b from-[#eef2fc] to-[#e8ecf8] lg:flex">
-        <div className="shrink-0 border-b border-[var(--color-surface-line)]/80 bg-white/60 px-5 py-5 backdrop-blur-sm">
+        <div className="shrink-0 border-b border-[var(--color-surface-line)]/80 bg-white/80 px-5 py-4 backdrop-blur-sm">
           <BrandLogo
             href="/admin"
             subtitle="Admin Console"
-            textClassName="text-xl font-bold text-[var(--color-primary)]"
+            textClassName="text-xl font-semibold text-[var(--color-primary)]"
           />
         </div>
 
@@ -47,34 +60,31 @@ export function AdminShell({
           </ul>
         </nav>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-1">
           <AdminQrSidebar />
+        </div>
+
+        <div className="shrink-0 border-t border-[var(--color-surface-line)]/80 bg-white/50 px-3 py-3">
+          <button
+            type="button"
+            onClick={() => setLogoutConfirmOpen(true)}
+            disabled={signingOut}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[var(--color-surface-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] shadow-sm transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)] disabled:opacity-60"
+          >
+            <MaterialIcon name="logout" filled={false} className="text-lg" />
+            {signingOut ? "Logging out…" : "Log out"}
+          </button>
         </div>
       </aside>
 
-      <header className="fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b border-[var(--color-surface-line)] bg-white px-4 shadow-sm lg:hidden">
+      <header className="fixed top-0 z-50 flex h-14 w-full items-center border-b border-[var(--color-surface-line)] bg-white/95 px-4 shadow-[0_1px_0_rgba(18,28,42,0.04)] backdrop-blur-md lg:hidden">
         <BrandLogo
           href="/admin"
-          textClassName="text-lg font-bold leading-none text-[var(--color-primary)]"
+          subtitle="Admin"
+          textClassName="text-sm font-semibold leading-tight text-[var(--color-primary)]"
+          subtitleClassName="text-[10px] font-normal text-[var(--color-text-muted)]/80"
+          markScale={1.1}
         />
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setQrSheetOpen(true)}
-            className="cursor-pointer rounded-lg p-2 text-[var(--color-primary)]"
-            aria-label="Table QR codes"
-          >
-            <MaterialIcon name="qr_code_2" filled={false} />
-          </button>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="cursor-pointer rounded-lg p-2 text-[var(--color-primary)]"
-            aria-label="Refresh orders"
-          >
-            <MaterialIcon name="refresh" filled={false} />
-          </button>
-        </div>
       </header>
 
       {qrSheetOpen ? (
@@ -90,13 +100,13 @@ export function AdminShell({
             aria-label="Close"
             onClick={() => setQrSheetOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[92dvh] overflow-y-auto rounded-t-2xl bg-[var(--background)] px-4 pb-[max(5rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-24px_48px_rgba(0,0,0,0.2)]">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-zinc-900">Table QR codes</h2>
+          <div className="absolute bottom-0 left-0 right-0 max-h-[92dvh] overflow-y-auto rounded-t-2xl bg-[var(--background)] px-3 pb-[max(4.5rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_48px_rgba(0,0,0,0.2)] sm:px-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-base font-bold text-zinc-900">Table QR codes</h2>
               <button
                 type="button"
                 onClick={() => setQrSheetOpen(false)}
-                className="cursor-pointer rounded-full p-2 text-zinc-500 hover:bg-zinc-100"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100"
                 aria-label="Close"
               >
                 <MaterialIcon name="close" filled={false} />
@@ -108,34 +118,79 @@ export function AdminShell({
       ) : null}
 
       <div className="flex min-h-screen w-full flex-1 flex-col lg:ml-80">
-        <div className="flex-1 pt-16 lg:pt-0">{children}</div>
+        <div className="flex-1 pt-14 lg:pt-0">{children}</div>
       </div>
 
-      <nav className="fixed bottom-0 z-50 flex w-full items-center justify-around rounded-t-xl border-t border-[var(--color-surface-line)] bg-white px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.05)] lg:hidden">
+      <nav className="fixed bottom-0 z-50 flex w-full items-stretch justify-around gap-0.5 border-t border-[var(--color-surface-line)] bg-white/95 px-1.5 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur-sm lg:hidden">
         <Link
           href="/admin"
-          className="flex cursor-pointer flex-col items-center rounded-full bg-[var(--color-primary)] px-5 py-1.5 text-white"
+          className="flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl bg-[var(--color-primary)] px-2 py-2 text-white"
         >
-          <MaterialIcon name="receipt_long" className="text-xl" />
-          <span className="mt-1 text-[10px] font-bold">Orders</span>
+          <MaterialIcon name="receipt_long" className="text-[22px]" />
+          <span className="mt-0.5 text-[10px] font-bold">Orders</span>
         </Link>
         <button
           type="button"
           onClick={() => setQrSheetOpen(true)}
-          className="flex cursor-pointer flex-col items-center px-4 py-1 text-[var(--color-text-muted)]"
+          className="flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-2 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-subtle)]"
         >
-          <MaterialIcon name="qr_code_2" filled={false} className="text-xl" />
-          <span className="mt-1 text-[10px] font-semibold">QR codes</span>
+          <MaterialIcon name="qr_code_2" filled={false} className="text-[22px]" />
+          <span className="mt-0.5 text-[10px] font-semibold">QR</span>
         </button>
         <button
           type="button"
-          onClick={onRefresh}
-          className="flex cursor-pointer flex-col items-center px-3 py-1 text-[var(--color-text-muted)]"
+          onClick={() => setLogoutConfirmOpen(true)}
+          disabled={signingOut}
+          className="flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-2 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-primary)] disabled:opacity-60"
         >
-          <MaterialIcon name="refresh" filled={false} className="text-xl" />
-          <span className="mt-1 text-[10px] font-semibold">Refresh</span>
+          <MaterialIcon name="logout" filled={false} className="text-[22px]" />
+          <span className="mt-0.5 text-[10px] font-semibold">
+            {signingOut ? "…" : "Log out"}
+          </span>
         </button>
       </nav>
+
+      {logoutConfirmOpen ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-confirm-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 cursor-pointer bg-black/45 backdrop-blur-[2px]"
+            aria-label="Cancel"
+            onClick={() => !signingOut && setLogoutConfirmOpen(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-2xl border border-[var(--color-surface-line)] bg-white p-5 shadow-xl sm:p-6">
+            <h2
+              id="logout-confirm-title"
+              className="text-base font-semibold text-[var(--foreground)]"
+            >
+              Log out?
+            </h2>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="flex-1 cursor-pointer rounded-xl border border-[var(--color-surface-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-subtle)] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={confirmSignOut}
+                className="flex-1 cursor-pointer rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-dark)] disabled:opacity-60"
+              >
+                {signingOut ? "Logging out…" : "Log out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -3,10 +3,12 @@ import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { createOrderRecord } from "@/lib/orders/order-service";
 import { getErrorMessage } from "@/lib/orders/supabase-order-errors";
+import { IntegerTableNumberError } from "@/lib/table";
+import { readRequestJson } from "@/lib/json";
 import { CreateOrderSchema } from "../../../schemas/order.schemas.js";
 
 export async function GET(request: NextRequest) {
-  if (!isAdminRequest(request)) {
+  if (!(await isAdminRequest(request))) {
     return adminUnauthorized();
   }
   return NextResponse.json(
@@ -21,7 +23,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as unknown;
+    const body = await readRequestJson(request);
+    if (body === null) {
+      return NextResponse.json(
+        { error: { message: "Request body is required" } },
+        { status: 400 }
+      );
+    }
     const parsed = CreateOrderSchema.parse(body);
 
     const payment_status =
@@ -31,9 +39,7 @@ export async function POST(request: NextRequest) {
 
     const service_type = parsed.service_type ?? "dine_in";
     const table_number =
-      service_type === "takeout"
-        ? null
-        : parsed.table_number?.trim() || "1";
+      service_type === "takeout" ? null : (parsed.table_number ?? "1");
 
     const data = await createOrderRecord({
       items: parsed.items,
@@ -47,9 +53,25 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof IntegerTableNumberError) {
       return NextResponse.json(
-        { error: { message: "Validation error", issues: error.issues } },
+        { error: { message: error.message, code: error.code } },
+        { status: 400 }
+      );
+    }
+    if (error instanceof z.ZodError) {
+      const tableIssue = error.issues.find((i) =>
+        i.path.includes("table_number")
+      );
+      return NextResponse.json(
+        {
+          error: {
+            message:
+              tableIssue?.message ??
+              "Validation error — only whole-number table values are accepted.",
+            issues: error.issues,
+          },
+        },
         { status: 400 }
       );
     }

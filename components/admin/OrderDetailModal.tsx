@@ -119,6 +119,7 @@ export function OrderDetailModal({
               />
               <KitchenStatusSelect
                 value={kitchenSelectValue(order.order_status)}
+                paymentStatus={order.payment_status}
                 disabled={updating || locked}
                 onChange={onKitchenChange}
               />

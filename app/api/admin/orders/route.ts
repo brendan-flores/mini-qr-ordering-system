@@ -4,7 +4,7 @@ import { listAllOrders } from "@/lib/orders/order-service";
 import { getErrorMessage } from "@/lib/orders/supabase-order-errors";
 
 export async function GET(request: Request) {
-  if (!isAdminRequest(request as import("next/server").NextRequest)) {
+  if (!(await isAdminRequest(request as import("next/server").NextRequest))) {
     return adminUnauthorized();
   }
 

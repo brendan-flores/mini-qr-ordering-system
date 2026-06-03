@@ -39,6 +39,7 @@ import {
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { MENU_PAGE_PATH } from "@/lib/routes";
+import { validateIntegerTableNumber } from "@/lib/table";
 
 type GcashSimResult = "success" | "failure";
 
@@ -158,6 +159,14 @@ export default function CheckoutClient() {
     setSubmitting(true);
     setError(null);
     try {
+      if (serviceType === "dine_in") {
+        const tableCheck = validateIntegerTableNumber(tableNumber);
+        if (!tableCheck.ok) {
+          setError(tableCheck.message);
+          return;
+        }
+      }
+
       if (paymentMethod === "gcash") {
         const outcome = await runGcashPaymentFlow(setGcashOverlay, {
           failure: gcashResult === "failure",

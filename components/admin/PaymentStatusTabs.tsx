@@ -1,6 +1,13 @@
 "use client";
 
-export type PaymentTab = "Pending" | "Paid" | "Cancelled";
+import { PAYMENT_TAB_TONES } from "./adminStatusStyles";
+import { FilterTabs } from "./FilterTabs";
+
+export type PaymentTab =
+  | "Pending"
+  | "Paid"
+  | "Completed"
+  | "Cancelled";
 
 type TabConfig = {
   id: PaymentTab;
@@ -18,41 +25,14 @@ export function PaymentStatusTabs({
   onChange(tab: PaymentTab): void;
 }) {
   return (
-    <div
-      className="grid w-full grid-cols-3 gap-1.5 rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface-subtle)] p-1.5"
-      role="tablist"
-      aria-label="Filter orders by payment status"
-    >
-      {tabs.map((tab) => {
-        const selected = active === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => onChange(tab.id)}
-            className={[
-              "flex min-w-0 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-sm font-semibold transition sm:px-4 sm:py-3",
-              selected
-                ? "bg-[var(--color-primary)] text-white shadow-sm"
-                : "border border-[var(--color-surface-line)] bg-white text-zinc-800 hover:bg-zinc-50",
-            ].join(" ")}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={[
-                "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-xs font-bold",
-                selected
-                  ? "bg-white/25 text-white"
-                  : "bg-[var(--color-primary)] text-white",
-              ].join(" ")}
-            >
-              {tab.count}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+    <FilterTabs
+      tabs={tabs}
+      active={active}
+      onChange={onChange}
+      ariaLabel="Filter orders by payment status"
+      variant="payment"
+      getTone={(id) => PAYMENT_TAB_TONES[id]}
+      gridClassName="grid-cols-2 sm:grid-cols-4"
+    />
   );
 }

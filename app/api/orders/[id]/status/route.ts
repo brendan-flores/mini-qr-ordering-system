@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
+import { readRequestJson } from "@/lib/json";
 import { patchOrderStatus } from "@/lib/orders/order-service";
 import { UpdateOrderStatusSchema } from "../../../../../schemas/order.schemas.js";
 
@@ -8,7 +9,7 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdminRequest(request)) {
+  if (!(await isAdminRequest(request))) {
     return adminUnauthorized();
   }
 
@@ -21,7 +22,13 @@ export async function PATCH(
       );
     }
 
-    const body = (await request.json()) as unknown;
+    const body = await readRequestJson(request);
+    if (body === null) {
+      return NextResponse.json(
+        { error: { message: "Request body is required" } },
+        { status: 400 }
+      );
+    }
     const parsed = UpdateOrderStatusSchema.parse(body);
     const data = await patchOrderStatus(id, parsed.order_status);
 

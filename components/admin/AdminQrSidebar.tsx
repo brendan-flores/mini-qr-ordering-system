@@ -3,15 +3,6 @@
 import { TableQrGenerator } from "../qr/TableQrGenerator";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
-function downloadQr(dataUrl: string, table: string) {
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = `brencravings-table-${table.trim() || "1"}-qr.png`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
 export function AdminQrSidebar({ className = "" }: { className?: string }) {
   return (
     <section
@@ -47,16 +38,13 @@ export function AdminQrSidebar({ className = "" }: { className?: string }) {
         </div>
 
         <div className="border-t border-[var(--color-surface-line)] bg-white px-4 py-4">
-          <TableQrGenerator
-            layout="sidebar"
-            onDownload={(dataUrl, table) => downloadQr(dataUrl, table)}
-          />
+          <TableQrGenerator layout="sidebar" />
         </div>
 
         <ul className="flex flex-col gap-2 border-t border-[var(--color-surface-line)] bg-[#faf8f9] px-4 py-3.5">
           {[
             { step: "1", text: "Enter table number" },
-            { step: "2", text: "Download or copy link" },
+            { step: "2", text: "Preview & download PNG" },
             { step: "3", text: "Display QR at the table" },
           ].map((item) => (
             <li

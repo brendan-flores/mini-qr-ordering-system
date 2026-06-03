@@ -5,10 +5,23 @@ import type {
   Order,
   PaymentStatus,
 } from "../../client/services/orders";
-import { isOrderCancelled } from "../../lib/orders/order-rules";
+import {
+  effectivePaymentStatus,
+  isOrderCancelled,
+} from "../../lib/orders/order-rules";
 import { formatMoney } from "../cart/cartUtils";
-import { isOrderLocked, itemsSummary, orderLocationLabel } from "./adminUtils";
+import {
+  isOrderLocked,
+  itemsSummary,
+  orderLocationLabel,
+  shortOrderId,
+} from "./adminUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { OrderStatusBadge } from "./OrderStatusBadge";
+import {
+  FAILED_PAYMENT_BADGE,
+  PAYMENT_BADGE_STYLES,
+} from "./adminStatusStyles";
 import { KitchenStatusSelect, PaymentStatusSelect } from "./StatusSelect";
 
 function formatTime(iso: string) {
@@ -34,6 +47,32 @@ function kitchenSelectValue(
   return "received";
 }
 
+function PaymentBadge({ status }: { status: Order["payment_status"] }) {
+  const label = effectivePaymentStatus(status);
+  if (label === "Failed") {
+    return (
+      <span
+        className={[
+          "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
+          FAILED_PAYMENT_BADGE,
+        ].join(" ")}
+      >
+        Failed
+      </span>
+    );
+  }
+  return (
+    <span
+      className={[
+        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
+        PAYMENT_BADGE_STYLES[label],
+      ].join(" ")}
+    >
+      {label}
+    </span>
+  );
+}
+
 export function AdminOrderCard({
   order,
   updating,
@@ -49,42 +88,47 @@ export function AdminOrderCard({
   onPaymentChange(status: PaymentStatus): void;
   onKitchenChange(status: AdminKitchenStatus): void;
 }) {
-  const locationLabel = orderLocationLabel(order);
   const locked = readOnly || isOrderLocked(order) || isOrderCancelled(order);
+  const kitchenStatus = order.order_status ?? "received";
+  const locationLabel = orderLocationLabel(order);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+    <article className="flex flex-col overflow-hidden rounded-lg border border-[var(--color-surface-line)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-md sm:rounded-xl">
       <button
         type="button"
         onClick={onSelect}
-        className="cursor-pointer p-4 text-left transition hover:bg-[var(--color-surface-subtle)]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)]"
+        className="cursor-pointer p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)]/40 sm:p-3.5"
       >
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-lg font-bold text-[var(--color-primary)]">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-[var(--color-primary)] sm:text-base">
               {locationLabel}
             </p>
-            <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-              {formatTime(order.created_at)}
+            <p className="text-[10px] font-medium text-[var(--color-text-muted)] sm:text-[11px]">
+              {shortOrderId(order.id)}
             </p>
           </div>
-          <p className="text-lg font-bold text-zinc-900">
+          <p className="shrink-0 text-base font-bold tabular-nums tracking-tight text-[var(--foreground)] sm:text-lg">
             {formatMoney(order.total_amount)}
           </p>
         </div>
 
-        <p className="mt-3 line-clamp-2 text-sm leading-snug text-zinc-700">
+        <div className="mt-2 flex flex-wrap items-center gap-1 sm:mt-2.5 sm:gap-1.5">
+          <PaymentBadge status={order.payment_status} />
+          <OrderStatusBadge status={kitchenStatus} />
+        </div>
+
+        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-600 sm:mt-3 sm:text-sm">
           {itemsSummary(order)}
         </p>
 
-        <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)]">
-          <MaterialIcon name="touch_app" filled={false} className="text-base" />
-          Tap for full details
+        <p className="mt-2 text-[10px] text-[var(--color-text-muted)] sm:mt-2.5 sm:text-xs">
+          {formatTime(order.created_at)}
         </p>
       </button>
 
       <div
-        className="grid grid-cols-2 gap-2 border-t border-[var(--color-surface-line)] bg-[var(--color-surface-subtle)]/40 p-3"
+        className="grid grid-cols-2 gap-2 border-t border-[var(--color-surface-line)] bg-[var(--color-surface-subtle)]/50 px-2.5 py-2.5 sm:gap-3 sm:px-3 sm:py-3"
         onClick={(e) => e.stopPropagation()}
       >
         <PaymentStatusSelect
@@ -94,10 +138,18 @@ export function AdminOrderCard({
         />
         <KitchenStatusSelect
           value={kitchenSelectValue(order.order_status)}
+          paymentStatus={order.payment_status}
           disabled={updating || locked}
           onChange={onKitchenChange}
         />
       </div>
+
+      {!locked ? (
+        <p className="flex items-center justify-center gap-1 border-t border-[var(--color-surface-line)]/80 py-2 text-[10px] font-medium text-[var(--color-text-muted)]">
+          <MaterialIcon name="open_in_full" filled={false} className="text-sm opacity-60" />
+          Tap card for details
+        </p>
+      ) : null}
     </article>
   );
 }

@@ -1,13 +1,11 @@
 import type { OrderStatus } from "../../client/services/orders";
 import { orderStatusLabel } from "../../client/services/orders";
+import { KITCHEN_BADGE_STYLES } from "./adminStatusStyles";
 
 const styles: Record<OrderStatus, string> = {
-  received: "bg-sky-100 text-sky-900",
-  preparing: "bg-amber-100 text-amber-900",
-  serving: "bg-violet-100 text-violet-900",
-  served: "bg-emerald-100 text-emerald-900",
-  completed: "bg-emerald-100 text-emerald-900",
-  cancelled: "bg-zinc-200 text-zinc-700",
+  ...KITCHEN_BADGE_STYLES,
+  cancelled:
+    "bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] ring-[var(--color-surface-line)]",
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
@@ -15,7 +13,7 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
     <span
       className={[
-        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
         styles[value],
       ].join(" ")}
     >

@@ -36,6 +36,73 @@
   --color-text-muted: #5c3f40;
 }
 
+.admin-login-page .admin-login-bg-float {
+  animation: admin-login-float-bg 20s ease-in-out infinite;
+}
+
+@keyframes admin-login-float-bg {
+  0% {
+    transform: scale(1.1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.15) translate(-10px, -10px);
+  }
+  100% {
+    transform: scale(1.1) translate(0, 0);
+  }
+}
+
+.admin-login-page .admin-login-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s ease;
+}
+
+.admin-login-page .admin-login-glass-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.admin-login-page .admin-login-glass-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.admin-login-page .admin-login-brand-gradient {
+  background: linear-gradient(135deg, #78001f 0%, #a3002d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.admin-login-page .admin-login-input:focus {
+  border-color: #a3002d !important;
+  box-shadow: 0 0 0 4px rgba(163, 0, 45, 0.1) !important;
+  outline: none;
+}
+
+.admin-login-page .admin-login-logo-enter {
+  animation: admin-login-logo-enter 0.7s ease-out both;
+}
+
+@keyframes admin-login-logo-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-qr-panel {
   animation: admin-qr-enter 0.45s ease-out both;
 }

@@ -10,26 +10,24 @@ import {
   type PaymentStatus,
 } from "../../client/services/orders";
 import {
+  canMarkKitchenCompleted,
   effectivePaymentStatus,
   isOrderCancelled,
+  KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE,
+  matchesAdminPaymentTab,
 } from "../../lib/orders/order-rules";
 import { notifyOrderUpdated } from "../../lib/order-events";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminShell } from "./AdminShell";
+import { LiveOrdersHeader } from "./LiveOrdersHeader";
+import { LiveOrdersSection } from "./LiveOrdersSection";
 import { OrderDetailModal } from "./OrderDetailModal";
 import { PaymentStatusTabs, type PaymentTab } from "./PaymentStatusTabs";
 import {
-  groupOrdersByTable,
-  sortedTableKeys,
-  TableOrdersSection,
-} from "./TableOrdersSection";
+  FlatLiveOrdersBoard,
+  KitchenLiveOrdersBoard,
+} from "./LiveOrdersBoard";
 import { isOrderLocked } from "./adminUtils";
-
-function matchesTab(order: Order, tab: PaymentTab) {
-  if (tab === "Cancelled") return isOrderCancelled(order);
-  if (isOrderCancelled(order)) return false;
-  return effectivePaymentStatus(order.payment_status) === tab;
-}
 
 export function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,9 +81,12 @@ export function AdminDashboard() {
 
   const totals = useMemo(
     () => ({
-      Pending: orders.filter((o) => matchesTab(o, "Pending")).length,
-      Paid: orders.filter((o) => matchesTab(o, "Paid")).length,
-      Cancelled: orders.filter((o) => matchesTab(o, "Cancelled")).length,
+      Pending: orders.filter((o) => matchesAdminPaymentTab(o, "Pending")).length,
+      Paid: orders.filter((o) => matchesAdminPaymentTab(o, "Paid")).length,
+      Completed: orders.filter((o) => matchesAdminPaymentTab(o, "Completed"))
+        .length,
+      Cancelled: orders.filter((o) => matchesAdminPaymentTab(o, "Cancelled"))
+        .length,
     }),
     [orders]
   );
@@ -96,6 +97,7 @@ export function AdminDashboard() {
         [
           { id: "Pending" as const, label: "Pending" },
           { id: "Paid" as const, label: "Paid" },
+          { id: "Completed" as const, label: "Completed" },
           { id: "Cancelled" as const, label: "Cancelled" },
         ] as const
       ).map((t) => ({ ...t, count: totals[t.id] })),
@@ -103,17 +105,19 @@ export function AdminDashboard() {
   );
 
   const filtered = useMemo(
-    () => orders.filter((o) => matchesTab(o, activeTab)),
+    () => orders.filter((o) => matchesAdminPaymentTab(o, activeTab)),
     [orders, activeTab]
   );
 
-  const byTable = useMemo(() => groupOrdersByTable(filtered), [filtered]);
-  const tableKeys = useMemo(() => sortedTableKeys(byTable), [byTable]);
+  const showKitchenBoard =
+    activeTab === "Pending" || activeTab === "Paid";
 
   const emptyMessage =
     activeTab === "Cancelled"
       ? "No cancelled orders"
-      : `No ${activeTab.toLowerCase()} orders`;
+      : activeTab === "Completed"
+        ? "No completed orders"
+        : `No ${activeTab.toLowerCase()} orders`;
 
   function patchOrderInList(data: Order) {
     setOrders((prev) =>
@@ -134,7 +138,7 @@ export function AdminDashboard() {
     try {
       const { data } = await updateOrderPaymentStatus(order.id, payment_status);
       patchOrderInList(data);
-      if (!matchesTab(data, activeTab)) {
+      if (!matchesAdminPaymentTab(data, activeTab)) {
         setSelectedOrder(null);
       }
     } catch (e: unknown) {
@@ -152,12 +156,22 @@ export function AdminDashboard() {
   ) {
     if (isOrderLocked(order) || isOrderCancelled(order)) return;
     if (order_status === (order.order_status ?? "received")) return;
+    if (
+      order_status === "completed" &&
+      !canMarkKitchenCompleted(order)
+    ) {
+      setError(KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE);
+      return;
+    }
 
     setUpdating(`kitchen-${order.id}`);
     setError(null);
     try {
       const { data } = await updateOrderStatus(order.id, order_status);
       patchOrderInList(data);
+      if (!matchesAdminPaymentTab(data, activeTab)) {
+        setSelectedOrder(null);
+      }
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Failed to update kitchen status";
@@ -173,75 +187,84 @@ export function AdminDashboard() {
       updating === `kitchen-${selectedOrder.id}`);
 
   return (
-    <AdminShell onRefresh={refresh}>
-      <main className="mx-auto max-w-[1440px] p-4 pb-28 lg:p-6 lg:pb-6">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--foreground)] lg:text-3xl">
-              Live Orders
-            </h1>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Payment: Pending or Paid. Kitchen: mark Completed when done.
-              Cancelled orders appear when customers cancel.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={refresh}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-          >
-            <MaterialIcon name="refresh" filled={false} className="text-lg" />
-            Refresh
-          </button>
-        </div>
-
-        <section className="mb-8 w-full">
-          <PaymentStatusTabs
-            tabs={paymentTabs}
-            active={activeTab}
-            onChange={setActiveTab}
-          />
-        </section>
-
-        {error ? (
-          <div className="mb-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-800">
-            {error}
-          </div>
-        ) : null}
-
-        {loading ? (
-          <div className="rounded-2xl border border-[var(--color-surface-line)] bg-white p-12 text-center text-sm text-zinc-600">
-            Loading orders…
-          </div>
-        ) : tableKeys.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--color-surface-line)] bg-white p-12 text-center">
-            <MaterialIcon
-              name="receipt_long"
-              filled={false}
-              className="mx-auto text-5xl text-zinc-300"
-            />
-            <p className="mt-4 font-semibold text-zinc-900">{emptyMessage}</p>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              {activeTab === "Cancelled"
-                ? "Orders cancelled by customers will show here."
-                : "New orders will appear here grouped by table."}
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-6">
-            {tableKeys.map((table) => (
-              <TableOrdersSection
-                key={table}
-                orders={byTable.get(table)!}
-                updatingId={updating}
-                readOnly={activeTab === "Cancelled"}
-                onSelectOrder={setSelectedOrder}
-                onPaymentChange={setPayment}
-                onKitchenChange={setKitchenStatus}
+    <AdminShell>
+      <main className="mx-auto max-w-[1440px] space-y-4 p-3 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:p-4 sm:pb-24 lg:space-y-6 lg:p-6 lg:pb-6">
+        <LiveOrdersSection
+          header={
+            <LiveOrdersHeader activeTab={activeTab} />
+          }
+          filters={
+            <div className="space-y-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]/70">
+                Payment stage
+              </p>
+              <PaymentStatusTabs
+                tabs={paymentTabs}
+                active={activeTab}
+                onChange={setActiveTab}
               />
-            ))}
-          </div>
-        )}
+            </div>
+          }
+        >
+          {error ? (
+            <div
+              className="mx-3 mb-3 mt-3 flex items-start gap-2 rounded-lg border border-rose-100 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-800 sm:mx-4 sm:text-sm"
+              role="alert"
+            >
+              <MaterialIcon
+                name="error_outline"
+                filled={false}
+                className="shrink-0 text-base opacity-80"
+              />
+              <span>{error}</span>
+            </div>
+          ) : null}
+
+          {loading ? (
+            <div className="px-4 py-12 text-center sm:py-14">
+              <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] sm:h-7 sm:w-7" />
+              <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                Loading orders…
+              </p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-4 py-12 text-center sm:px-6 sm:py-14">
+              <MaterialIcon
+                name="receipt_long"
+                filled={false}
+                className="mx-auto text-3xl text-zinc-200/90 sm:text-4xl"
+              />
+              <p className="mt-3 text-sm font-medium text-zinc-800">
+                {emptyMessage}
+              </p>
+              <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[var(--color-text-muted)]/80">
+                {activeTab === "Cancelled"
+                  ? "Orders cancelled by customers will show here."
+                  : "New orders appear when they match this payment stage."}
+              </p>
+            </div>
+          ) : showKitchenBoard ? (
+            <KitchenLiveOrdersBoard
+              key={activeTab}
+              orders={filtered}
+              updatingId={updating}
+              onSelectOrder={setSelectedOrder}
+              onPaymentChange={setPayment}
+              onKitchenChange={setKitchenStatus}
+              embedded
+            />
+          ) : (
+            <FlatLiveOrdersBoard
+              orders={filtered}
+              updatingId={updating}
+              readOnly={activeTab === "Cancelled"}
+              onSelectOrder={setSelectedOrder}
+              onPaymentChange={setPayment}
+              onKitchenChange={setKitchenStatus}
+              embedded
+            />
+          )}
+        </LiveOrdersSection>
       </main>
 
       {selectedOrder ? (
