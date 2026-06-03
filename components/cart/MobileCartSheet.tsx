@@ -9,6 +9,7 @@ import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
+import { useTable } from "../table/TableProvider";
 import { useCart } from "./CartContext";
 
 export function MobileCartSheet({
@@ -19,6 +20,7 @@ export function MobileCartSheet({
   onClose(): void;
 }) {
   const router = useRouter();
+  const { hasTableFromQr, tableNumber } = useTable();
   const { items, pieceCount, setQty, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +30,12 @@ export function MobileCartSheet({
   function onCheckout() {
     if (items.length === 0) return;
     onClose();
-    router.push(cartCheckoutUrl(MENU_PAGE_PATH));
+    router.push(
+      cartCheckoutUrl(
+        MENU_PAGE_PATH,
+        hasTableFromQr ? tableNumber : undefined
+      )
+    );
   }
 
   useEffect(() => {

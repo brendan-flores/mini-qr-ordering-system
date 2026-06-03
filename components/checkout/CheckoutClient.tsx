@@ -24,6 +24,7 @@ import { useCart } from "../cart/CartContext";
 import { cartSubtotal, cartTotal, formatMoney } from "../cart/cartUtils";
 import { BrandLogo } from "../brand/BrandLogo";
 import {
+  CheckoutSectionHeader,
   CheckoutStepper,
   GcashLogoMark,
   OrderLineItem,
@@ -39,7 +40,10 @@ import {
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { MENU_PAGE_PATH } from "@/lib/routes";
-import { validateIntegerTableNumber } from "@/lib/table";
+import {
+  allowsDevDineInWithoutQr,
+  validateIntegerTableNumber,
+} from "@/lib/table";
 
 type GcashSimResult = "success" | "failure";
 
@@ -51,13 +55,19 @@ export default function CheckoutClient() {
 
   const { items: cartItems, clear: clearCart } = useCart();
   const { hasTableFromQr, tableNumber } = useTable();
+  const canChooseDineIn = hasTableFromQr || allowsDevDineInWithoutQr();
+  const dineInTableNumber = hasTableFromQr
+    ? tableNumber
+    : allowsDevDineInWithoutQr()
+      ? "1"
+      : "";
   const [order, setOrder] = useState<Order | null>(() => getStoredOrder());
   const [loading, setLoading] = useState(!!orderId);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [serviceType, setServiceType] = useState<ServiceType>(() =>
-    hasTableFromQr ? "dine_in" : "takeout"
+    canChooseDineIn ? "dine_in" : "takeout"
   );
   const [gcashResult, setGcashResult] = useState<GcashSimResult>("success");
   const [gcashOverlay, setGcashOverlay] = useState<GcashOverlayState | null>(
@@ -113,14 +123,10 @@ export default function CheckoutClient() {
   }
 
   useEffect(() => {
-    if (hasTableFromQr) {
-      setServiceType((prev) => (prev === "takeout" ? "dine_in" : prev));
-      return;
-    }
-    if (serviceType === "dine_in") {
+    if (!canChooseDineIn) {
       setServiceType("takeout");
     }
-  }, [hasTableFromQr, serviceType]);
+  }, [canChooseDineIn]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -174,10 +180,10 @@ export default function CheckoutClient() {
     setError(null);
     try {
       const effectiveServiceType: ServiceType =
-        hasTableFromQr && serviceType === "dine_in" ? "dine_in" : "takeout";
+        canChooseDineIn && serviceType === "dine_in" ? "dine_in" : "takeout";
 
       if (effectiveServiceType === "dine_in") {
-        const tableCheck = validateIntegerTableNumber(tableNumber);
+        const tableCheck = validateIntegerTableNumber(dineInTableNumber);
         if (!tableCheck.ok) {
           setError(tableCheck.message);
           return;
@@ -207,7 +213,7 @@ export default function CheckoutClient() {
         payment_status: paymentMethod === "gcash" ? payment_status : undefined,
         service_type: effectiveServiceType,
         table_number:
-          effectiveServiceType === "dine_in" ? tableNumber : undefined,
+          effectiveServiceType === "dine_in" ? dineInTableNumber : undefined,
       });
       clearCart();
       goToConfirmation(data);
@@ -287,7 +293,7 @@ export default function CheckoutClient() {
     !(isCartMode && cartLineItems.length === 0);
 
   return (
-    <div className="min-h-screen bg-[var(--background)] pb-28 lg:pb-0">
+    <div className="min-h-screen bg-[var(--background)] lg:pb-0">
       <header className="checkout-hero-glow border-b border-[var(--color-surface-line)]">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <button
@@ -307,7 +313,7 @@ export default function CheckoutClient() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 pb-8 sm:px-6 sm:py-8">
         {showCheckoutContent ? (
           <div className="checkout-animate-in checkout-animate-in-delay-1 mb-8 rounded-2xl border border-[var(--color-surface-line)] bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-5">
             <CheckoutStepper activeStep={2} completedStep={1} />
@@ -348,22 +354,12 @@ export default function CheckoutClient() {
           <div className="checkout-animate-in checkout-animate-in-delay-2 grid gap-6 lg:grid-cols-12 lg:gap-8">
             <section className="space-y-5 lg:col-span-7">
               <div className="overflow-hidden rounded-3xl border border-[var(--color-surface-line)] bg-white shadow-[0_12px_40px_rgba(184,0,53,0.08)]">
-                <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-[var(--color-primary-soft)]/50 to-white px-5 py-4 sm:px-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-bold text-zinc-900 sm:text-xl">
-                        Order summary
-                      </h2>
-                      <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                        {totalQty} {totalQty === 1 ? "piece" : "pieces"} ·{" "}
-                        {displayItems.length}{" "}
-                        {displayItems.length === 1 ? "dish" : "dishes"}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-bold text-white">
-                      Your items
-                    </span>
-                  </div>
+                <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-[var(--color-primary-soft)]/50 to-white px-4 py-4 sm:px-6">
+                  <CheckoutSectionHeader
+                    title="Order summary"
+                    subtitle={`${totalQty} ${totalQty === 1 ? "piece" : "pieces"} · ${displayItems.length} ${displayItems.length === 1 ? "dish" : "dishes"}`}
+                    badge="Your items"
+                  />
                 </div>
                 <div className="p-5 sm:p-6">
                   <ul className="flex flex-col gap-3">
@@ -380,31 +376,31 @@ export default function CheckoutClient() {
 
               {isCartMode ? (
                 <div className="overflow-hidden rounded-3xl border border-[var(--color-surface-line)] bg-white shadow-[0_12px_40px_rgba(184,0,53,0.08)]">
-                  <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-[var(--color-primary-soft)]/50 to-white px-5 py-4 sm:px-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-bold text-zinc-900 sm:text-xl">
-                          Dining option
-                        </h2>
-                        <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                          {serviceType === "dine_in" && hasTableFromQr
+                  <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-[var(--color-primary-soft)]/50 to-white px-4 py-4 sm:px-6">
+                    <CheckoutSectionHeader
+                      title="Dining option"
+                      subtitle={
+                        serviceType === "dine_in" && canChooseDineIn
+                          ? hasTableFromQr
                             ? `Eating at Table ${tableNumber}`
-                            : "Pick up when your order is ready"}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-bold text-white">
-                        Dine in / Take out
-                      </span>
-                    </div>
+                            : "Eating in — we'll serve your order at your table"
+                          : "Pick up when your order is ready"
+                      }
+                      badge="Dine in · Take out"
+                    />
                   </div>
-                  <div className="flex flex-col gap-3 p-5 sm:p-6">
-                    {hasTableFromQr ? (
+                  <div className="flex flex-col gap-3 p-4 sm:p-6">
+                    {canChooseDineIn ? (
                       <PaymentMethodCard
                         selected={serviceType === "dine_in"}
                         onSelect={() => setServiceType("dine_in")}
                         accent="brand"
                         title="Dine in"
-                        description={`We serve you at Table ${tableNumber}`}
+                        description={
+                          hasTableFromQr
+                            ? `We serve you at Table ${tableNumber}`
+                            : "Enjoy your meal in the restaurant — scan a table QR to show your table number"
+                        }
                         icon={
                           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-white shadow-md">
                             <MaterialIcon name="restaurant" className="text-2xl" />
@@ -418,7 +414,7 @@ export default function CheckoutClient() {
                       </p>
                     )}
                     <PaymentMethodCard
-                      selected={serviceType === "takeout" || !hasTableFromQr}
+                      selected={serviceType === "takeout"}
                       onSelect={() => setServiceType("takeout")}
                       accent="brand"
                       title="Take out"
@@ -461,23 +457,16 @@ export default function CheckoutClient() {
                 </div>
 
                 <div className="overflow-hidden rounded-3xl border border-[var(--color-surface-line)] bg-white shadow-[0_16px_48px_rgba(0,0,0,0.08)]">
-                  <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-white to-[var(--color-surface-subtle)] px-5 py-4 sm:px-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-bold text-zinc-900">
-                          Payment
-                        </h2>
-                        <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                          All transactions are encrypted
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-[#007dfe]/10 px-3 py-1 text-xs font-bold text-[#007dfe]">
-                        Choose payment
-                      </span>
-                    </div>
+                  <div className="border-b border-[var(--color-surface-line)] bg-gradient-to-r from-white to-[var(--color-surface-subtle)] px-4 py-4 sm:px-6">
+                    <CheckoutSectionHeader
+                      title="Payment"
+                      subtitle="All transactions are encrypted"
+                      badge="Choose payment"
+                      badgeTone="gcash"
+                    />
                   </div>
 
-                  <div className="p-5 sm:p-6">
+                  <div className="p-4 pb-6 sm:p-6 sm:pb-6">
                     <div className="space-y-4">
                         {isCartMode ? (
                           <div className="flex flex-col gap-3">
@@ -493,7 +482,7 @@ export default function CheckoutClient() {
                               description={
                                 serviceType === "takeout"
                                   ? "Pay with cash at the counter when you pick up"
-                                  : "Pay with cash when staff serves your table"
+                                  : "Pay with cash when staff serves your table or after you finish eating."
                               }
                               icon={
                                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-white shadow-md">
@@ -507,7 +496,7 @@ export default function CheckoutClient() {
                               accent="gcash"
                               title="GCash"
                               description="Fast mobile wallet payment — confirm in your GCash app"
-                              icon={<GcashLogoMark size={48} />}
+                              icon={<GcashLogoMark size={44} />}
                             />
                           </div>
                         ) : null}
@@ -593,7 +582,7 @@ export default function CheckoutClient() {
                         {canSubmit ? (
                           <Button
                             type="button"
-                            className="hidden w-full py-3.5 text-base shadow-[0_8px_28px_rgba(184,0,53,0.3)] lg:flex"
+                            className="w-full py-3.5 text-base shadow-[0_8px_28px_rgba(184,0,53,0.3)]"
                             disabled={submitting}
                             onClick={handlePrimaryAction}
                           >
@@ -620,29 +609,6 @@ export default function CheckoutClient() {
           </div>
         )}
       </main>
-
-      {showCheckoutContent && canSubmit ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-surface-line)] bg-white/95 p-4 shadow-[0_-12px_40px_rgba(0,0,0,0.1)] backdrop-blur-md lg:hidden">
-          <div className="mx-auto flex max-w-6xl items-center gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
-                Total
-              </p>
-              <p className="text-xl font-extrabold text-[var(--color-primary)]">
-                {formatMoney(displayTotal)}
-              </p>
-            </div>
-            <Button
-              type="button"
-              className="min-w-[160px] shrink-0 py-3.5 shadow-[0_8px_24px_rgba(184,0,53,0.25)]"
-              disabled={submitting}
-              onClick={handlePrimaryAction}
-            >
-              {primaryLabel}
-            </Button>
-          </div>
-        </div>
-      ) : null}
 
       {gcashOverlay ? (
         <GcashPaymentOverlay state={gcashOverlay} amount={displayTotal} />

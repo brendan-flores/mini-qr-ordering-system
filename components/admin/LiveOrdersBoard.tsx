@@ -103,6 +103,7 @@ export function KitchenLiveOrdersBoard({
   updatingId,
   readOnly = false,
   embedded = false,
+  progressOrder = null,
   onSelectOrder,
   onPaymentChange,
   onKitchenChange,
@@ -111,6 +112,7 @@ export function KitchenLiveOrdersBoard({
   updatingId: string | null;
   readOnly?: boolean;
   embedded?: boolean;
+  progressOrder?: Order | null;
   onSelectOrder(order: Order): void;
   onPaymentChange(order: Order, status: PaymentStatus): void;
   onKitchenChange(order: Order, status: AdminKitchenStatus): void;
@@ -144,6 +146,7 @@ export function KitchenLiveOrdersBoard({
         active={activeKitchen}
         onChange={setActiveKitchen}
         fullWidth
+        progressOrder={progressOrder}
       />
 
       <div

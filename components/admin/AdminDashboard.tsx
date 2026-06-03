@@ -248,6 +248,7 @@ export function AdminDashboard() {
               key={activeTab}
               orders={filtered}
               updatingId={updating}
+              progressOrder={selectedOrder}
               onSelectOrder={setSelectedOrder}
               onPaymentChange={setPayment}
               onKitchenChange={setKitchenStatus}

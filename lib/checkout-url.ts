@@ -6,8 +6,15 @@ export function checkoutUrl(orderId: string | number, returnTo: string) {
   return `/checkout?${params.toString()}`;
 }
 
-export function cartCheckoutUrl(returnTo: string) {
+export function cartCheckoutUrl(
+  returnTo: string,
+  tableNumber?: string | null
+) {
   const params = new URLSearchParams({ return: returnTo });
+  const table = tableNumber?.trim();
+  if (table && /^\d+$/.test(table)) {
+    params.set("table", table);
+  }
   return `/checkout?${params.toString()}`;
 }
 

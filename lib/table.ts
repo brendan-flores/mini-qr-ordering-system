@@ -13,6 +13,11 @@ export function isLocalhostClient(): boolean {
   return host === "localhost" || host === "127.0.0.1";
 }
 
+/** Local dev: dine-in at checkout without a QR scan (no table badge on menu). */
+export function allowsDevDineInWithoutQr(): boolean {
+  return process.env.NODE_ENV === "development" && isLocalhostClient();
+}
+
 export function isMenuPagePath(pathname: string): boolean {
   return (
     pathname === MENU_PAGE_PATH || pathname.startsWith(`${MENU_PAGE_PATH}/`)

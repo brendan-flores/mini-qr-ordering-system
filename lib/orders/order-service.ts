@@ -377,7 +377,9 @@ export async function cancelOrderByCustomer(
   }
   if (
     existing.order_status === "completed" ||
-    existing.order_status === "served"
+    existing.order_status === "served" ||
+    existing.order_status === "serving" ||
+    existing.order_status === "preparing"
   ) {
     const err = new Error("This order can no longer be cancelled");
     (err as Error & { status: number }).status = 403;

@@ -179,6 +179,48 @@ export function OrderTotalsBreakdown({
   );
 }
 
+export function CheckoutSectionHeader({
+  title,
+  subtitle,
+  badge,
+  badgeTone = "brand",
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  badgeTone?: "brand" | "gcash";
+}) {
+  const badgeClass =
+    badgeTone === "gcash"
+      ? "bg-[#007dfe]/10 text-[#007dfe]"
+      : "bg-[var(--color-primary)] text-white";
+
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1 pr-2">
+        <h2 className="text-lg font-bold leading-tight text-zinc-900 sm:text-xl">
+          {title}
+        </h2>
+        {subtitle ? (
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-text-muted)]">
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
+      {badge ? (
+        <span
+          className={[
+            "inline-flex shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold leading-tight",
+            badgeClass,
+          ].join(" ")}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function PaymentMethodCard({
   selected,
   onSelect,
@@ -208,26 +250,30 @@ export function PaymentMethodCard({
       type="button"
       onClick={onSelect}
       className={[
-        "relative flex w-full cursor-pointer items-start gap-4 rounded-2xl border-2 p-4 text-left transition",
+        "relative grid w-full cursor-pointer grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-2xl border-2 p-4 text-left transition active:scale-[0.99] sm:gap-x-4 sm:p-4",
+        selected ? "pr-11 sm:pr-12" : "pr-4",
         border,
       ].join(" ")}
     >
       {selected ? (
         <span
           className={[
-            "absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-white",
+            "absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-sm",
             accent === "gcash" ? "bg-[#007dfe]" : "bg-[var(--color-primary)]",
           ].join(" ")}
+          aria-hidden
         >
-          <MaterialIcon name="check" filled className="text-sm" />
+          <MaterialIcon name="check" filled className="text-base" />
         </span>
       ) : null}
-      {icon}
-      <span className="min-w-0 pr-6">
-        <span className="block text-base font-bold text-zinc-900">{title}</span>
-        <span className="mt-1 block text-sm leading-snug text-[var(--color-text-muted)]">
-          {description}
-        </span>
+      <div className="row-span-2 self-start [&_img]:max-h-12 [&_img]:max-w-12">
+        {icon}
+      </div>
+      <span className="min-w-0 text-base font-bold leading-snug text-zinc-900">
+        {title}
+      </span>
+      <span className="min-w-0 text-sm leading-relaxed text-[var(--color-text-muted)]">
+        {description}
       </span>
     </button>
   );
@@ -243,24 +289,38 @@ export function PaymentHints({
   if (method === "cod") {
     const isTakeout = serviceType === "takeout";
     return (
-      <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-white p-4">
-        <p className="flex items-center gap-2 text-sm font-bold text-amber-950">
-          <MaterialIcon name="info" filled={false} className="text-lg" />
-          {isTakeout ? "Pay at the counter" : "Pay at table"}
+      <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-white p-4 sm:p-4">
+        <p className="flex items-start gap-2 text-sm font-bold leading-snug text-amber-950">
+          <MaterialIcon
+            name="info"
+            filled={false}
+            className="mt-0.5 shrink-0 text-lg"
+          />
+          <span className="min-w-0">
+            {isTakeout ? "Pay at the counter" : "Pay at table"}
+            {!isTakeout ? (
+              <span className="mt-1.5 block font-normal text-amber-900/90">
+                Pay with cash when staff serves your table or after you finish
+                eating.
+              </span>
+            ) : null}
+          </span>
         </p>
-        <ul className="mt-3 space-y-2 text-sm text-amber-900/90">
+        <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-amber-900/90">
           <li className="flex gap-2">
             <span className="font-bold text-[var(--color-primary)]">1.</span>
             We send your order to the kitchen after you confirm.
           </li>
+          {isTakeout ? (
+            <li className="flex gap-2">
+              <span className="font-bold text-[var(--color-primary)]">2.</span>
+              Pay with cash at the counter when you pick up your order.
+            </li>
+          ) : null}
           <li className="flex gap-2">
-            <span className="font-bold text-[var(--color-primary)]">2.</span>
-            {isTakeout
-              ? "Pay with cash at the counter when you pick up your order."
-              : "Pay with cash when staff serves your table."}
-          </li>
-          <li className="flex gap-2">
-            <span className="font-bold text-[var(--color-primary)]">3.</span>
+            <span className="font-bold text-[var(--color-primary)]">
+              {isTakeout ? "3." : "2."}
+            </span>
             Exact change is appreciated.
           </li>
         </ul>

@@ -12,6 +12,7 @@ import {
 import { fetchOrdersFromHistory } from "../../client/services/order-history-fetch";
 import {
   canCustomerCancel,
+  showCustomerCancelButton,
   effectivePaymentStatus,
   isOrderCancelled,
   orderNeedsStatusPolling,
@@ -141,12 +142,17 @@ function OrderCard({
             Try payment again
           </Link>
         ) : null}
-        {canCustomerCancel(order) && onCancel ? (
+        {showCustomerCancelButton(order) && onCancel ? (
           <button
             type="button"
-            disabled={cancelling}
+            disabled={cancelling || !canCustomerCancel(order)}
+            title={
+              canCustomerCancel(order)
+                ? undefined
+                : "Your order is already being prepared and can no longer be cancelled."
+            }
             onClick={() => onCancel(order)}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-rose-50"
           >
             {cancelling ? "Cancelling…" : "Cancel order"}
           </button>
@@ -180,6 +186,7 @@ export function OrdersList({
   const refreshing = useRef(false);
 
   async function handleCancel(order: Order) {
+    if (!canCustomerCancel(order)) return;
     if (
       !window.confirm(
         "Cancel this order? It will be removed from the kitchen queue."

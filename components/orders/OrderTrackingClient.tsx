@@ -18,6 +18,7 @@ import {
 } from "@/lib/customer-order-flow";
 import {
   canCustomerCancel,
+  showCustomerCancelButton,
   orderNeedsStatusPolling,
 } from "@/lib/orders/order-rules";
 import { ORDER_UPDATED_EVENT } from "@/lib/order-events";
@@ -97,7 +98,7 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
   }, [order, loadOrder]);
 
   async function handleCancel() {
-    if (!order) return;
+    if (!order || !canCustomerCancel(order)) return;
     if (
       !window.confirm(
         "Cancel this order? It will be removed from the kitchen queue."
@@ -291,12 +292,17 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
               </Link>
             </div>
 
-            {canCustomerCancel(order) ? (
+            {showCustomerCancelButton(order) ? (
               <button
                 type="button"
-                disabled={cancelling}
+                disabled={cancelling || !canCustomerCancel(order)}
+                title={
+                  canCustomerCancel(order)
+                    ? undefined
+                    : "Your order is already being prepared and can no longer be cancelled."
+                }
                 onClick={() => void handleCancel()}
-                className="w-full cursor-pointer rounded-xl border border-rose-200 bg-rose-50 py-3 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 disabled:opacity-50"
+                className="w-full rounded-xl border border-rose-200 bg-rose-50 py-3 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-rose-50"
               >
                 {cancelling ? "Cancelling…" : "Cancel order"}
               </button>

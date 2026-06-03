@@ -14,6 +14,7 @@ import { effectivePaymentStatus, isOrderCancelled } from "../../lib/orders/order
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { isOrderLocked, orderLocationLabel, shortOrderId } from "./adminUtils";
+import { AdminKitchenProgress } from "./AdminKitchenProgress";
 import { PaymentMethodBadge } from "./PaymentMethodBadge";
 import { KitchenStatusSelect, PaymentStatusSelect } from "./StatusSelect";
 
@@ -135,6 +136,12 @@ export function OrderDetailModal({
             <p className="mt-2 text-xs text-[var(--color-text-muted)]">
               Payment: {effectivePaymentStatus(order.payment_status)}
             </p>
+          ) : null}
+
+          {!isOrderCancelled(order) ? (
+            <div className="mt-4">
+              <AdminKitchenProgress order={order} />
+            </div>
           ) : null}
 
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">

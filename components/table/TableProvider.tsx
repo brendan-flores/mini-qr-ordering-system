@@ -56,7 +56,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
       markOrderingSessionFromQr(tableFromUrl);
       return;
     }
-    if (allowsMenuOrderingWithoutTable(pathname)) {
+    if (allowsMenuOrderingWithoutTable(pathname) && !hasTableFromQr()) {
       markMenuOrderingSession();
     }
   }, [tableFromUrl, pathname]);

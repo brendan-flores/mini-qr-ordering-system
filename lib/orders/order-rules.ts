@@ -68,10 +68,23 @@ export function matchesAdminPaymentTab(
   return payment === "Pending";
 }
 
+/** Customer may cancel only before kitchen starts preparing. */
 export function canCustomerCancel(order: OrderLike) {
   if (isOrderCancelled(order) || isKitchenCompleted(order)) return false;
-  const kitchen = order.order_status ?? "received";
-  if (kitchen === "served") return false;
   if (order.payment_status === "Failed") return false;
-  return true;
+  const kitchen = order.order_status ?? "received";
+  return kitchen === "received";
+}
+
+/** Show cancel control on tracking UI (disabled when kitchen has started). */
+export function showCustomerCancelButton(order: OrderLike) {
+  if (isOrderCancelled(order) || isKitchenCompleted(order)) return false;
+  if (order.payment_status === "Failed") return false;
+  const kitchen = order.order_status ?? "received";
+  return (
+    kitchen === "received" ||
+    kitchen === "preparing" ||
+    kitchen === "serving" ||
+    kitchen === "served"
+  );
 }

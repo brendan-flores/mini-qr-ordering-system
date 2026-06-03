@@ -1,10 +1,11 @@
 "use client";
 
 import type { OrderStatus } from "@/client/services/orders";
+import { CUSTOMER_KITCHEN_STEPS } from "@/lib/customer-order-flow";
 import {
-  CUSTOMER_KITCHEN_STEPS,
-  customerKitchenStepIndex,
-} from "@/lib/customer-order-flow";
+  getKitchenStepProgress,
+  kitchenStepState,
+} from "@/lib/kitchen-step-progress";
 import { isOrderCancelled } from "@/lib/orders/order-rules";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
@@ -19,7 +20,7 @@ export function OrderStatusStepper({
     order_status: orderStatus,
     payment_status: "Pending",
   });
-  const activeIndex = customerKitchenStepIndex(orderStatus);
+  const progress = getKitchenStepProgress(orderStatus);
 
   if (cancelled) {
     return (
@@ -39,32 +40,32 @@ export function OrderStatusStepper({
       aria-label="Order progress"
     >
       {CUSTOMER_KITCHEN_STEPS.map((step, index) => {
-        const done = activeIndex > index;
-        const current = activeIndex === index;
+        const state = kitchenStepState(index, progress);
         return (
           <li
             key={step.key}
             className={[
               "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left",
-              done
+              state === "done"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : current
+                : state === "active"
                   ? "border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] text-zinc-900"
                   : "border-[var(--color-surface-line)] bg-white text-zinc-500",
             ].join(" ")}
+            aria-current={state === "active" ? "step" : undefined}
           >
             <span
               className={[
                 "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                done
+                state === "done"
                   ? "bg-emerald-600 text-white"
-                  : current
+                  : state === "active"
                     ? "bg-[var(--color-primary)] text-white"
                     : "bg-zinc-200 text-zinc-600",
               ].join(" ")}
               aria-hidden
             >
-              {done ? (
+              {state === "done" ? (
                 <MaterialIcon name="check" className="text-base" />
               ) : (
                 index + 1
@@ -73,7 +74,7 @@ export function OrderStatusStepper({
             <span
               className={[
                 "text-xs font-semibold leading-tight",
-                current ? "text-[var(--color-primary)]" : "",
+                state === "active" ? "text-[var(--color-primary)]" : "",
               ].join(" ")}
             >
               {step.label}

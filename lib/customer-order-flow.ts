@@ -6,7 +6,7 @@ import { isOrderCancelled } from "@/lib/orders/order-rules";
 export const CUSTOMER_KITCHEN_STEPS = [
   { key: "received" as const, label: "Order received" },
   { key: "preparing" as const, label: "Preparing" },
-  { key: "serving" as const, label: "On the way" },
+  { key: "serving" as const, label: "Serving" },
   { key: "served" as const, label: "Served" },
   { key: "completed" as const, label: "Complete" },
 ] as const;
@@ -56,7 +56,7 @@ export function confirmationMessage(order: Order) {
     return "This order was cancelled and will not be prepared.";
   }
   if (order.payment_method === "cod") {
-    return "Pay with cash when staff serves your table. Track progress below.";
+    return "Pay with cash when staff serves your table or after you finish eating. Track progress below.";
   }
   if (order.payment_method === "gcash" && order.payment_status === "Paid") {
     return "Your GCash payment was received. We're preparing your order.";

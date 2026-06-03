@@ -6,12 +6,14 @@ import { useMemo, useState } from "react";
 import { cartCheckoutUrl } from "../../lib/checkout-url";
 import { MENU_PAGE_PATH } from "@/lib/routes";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
+import { useTable } from "../table/TableProvider";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { Button } from "../ui/Button";
 
 export function CartPanel() {
   const router = useRouter();
+  const { hasTableFromQr, tableNumber } = useTable();
   const { items, lineCount, setQty, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +22,12 @@ export function CartPanel() {
 
   function onCheckout() {
     if (items.length === 0) return;
-    router.push(cartCheckoutUrl(MENU_PAGE_PATH));
+    router.push(
+      cartCheckoutUrl(
+        MENU_PAGE_PATH,
+        hasTableFromQr ? tableNumber : undefined
+      )
+    );
   }
 
   return (

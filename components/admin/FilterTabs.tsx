@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  kitchenStepState,
+  type KitchenStepProgress,
+} from "@/lib/kitchen-step-progress";
+import { MaterialIcon } from "../ui/MaterialIcon";
 import type { StatusTone } from "./adminStatusStyles";
 
 export type FilterTabConfig<T extends string> = {
@@ -18,6 +23,7 @@ export function FilterTabs<T extends string>({
   gridClassName = "grid-cols-2 sm:grid-cols-4",
   fullWidth = false,
   kitchenColumnCount = 4,
+  kitchenProgress,
 }: {
   tabs: FilterTabConfig<T>[];
   active: T;
@@ -28,6 +34,8 @@ export function FilterTabs<T extends string>({
   gridClassName?: string;
   fullWidth?: boolean;
   kitchenColumnCount?: number;
+  /** When set, kitchen tabs show checked/active progress for the selected order. */
+  kitchenProgress?: KitchenStepProgress | null;
 }) {
   const isKitchen = variant === "kitchen";
   const kitchenGrid =
@@ -55,6 +63,11 @@ export function FilterTabs<T extends string>({
           variant={variant}
           fullWidth={fullWidth}
           isLast={index === tabs.length - 1}
+          kitchenStep={
+            kitchenProgress
+              ? kitchenStepState(index, kitchenProgress)
+              : undefined
+          }
           onSelect={() => onChange(tab.id)}
         />
       ))}
@@ -88,6 +101,7 @@ function TabButton<T extends string>({
   variant,
   fullWidth = false,
   isLast = false,
+  kitchenStep,
   onSelect,
 }: {
   tab: FilterTabConfig<T>;
@@ -96,9 +110,12 @@ function TabButton<T extends string>({
   variant: "payment" | "kitchen";
   fullWidth?: boolean;
   isLast?: boolean;
+  kitchenStep?: "done" | "active" | "upcoming";
   onSelect(): void;
 }) {
   const isKitchen = variant === "kitchen";
+  const progressDone = kitchenStep === "done";
+  const progressActive = kitchenStep === "active";
 
   if (isKitchen) {
     return (
@@ -106,6 +123,7 @@ function TabButton<T extends string>({
         type="button"
         role="tab"
         aria-selected={selected}
+        aria-current={progressActive ? "step" : undefined}
         onClick={onSelect}
         className={[
           "flex w-full min-w-0 cursor-pointer flex-col items-center justify-center gap-1 transition",
@@ -113,6 +131,9 @@ function TabButton<T extends string>({
             ? "border-r border-[var(--color-surface-line)] px-1.5 py-2.5 sm:px-3 sm:py-3.5"
             : "min-w-[5.5rem] shrink-0 rounded-lg px-2.5 py-2",
           fullWidth && isLast ? "border-r-0" : "",
+          progressActive && !selected
+            ? "bg-[var(--color-primary-soft)] ring-1 ring-[var(--color-primary)]/30"
+            : "",
           selected
             ? fullWidth
               ? [
@@ -125,15 +146,32 @@ function TabButton<T extends string>({
               : [tone.activeBg, tone.activeText, "ring-1", tone.activeRing].join(
                   " "
                 )
-            : ["text-[var(--color-text-muted)]", tone.inactiveHover].join(" "),
+            : progressDone
+              ? "text-emerald-800"
+              : ["text-[var(--color-text-muted)]", tone.inactiveHover].join(" "),
         ].join(" ")}
       >
         <span className="flex w-full min-w-0 items-center justify-center gap-1.5">
-          <span className={["h-1.5 w-1.5 shrink-0 rounded-full", tone.dot].join(" ")} />
+          {progressDone ? (
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"
+              aria-hidden
+            >
+              <MaterialIcon name="check" className="text-[10px]" />
+            </span>
+          ) : (
+            <span
+              className={[
+                "h-1.5 w-1.5 shrink-0 rounded-full",
+                progressActive ? "bg-[var(--color-primary)]" : tone.dot,
+              ].join(" ")}
+            />
+          )}
           <span
             className={[
               "truncate text-xs font-medium sm:text-sm",
-              selected ? "font-semibold" : "",
+              selected || progressActive ? "font-semibold" : "",
+              progressActive ? "text-[var(--color-primary)]" : "",
             ].join(" ")}
           >
             {tab.label}
