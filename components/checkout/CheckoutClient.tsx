@@ -50,13 +50,15 @@ export default function CheckoutClient() {
   const returnTo = params.get("return");
 
   const { items: cartItems, clear: clearCart } = useCart();
-  const { tableNumber } = useTable();
+  const { hasTableFromQr, tableNumber } = useTable();
   const [order, setOrder] = useState<Order | null>(() => getStoredOrder());
   const [loading, setLoading] = useState(!!orderId);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
-  const [serviceType, setServiceType] = useState<ServiceType>("dine_in");
+  const [serviceType, setServiceType] = useState<ServiceType>(() =>
+    hasTableFromQr ? "dine_in" : "takeout"
+  );
   const [gcashResult, setGcashResult] = useState<GcashSimResult>("success");
   const [gcashOverlay, setGcashOverlay] = useState<GcashOverlayState | null>(
     null
@@ -111,6 +113,16 @@ export default function CheckoutClient() {
   }
 
   useEffect(() => {
+    if (hasTableFromQr) {
+      setServiceType((prev) => (prev === "takeout" ? "dine_in" : prev));
+      return;
+    }
+    if (serviceType === "dine_in") {
+      setServiceType("takeout");
+    }
+  }, [hasTableFromQr, serviceType]);
+
+  useEffect(() => {
     if (!orderId) return;
     const stored = getStoredOrder();
     if (stored && String(stored.id) === String(orderId)) {
@@ -161,7 +173,10 @@ export default function CheckoutClient() {
     setSubmitting(true);
     setError(null);
     try {
-      if (serviceType === "dine_in") {
+      const effectiveServiceType: ServiceType =
+        hasTableFromQr && serviceType === "dine_in" ? "dine_in" : "takeout";
+
+      if (effectiveServiceType === "dine_in") {
         const tableCheck = validateIntegerTableNumber(tableNumber);
         if (!tableCheck.ok) {
           setError(tableCheck.message);
@@ -190,8 +205,9 @@ export default function CheckoutClient() {
         total_amount: cartTotalAmount,
         payment_method: paymentMethod,
         payment_status: paymentMethod === "gcash" ? payment_status : undefined,
-        service_type: serviceType,
-        table_number: serviceType === "dine_in" ? tableNumber : undefined,
+        service_type: effectiveServiceType,
+        table_number:
+          effectiveServiceType === "dine_in" ? tableNumber : undefined,
       });
       clearCart();
       goToConfirmation(data);
@@ -371,8 +387,8 @@ export default function CheckoutClient() {
                           Dining option
                         </h2>
                         <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                          {serviceType === "dine_in"
-                            ? `Eating at ${tableNumber ? `Table ${tableNumber}` : "your table"}`
+                          {serviceType === "dine_in" && hasTableFromQr
+                            ? `Eating at Table ${tableNumber}`
                             : "Pick up when your order is ready"}
                         </p>
                       </div>
@@ -382,20 +398,27 @@ export default function CheckoutClient() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-3 p-5 sm:p-6">
+                    {hasTableFromQr ? (
+                      <PaymentMethodCard
+                        selected={serviceType === "dine_in"}
+                        onSelect={() => setServiceType("dine_in")}
+                        accent="brand"
+                        title="Dine in"
+                        description={`We serve you at Table ${tableNumber}`}
+                        icon={
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-white shadow-md">
+                            <MaterialIcon name="restaurant" className="text-2xl" />
+                          </span>
+                        }
+                      />
+                    ) : (
+                      <p className="rounded-xl bg-[var(--color-surface-subtle)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
+                        Scan your table QR to order dine-in. Without a scan,
+                        orders are takeout only.
+                      </p>
+                    )}
                     <PaymentMethodCard
-                      selected={serviceType === "dine_in"}
-                      onSelect={() => setServiceType("dine_in")}
-                      accent="brand"
-                      title="Dine in"
-                      description="We serve you at your table — use the table from your QR scan"
-                      icon={
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-white shadow-md">
-                          <MaterialIcon name="restaurant" className="text-2xl" />
-                        </span>
-                      }
-                    />
-                    <PaymentMethodCard
-                      selected={serviceType === "takeout"}
+                      selected={serviceType === "takeout" || !hasTableFromQr}
                       onSelect={() => setServiceType("takeout")}
                       accent="brand"
                       title="Take out"

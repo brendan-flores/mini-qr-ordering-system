@@ -61,7 +61,8 @@ export function AdminQrSidebar({ className = "" }: { className?: string }) {
       </div>
 
       <p className="mt-3 px-1 text-center text-[10px] leading-relaxed text-[var(--color-text-muted)]/80">
-        Browsing without a scan shows the menu only — no cart or checkout.
+        Without a table QR, guests can still order takeout from the menu; the
+        table number appears only after scanning.
       </p>
     </section>
   );

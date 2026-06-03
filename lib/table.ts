@@ -2,8 +2,27 @@ import { MENU_PAGE_PATH } from "./routes";
 
 const TABLE_STORAGE_KEY = "brencravings-table";
 const ORDERING_SESSION_KEY = "brencravings-ordering-session";
+/** Set only when guest opened menu via table QR (?table=). */
+const TABLE_FROM_QR_KEY = "brencravings-table-from-qr";
 export const TABLE_UPDATE_EVENT = "brencravings-table-update";
 export const ORDERING_UPDATE_EVENT = "brencravings-ordering-update";
+
+export function isLocalhostClient(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname.toLowerCase();
+  return host === "localhost" || host === "127.0.0.1";
+}
+
+export function isMenuPagePath(pathname: string): boolean {
+  return (
+    pathname === MENU_PAGE_PATH || pathname.startsWith(`${MENU_PAGE_PATH}/`)
+  );
+}
+
+/** Menu without ?table= — ordering allowed (takeout); table badge only after QR. */
+export function allowsMenuOrderingWithoutTable(pathname: string): boolean {
+  return isMenuPagePath(pathname);
+}
 
 export const INTEGER_TABLE_ERROR_MESSAGE =
   "Table number must be a whole number (digits only, no letters).";
@@ -103,27 +122,50 @@ export function subscribeToOrdering(onStoreChange: () => void) {
   return subscribeToTable(onStoreChange);
 }
 
-export function markOrderingSession(table: string) {
+/** Table QR scan — enables dine-in + shows table number. */
+export function markOrderingSessionFromQr(table: string) {
   if (typeof window === "undefined") return;
   const normalized = normalizeTableNumber(table);
   if (!normalized) return;
   window.sessionStorage.setItem(TABLE_STORAGE_KEY, normalized);
   window.sessionStorage.setItem(ORDERING_SESSION_KEY, "1");
+  window.sessionStorage.setItem(TABLE_FROM_QR_KEY, "1");
+  window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
+}
+
+/** @deprecated Use markOrderingSessionFromQr */
+export function markOrderingSession(table: string) {
+  markOrderingSessionFromQr(table);
+}
+
+/** Cart/checkout on menu without a table QR (localhost menu-page testing). */
+export function markMenuOrderingSession() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(ORDERING_SESSION_KEY, "1");
+  window.sessionStorage.removeItem(TABLE_FROM_QR_KEY);
+  window.sessionStorage.removeItem(TABLE_STORAGE_KEY);
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
 }
 
 export function clearOrderingSession() {
   if (typeof window === "undefined") return;
   window.sessionStorage.removeItem(ORDERING_SESSION_KEY);
+  window.sessionStorage.removeItem(TABLE_FROM_QR_KEY);
   window.sessionStorage.removeItem(TABLE_STORAGE_KEY);
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
   window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
 }
 
-/** True after guest scans a table QR (?table= in URL). */
+/** True when cart, checkout, and orders are allowed. */
 export function hasOrderingSession(): boolean {
   if (typeof window === "undefined") return false;
-  if (window.sessionStorage.getItem(ORDERING_SESSION_KEY) !== "1") return false;
+  return window.sessionStorage.getItem(ORDERING_SESSION_KEY) === "1";
+}
+
+/** True only after a valid ?table= QR scan (show badge, dine-in at table). */
+export function hasTableFromQr(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.sessionStorage.getItem(TABLE_FROM_QR_KEY) !== "1") return false;
   return getStoredTableNumber() !== null;
 }
 
@@ -142,11 +184,10 @@ export function getStoredTableNumber(): string | null {
 export function resolveTableNumber(
   fromUrl: string | null | undefined
 ): string {
-  return (
-    normalizeTableNumber(fromUrl ?? null) ??
-    getStoredTableNumber() ??
-    "1"
-  );
+  const fromParam = normalizeTableNumber(fromUrl ?? null);
+  if (fromParam) return fromParam;
+  if (!hasTableFromQr()) return "";
+  return getStoredTableNumber() ?? "";
 }
 
 export function menuUrlWithTable(

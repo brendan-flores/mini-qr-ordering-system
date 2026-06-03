@@ -8,10 +8,13 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
+  allowsMenuOrderingWithoutTable,
   hasOrderingSession,
-  markOrderingSession,
+  hasTableFromQr,
+  markMenuOrderingSession,
+  markOrderingSessionFromQr,
   normalizeTableNumber,
   resolveTableNumber,
   subscribeToOrdering,
@@ -20,44 +23,72 @@ import {
 
 type TableContextValue = {
   orderingEnabled: boolean;
+  /** Table label only after scanning a table QR. */
+  hasTableFromQr: boolean;
   tableNumber: string;
   setTableNumber: (value: string) => void;
 };
 
 const TableContext = createContext<TableContextValue | null>(null);
 
+function readOrderingEnabled(
+  tableFromUrl: string | null,
+  pathname: string
+): boolean {
+  if (tableFromUrl) return true;
+  if (allowsMenuOrderingWithoutTable(pathname)) return true;
+  return hasOrderingSession();
+}
+
+function readHasTableFromQr(tableFromUrl: string | null): boolean {
+  if (tableFromUrl) return true;
+  return hasTableFromQr();
+}
+
 export function TableProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("table");
   const tableFromUrl = normalizeTableNumber(fromUrl);
 
   useEffect(() => {
     if (tableFromUrl) {
-      markOrderingSession(tableFromUrl);
+      markOrderingSessionFromQr(tableFromUrl);
+      return;
     }
-  }, [tableFromUrl]);
+    if (allowsMenuOrderingWithoutTable(pathname)) {
+      markMenuOrderingSession();
+    }
+  }, [tableFromUrl, pathname]);
 
   const orderingEnabled = useSyncExternalStore(
     subscribeToOrdering,
-    () => !!tableFromUrl || hasOrderingSession(),
+    () => readOrderingEnabled(tableFromUrl, pathname),
+    () => !!tableFromUrl
+  );
+
+  const tableFromQr = useSyncExternalStore(
+    subscribeToOrdering,
+    () => readHasTableFromQr(tableFromUrl),
     () => !!tableFromUrl
   );
 
   const tableNumber = useSyncExternalStore(
     subscribeToOrdering,
-    () => (orderingEnabled ? resolveTableNumber(fromUrl) : "1"),
-    () => tableNumberFromUrl(fromUrl) ?? "1"
+    () => (tableFromQr ? resolveTableNumber(fromUrl) : ""),
+    () => tableNumberFromUrl(fromUrl) ?? ""
   );
 
   const value = useMemo(
     () => ({
       orderingEnabled,
+      hasTableFromQr: tableFromQr,
       tableNumber,
       setTableNumber: (value: string) => {
-        markOrderingSession(value);
+        markOrderingSessionFromQr(value);
       },
     }),
-    [orderingEnabled, tableNumber]
+    [orderingEnabled, tableFromQr, tableNumber]
   );
 
   return (

@@ -4,9 +4,9 @@ import { useTable } from "./TableProvider";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 export function TableBadge({ className = "" }: { className?: string }) {
-  const { orderingEnabled, tableNumber } = useTable();
+  const { hasTableFromQr, tableNumber } = useTable();
 
-  if (!orderingEnabled) return null;
+  if (!hasTableFromQr || !tableNumber) return null;
 
   return (
     <span

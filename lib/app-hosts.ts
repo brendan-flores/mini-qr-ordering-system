@@ -48,14 +48,13 @@ export function getAdminAppOrigin(): string {
   return DEFAULT_ADMIN_ORIGIN;
 }
 
-/** Customer-facing paths that should not be served on the admin hostname. */
+/** Customer UI routes redirected off the admin hostname (not API — admin needs /api/orders). */
 export function isCustomerPath(pathname: string) {
+  if (pathname.startsWith("/api/")) return false;
   return (
     pathname === "/" ||
     pathname.startsWith("/menu-page") ||
     pathname.startsWith("/checkout") ||
-    pathname.startsWith("/orders") ||
-    (pathname.startsWith("/api/orders") && !pathname.startsWith("/api/admin")) ||
-    pathname.startsWith("/api/products")
+    pathname.startsWith("/orders")
   );
 }

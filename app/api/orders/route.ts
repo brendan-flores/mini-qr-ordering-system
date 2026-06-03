@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     const service_type = parsed.service_type ?? "dine_in";
     const table_number =
-      service_type === "takeout" ? null : (parsed.table_number ?? "1");
+      service_type === "takeout" ? null : (parsed.table_number ?? null);
 
     const data = await createOrderRecord({
       items: parsed.items,

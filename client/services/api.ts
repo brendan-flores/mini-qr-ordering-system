@@ -37,15 +37,26 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit
 ): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch (cause: unknown) {
+    const hint =
+      API_BASE_URL && typeof window !== "undefined"
+        ? " Check NEXT_PUBLIC_API_BASE_URL is empty on Vercel (same-origin)."
+        : "";
+    const message =
+      cause instanceof Error ? cause.message : "Network request failed";
+    throw new ApiError(`${message}${hint}`, 0, cause);
+  }
 
   const text = await res.text();
   let json: unknown | null = null;
