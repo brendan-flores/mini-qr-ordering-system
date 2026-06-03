@@ -12,9 +12,9 @@ create table if not exists public.admin_users (
   constraint admin_users_username_unique unique (username)
 );
 
--- Default admin: username `admin`, password `admin1245` (change in production)
+-- Default admin: username `admin`, password `admin12345` (change in production)
 insert into public.admin_users (username, password_hash)
-values ('admin', extensions.crypt('admin1245', extensions.gen_salt('bf')))
+values ('admin', extensions.crypt('admin12345', extensions.gen_salt('bf')))
 on conflict (username) do update
 set password_hash = excluded.password_hash;
 

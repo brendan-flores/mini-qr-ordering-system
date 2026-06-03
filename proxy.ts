@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminSessionFromRequest } from "@/lib/admin-session";
 import {
+  canServeAdminRoutes,
+  getAdminAppOrigin,
   getMenuAppOrigin,
   isAdminHost,
   isCustomerPath,
@@ -13,6 +15,27 @@ export async function proxy(request: NextRequest) {
   const host = request.headers.get("host")?.toLowerCase() ?? "";
   const { pathname, search } = request.nextUrl;
   const onAdminHost = isAdminHost(host);
+  const adminAllowed = canServeAdminRoutes(host);
+
+  if (
+    !adminAllowed &&
+    (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))
+  ) {
+    const adminOrigin = getAdminAppOrigin();
+    if (pathname.startsWith("/api/admin")) {
+      return NextResponse.json(
+        {
+          error: {
+            message: `Admin API is only available on ${adminOrigin.replace(/^https?:\/\//, "")}`,
+          },
+        },
+        { status: 403 }
+      );
+    }
+    return NextResponse.redirect(
+      new URL(`${pathname}${search}`, adminOrigin)
+    );
+  }
 
   if (onAdminHost && pathname === "/") {
     return NextResponse.redirect(new URL("/admin", request.url));
@@ -25,6 +48,10 @@ export async function proxy(request: NextRequest) {
         new URL(`${pathname}${search}`, menuOrigin)
       );
     }
+  }
+
+  if (!adminAllowed) {
+    return NextResponse.next();
   }
 
   const session = await getAdminSessionFromRequest(request);
