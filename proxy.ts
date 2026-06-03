@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { getAdminSessionFromRequest } from "@/lib/admin-session";
 import {
   canServeAdminRoutes,
-  getAdminAppOrigin,
   getMenuAppOrigin,
   isAdminHost,
   isCustomerPath,
@@ -17,23 +16,10 @@ export async function proxy(request: NextRequest) {
   const onAdminHost = isAdminHost(host);
   const adminAllowed = canServeAdminRoutes(host);
 
-  if (
-    !adminAllowed &&
-    (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))
-  ) {
-    const adminOrigin = getAdminAppOrigin();
-    if (pathname.startsWith("/api/admin")) {
-      return NextResponse.json(
-        {
-          error: {
-            message: `Admin API is only available on ${adminOrigin.replace(/^https?:\/\//, "")}`,
-          },
-        },
-        { status: 403 }
-      );
-    }
-    return NextResponse.redirect(
-      new URL(`${pathname}${search}`, adminOrigin)
+  if (!adminAllowed && pathname.startsWith("/api/admin")) {
+    return NextResponse.json(
+      { error: { message: "Not Found" } },
+      { status: 404 }
     );
   }
 
@@ -96,6 +82,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/admin",
     "/admin/:path*",
     "/api/admin/:path*",
     "/menu-page",
