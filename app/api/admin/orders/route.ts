@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { listAllOrders } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/supabase-order-errors";
+import { getErrorMessage } from "@/lib/orders/db-errors";
 
 export async function GET(request: Request) {
   if (!(await isAdminRequest(request as import("next/server").NextRequest))) {

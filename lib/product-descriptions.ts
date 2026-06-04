@@ -1,4 +1,4 @@
-/** Short menu blurbs keyed by product name (seed + Supabase). */
+/** Short menu blurbs keyed by product name (seed + DB). */
 export const PRODUCT_DESCRIPTIONS: Record<string, string> = {
   "Truffle Parmesan Fries":
     "Crispy fries with truffle oil and grated parmesan.",

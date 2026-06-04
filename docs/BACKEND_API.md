@@ -1,6 +1,6 @@
 # Express Backend API
 
-Node.js + Express REST API. Data is stored in **Supabase (PostgreSQL)** when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set in `.env`; otherwise in-memory mock data is used.
+Node.js + Express REST API. Data is stored in **MySQL** when `MYSQL_HOST`, `MYSQL_USER`, and `MYSQL_DATABASE` are set in `.env` (see `backend.env.example` and `mysql/schema.sql`).
 
 ## Run the Express server
 
@@ -174,4 +174,4 @@ Allowed values: `Pending`, `Paid`, `Failed`.
 | Controllers | `controllers/products.controller.js`, `controllers/orders.controller.js` |
 | Services | `services/products.service.js`, `services/orders.service.js` |
 | Validation | `schemas/order.schemas.js` |
-| Database | `config/supabase.js`, `supabase/schema.sql` |
+| Database | `config/mysql.js`, `mysql/schema.sql` |

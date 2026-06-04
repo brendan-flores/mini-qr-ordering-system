@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { createOrderRecord } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/supabase-order-errors";
+import { getErrorMessage } from "@/lib/orders/db-errors";
 import { IntegerTableNumberError } from "@/lib/table";
 import { readRequestJson } from "@/lib/json";
 import { CreateOrderSchema } from "../../../schemas/order.schemas.js";

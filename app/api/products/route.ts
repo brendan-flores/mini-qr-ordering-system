@@ -1,37 +1,27 @@
 import { NextResponse } from "next/server";
+import { isMysqlConfigured, mysqlConfigError } from "@/lib/mysql/db";
+import { listProducts } from "@/lib/mysql/products";
 import { withResolvedProductDescriptions } from "@/lib/product-descriptions";
 import { withResolvedProductImages } from "@/lib/product-images";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
-import { listMockProducts } from "../../../services/mock-data.service.js";
+import { getErrorMessage } from "@/lib/orders/db-errors";
 
 export async function GET() {
   try {
-    if (!isSupabaseConfigured()) {
-      return NextResponse.json({
-        data: withResolvedProductDescriptions(
-          withResolvedProductImages(listMockProducts())
-        ),
-      });
+    if (!isMysqlConfigured()) {
+      return NextResponse.json(
+        { error: { message: mysqlConfigError() } },
+        { status: 503 }
+      );
     }
 
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("products")
-      .select("id,name,price,category,image_url,created_at")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      return NextResponse.json({ error: { message: error.message } }, { status: 500 });
-    }
-
+    const data = await listProducts();
     return NextResponse.json({
-      data: withResolvedProductDescriptions(
-        withResolvedProductImages(data ?? [])
-      ),
+      data: withResolvedProductDescriptions(withResolvedProductImages(data)),
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: { message } }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: getErrorMessage(error) } },
+      { status: 500 }
+    );
   }
 }

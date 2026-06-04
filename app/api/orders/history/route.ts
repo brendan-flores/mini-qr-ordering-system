@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { listOrdersForDeviceHistory } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/supabase-order-errors";
+import { getErrorMessage } from "@/lib/orders/db-errors";
 import { readRequestJson } from "@/lib/json";
 import { OrderHistorySchema } from "@/schemas/order.schemas.js";
 

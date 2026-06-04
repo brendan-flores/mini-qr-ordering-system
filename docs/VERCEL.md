@@ -22,8 +22,11 @@ This project is a **Next.js** app. Vercel runs the UI and API routes (`app/api/*
 |----------|------------|---------|--------|
 | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` | optional | QR code target URL |
 | `NEXT_PUBLIC_API_BASE_URL` | *(leave empty)* | *(leave empty)* | Same-origin `/api/*` on Vercel |
-| `SUPABASE_URL` | optional | optional | Only when using Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | optional | optional | Server-only; never expose as `NEXT_PUBLIC_*` |
+| `MYSQL_HOST` | required | required | MySQL host (e.g. PlanetScale, Railway, or self-hosted) |
+| `MYSQL_USER` | required | required | Database user |
+| `MYSQL_PASSWORD` | required | required | Database password |
+| `MYSQL_DATABASE` | required | required | e.g. `mini_qr_ordering` |
+| `ADMIN_SESSION_SECRET` | required | required | Signs admin session cookie |
 
 Copy from [`.env.example`](../.env.example).
 
@@ -54,12 +57,12 @@ vercel env add NEXT_PUBLIC_APP_URL production
 | `/` | Customer menu (`app/page.tsx`) |
 | `/checkout` | Checkout flow |
 | `/admin` | Admin dashboard |
-| `/api/products` | Product list (mock or Supabase) |
+| `/api/products` | Product list (MySQL) |
 | `/api/orders` | Orders API |
 
-## Mock data on serverless
+## Database on serverless
 
-Without Supabase, orders are stored **in memory**. On Vercel, that data does not persist across cold starts or multiple instances. For production, connect Supabase (or another database) later.
+Configure a hosted **MySQL** instance and set the `MYSQL_*` variables in Vercel. Run `mysql/schema.sql` against that database before going live.
 
 ## Custom domain
 

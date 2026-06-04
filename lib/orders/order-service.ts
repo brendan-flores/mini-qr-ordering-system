@@ -1,115 +1,13 @@
+import { randomUUID } from "node:crypto";
+import type { RowDataPacket } from "mysql2";
 import {
   canMarkKitchenCompleted,
   KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE,
 } from "@/lib/orders/order-rules";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
-import {
-  getErrorMessage,
-  isMissingColumnError,
-  missingColumnHint,
-} from "./supabase-order-errors";
-import {
-  createMockOrder,
-  getMockOrderById,
-  listMockProducts,
-  listMockOrders,
-  updateMockOrderPaymentStatus,
-  updateMockOrderStatus,
-} from "../../services/mock-data.service.js";
-
-export const ORDER_COLUMNS_FULL =
-  "id,items,total_amount,payment_method,payment_status,table_number,service_type,order_status,created_at,client_device_id";
-
-export const ORDER_COLUMNS_KITCHEN =
-  "id,items,total_amount,payment_method,payment_status,table_number,order_status,created_at";
-
-export const ORDER_COLUMNS_BASE =
-  "id,items,total_amount,payment_method,payment_status,created_at";
-
-const ORDER_SELECT_COLUMNS = [
-  ORDER_COLUMNS_FULL,
-  ORDER_COLUMNS_KITCHEN,
-  ORDER_COLUMNS_BASE,
-] as const;
-
-async function selectWithColumnFallback<T>(
-  run: (columns: string) => PromiseLike<{ data: unknown; error: unknown }>
-): Promise<{ data: T; error: null } | { data: null; error: unknown }> {
-  let lastError: unknown = null;
-  for (const columns of ORDER_SELECT_COLUMNS) {
-    const result = await run(columns);
-    if (!result.error && result.data !== null) {
-      return { data: result.data as T, error: null };
-    }
-    if (!result.error && result.data === null) {
-      return { data: null as T, error: null };
-    }
-    lastError = result.error;
-    if (!isMissingColumnError(result.error)) {
-      return { data: null, error: result.error };
-    }
-  }
-  return { data: null, error: lastError };
-}
-
-/** @deprecated use ORDER_COLUMNS_FULL */
-export const ORDER_COLUMNS = ORDER_COLUMNS_FULL;
-
-function normalizeOrderStatus(
-  value: string | null | undefined
-): OrderRecord["order_status"] {
-  if (value === "ready") return "serving";
-  if (
-    value === "received" ||
-    value === "preparing" ||
-    value === "serving" ||
-    value === "served" ||
-    value === "completed" ||
-    value === "cancelled"
-  ) {
-    return value;
-  }
-  return "received";
-}
-
-function normalizePaymentStatus(
-  value: string | null | undefined
-): OrderRecord["payment_status"] {
-  if (value === "Completed") return "Paid";
-  if (value === "Pending" || value === "Paid" || value === "Failed") {
-    return value;
-  }
-  return "Pending";
-}
-
-function withOrderDefaults(
-  row: Record<string, unknown>,
-  table_number?: string,
-  service_type?: OrderRecord["service_type"]
-): OrderRecord {
-  const resolvedService =
-    (row.service_type as OrderRecord["service_type"] | undefined) ??
-    service_type ??
-    "dine_in";
-  const resolvedTable =
-    resolvedService === "takeout"
-      ? null
-      : ((row.table_number as string | null | undefined) ??
-        table_number ??
-        "1");
-
-  return {
-    ...(row as OrderRecord),
-    table_number: resolvedTable,
-    service_type: resolvedService,
-    payment_status: normalizePaymentStatus(
-      row.payment_status as string | null | undefined
-    ),
-    order_status: normalizeOrderStatus(
-      row.order_status as string | null | undefined
-    ),
-  };
-}
+import { mapOrderRow } from "@/lib/mysql/map-order";
+import { query } from "@/lib/mysql/db";
+import { getProductsByIds } from "@/lib/mysql/products";
+import { getErrorMessage } from "./db-errors";
 
 export type OrderRecord = {
   id: string | number;
@@ -146,6 +44,9 @@ type CreateInput = {
   client_device_id?: string | null;
 };
 
+const ORDER_SELECT = `id, items, total_amount, payment_method, payment_status,
+  table_number, service_type, order_status, created_at, client_device_id`;
+
 /** Customer may only access orders created on this device (when tagged). */
 export function assertOrderOwnedByDevice(
   order: OrderRecord,
@@ -177,32 +78,14 @@ export async function listOrdersForDeviceHistory(
 export async function validateAndBuildOrder(
   input: CreateInput
 ): Promise<{ items: OrderRecord["items"]; total_amount: number }> {
-  const productMap = new Map<string, { name: string; price: number; image_url: string | null }>();
-
-  if (isSupabaseConfigured()) {
-    const supabase = getSupabaseAdmin();
-    const ids = [...new Set(input.items.map((i) => String(i.product_id)))];
-    const { data, error } = await supabase
-      .from("products")
-      .select("id,name,price,image_url")
-      .in("id", ids);
-    if (error) throw error;
-    for (const p of data ?? []) {
-      productMap.set(String(p.id), {
-        name: p.name,
-        price: Number(p.price),
-        image_url: p.image_url,
-      });
-    }
-  } else {
-    for (const p of listMockProducts()) {
-      productMap.set(String(p.id), {
-        name: p.name,
-        price: Number(p.price),
-        image_url: p.image_url ?? null,
-      });
-    }
-  }
+  const ids = [...new Set(input.items.map((i) => String(i.product_id)))];
+  const products = await getProductsByIds(ids);
+  const productMap = new Map(
+    products.map((p) => [
+      String(p.id),
+      { name: p.name, price: p.price, image_url: p.image_url },
+    ])
+  );
 
   const validatedItems: OrderRecord["items"] = [];
   let computedTotal = 0;
@@ -242,107 +125,47 @@ export async function createOrderRecord(
   input: CreateInput
 ): Promise<OrderRecord> {
   const { items, total_amount } = await validateAndBuildOrder(input);
+  const id = randomUUID();
 
-  if (!isSupabaseConfigured()) {
-    const mockOrder = createMockOrder({
-      items,
+  await query(
+    `INSERT INTO orders (
+      id, items, total_amount, payment_method, payment_status,
+      table_number, service_type, order_status, client_device_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'received', ?)`,
+    [
+      id,
+      JSON.stringify(items),
       total_amount,
-      payment_method: input.payment_method,
-      payment_status: input.payment_status,
-      table_number:
-        input.service_type === "takeout"
-          ? undefined
-          : (input.table_number ?? "1"),
-      service_type: input.service_type,
-      order_status: "received",
-    });
-    return {
-      ...(mockOrder as OrderRecord),
-      client_device_id: input.client_device_id ?? null,
-    };
-  }
-
-  const supabase = getSupabaseAdmin();
-  const baseRow = {
-    items,
-    total_amount,
-    payment_method: input.payment_method,
-    payment_status: input.payment_status,
-  };
-  const extendedRow = {
-    ...baseRow,
-    table_number: input.table_number,
-    service_type: input.service_type,
-    order_status: "received" as const,
-    client_device_id: input.client_device_id ?? null,
-  };
-
-  let insertResult = await supabase
-    .from("orders")
-    .insert(extendedRow)
-    .select(ORDER_COLUMNS_FULL)
-    .single();
-
-  if (insertResult.error && isMissingColumnError(insertResult.error)) {
-    insertResult = await supabase
-      .from("orders")
-      .insert({ ...baseRow, table_number: input.table_number, order_status: "received" })
-      .select(ORDER_COLUMNS_KITCHEN)
-      .single();
-  }
-  if (insertResult.error && isMissingColumnError(insertResult.error)) {
-    insertResult = await supabase
-      .from("orders")
-      .insert(baseRow)
-      .select(ORDER_COLUMNS_BASE)
-      .single();
-  }
-
-  if (insertResult.error) {
-    const hint = missingColumnHint(insertResult.error);
-    const err = new Error(hint ?? getErrorMessage(insertResult.error));
-    if (!hint) (err as Error & { status: number }).status = 500;
-    throw err;
-  }
-
-  return withOrderDefaults(
-    insertResult.data as Record<string, unknown>,
-    input.table_number ?? undefined,
-    input.service_type
+      input.payment_method,
+      input.payment_status,
+      input.table_number,
+      input.service_type,
+      input.client_device_id ?? null,
+    ]
   );
+
+  const created = await getOrderById(id);
+  if (!created) {
+    throw new Error(getErrorMessage(new Error("Failed to load created order")));
+  }
+  return created;
 }
 
 export async function listAllOrders(): Promise<OrderRecord[]> {
-  if (!isSupabaseConfigured()) {
-    return listMockOrders() as OrderRecord[];
-  }
-
-  const supabase = getSupabaseAdmin();
-  const listResult = await selectWithColumnFallback<Record<string, unknown>[]>(
-    (columns) =>
-      supabase
-        .from("orders")
-        .select(columns)
-        .order("created_at", { ascending: false })
+  const rows = await query<RowDataPacket[]>(
+    `SELECT ${ORDER_SELECT} FROM orders ORDER BY created_at DESC`
   );
-
-  if (listResult.error) throw listResult.error;
-  return (listResult.data ?? []).map((row) => withOrderDefaults(row));
+  return rows.map((row) => mapOrderRow(row));
 }
 
 export async function getOrderById(id: string): Promise<OrderRecord | null> {
-  if (!isSupabaseConfigured()) {
-    return (getMockOrderById(id) as OrderRecord | null) ?? null;
-  }
-
-  const supabase = getSupabaseAdmin();
-  const getResult = await selectWithColumnFallback<Record<string, unknown>>(
-    (columns) => supabase.from("orders").select(columns).eq("id", id).maybeSingle()
+  const rows = await query<RowDataPacket[]>(
+    `SELECT ${ORDER_SELECT} FROM orders WHERE id = ? LIMIT 1`,
+    [id]
   );
-
-  if (getResult.error) throw getResult.error;
-  if (!getResult.data) return null;
-  return withOrderDefaults(getResult.data);
+  const row = rows[0];
+  if (!row) return null;
+  return mapOrderRow(row);
 }
 
 function assertOrderEditable(existing: OrderRecord | null): asserts existing is OrderRecord {
@@ -416,38 +239,18 @@ async function patchOrderStatusInternal(
     }
   }
 
-  if (!isSupabaseConfigured()) {
-    return updateMockOrderStatus({ id, order_status }) as OrderRecord;
-  }
+  await query(`UPDATE orders SET order_status = ? WHERE id = ?`, [
+    order_status,
+    id,
+  ]);
 
-  const supabase = getSupabaseAdmin();
-  const statusPatch = await selectWithColumnFallback<Record<string, unknown>>(
-    (columns) =>
-      supabase
-        .from("orders")
-        .update({ order_status })
-        .eq("id", id)
-        .select(columns)
-        .single()
-  );
-
-  if (statusPatch.error) {
-    if (isMissingColumnError(statusPatch.error)) {
-      const err = new Error(
-        missingColumnHint(statusPatch.error) ??
-          "order_status column is not available. Run supabase/patch-table-and-order-status.sql."
-      );
-      (err as Error & { status: number }).status = 400;
-      throw err;
-    }
-    throw statusPatch.error;
-  }
-  if (!statusPatch.data) {
+  const updated = await getOrderById(id);
+  if (!updated) {
     const err = new Error("Order not found");
     (err as Error & { status: number }).status = 404;
     throw err;
   }
-  return withOrderDefaults(statusPatch.data, undefined);
+  return updated;
 }
 
 export async function patchOrderPayment(
@@ -457,31 +260,18 @@ export async function patchOrderPayment(
   const existing = await getOrderById(id);
   assertOrderEditable(existing);
 
-  if (!isSupabaseConfigured()) {
-    return updateMockOrderPaymentStatus({
-      id,
-      payment_status,
-    }) as OrderRecord;
-  }
+  await query(`UPDATE orders SET payment_status = ? WHERE id = ?`, [
+    payment_status,
+    id,
+  ]);
 
-  const supabase = getSupabaseAdmin();
-  const patchResult = await selectWithColumnFallback<Record<string, unknown>>(
-    (columns) =>
-      supabase
-        .from("orders")
-        .update({ payment_status })
-        .eq("id", id)
-        .select(columns)
-        .single()
-  );
-
-  if (patchResult.error) throw patchResult.error;
-  if (!patchResult.data) {
+  const updated = await getOrderById(id);
+  if (!updated) {
     const err = new Error("Order not found");
     (err as Error & { status: number }).status = 404;
     throw err;
   }
-  return withOrderDefaults(patchResult.data);
+  return updated;
 }
 
 export async function patchOrderStatus(

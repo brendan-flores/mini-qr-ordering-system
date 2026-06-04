@@ -90,7 +90,6 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
     },
     {
       enabled: shouldSync,
-      scope: { orderId: String(orderId) },
       scopeKey: String(orderId),
     }
   );

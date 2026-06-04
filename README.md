@@ -1,133 +1,67 @@
-# Mini QR Restaurant Ordering System (Node.js + Supabase)
+# Mini QR Restaurant Ordering System (React + Node.js + MySQL)
 
-Single repo root containing:
+Single repo with:
 
-- **Frontend**: Next.js (React) customer ordering UI + admin dashboard (`app/`, `components/`, `client/`)
-- **Backend**: Node.js + Express REST API using Supabase (Postgres) (`routes/`, `controllers/`, `services/`, `config/`, `app.js`, `server.js`)
+- **Frontend**: Next.js (React) + Tailwind — customer menu, cart, checkout, order tracking, admin kitchen dashboard
+- **Backend**: Next.js API routes (`app/api/`) and optional Express REST API (`server.js`, port 4000)
+- **Database**: MySQL 8 (`mysql/schema.sql`)
 
-## Quick start (local)
+## Quick start
 
-### 1) Supabase schema
-
-Create these tables in Supabase SQL Editor:
-
-```sql
-create table if not exists public.products (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  price numeric not null check (price >= 0),
-  category text not null check (category in ('Starters', 'Mains', 'Desserts', 'Beverages')),
-  image_url text,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.orders (
-  id uuid primary key default gen_random_uuid(),
-  items jsonb not null,
-  total_amount numeric not null check (total_amount > 0),
-  payment_status text not null check (payment_status in ('Pending','Paid','Failed')),
-  created_at timestamptz not null default now()
-);
-```
-
-Seed sample products (optional):
-
-```sql
-insert into public.products (name, price, image_url) values
-('Truffle Parmesan Fries', 8.50, null),
-('Signature Wagyu Burger', 18.00, null),
-('Roasted Roots Quinoa Bowl', 14.50, null),
-('Iced Matcha Latte', 5.50, null);
-```
-
-### 2) Backend setup (Express + Supabase)
+### 1) MySQL schema
 
 ```bash
-copy backend.env.example .env
+mysql -u root -p < mysql/schema.sql
 ```
 
-Fill in:
+Or open `mysql/schema.sql` in **MySQL Workbench** and execute it.
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+Details: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 
-Run:
+### 2) Environment
+
+```bash
+copy .env.example .env.local
+```
+
+Set MySQL connection variables and `ADMIN_SESSION_SECRET`.
+
+Default admin (after schema): username `admin`, password `admin12345`.
+
+### 3) Run Next.js
 
 ```bash
 npm install
-npm run dev:api
-```
-
-Backend runs on `http://localhost:4000`.
-
-**Express API (assignment endpoints):** see **[docs/BACKEND_API.md](docs/BACKEND_API.md)**
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/products` | List all products |
-| POST | `/api/orders` | Create order (items, quantities, total) |
-| GET | `/api/orders` | List all orders for admin |
-
-### 3) Frontend setup (Next.js)
-
-```bash
-copy frontend.env.example .env.local
 npm run dev
 ```
 
-Frontend runs on `http://localhost:3000`.
+- Customer app: `http://localhost:3000`
+- Admin: `http://localhost:3000/admin` (or admin subdomain if configured)
 
-## API
+### 4) Optional Express API
 
-### `GET /api/products`
-
-Returns all products.
-
-### `POST /api/orders`
-
-Creates a new order.
-
-Body:
-
-```json
-{
-  "items": [
-    { "product_id": "uuid", "name": "Burger", "price": 18, "quantity": 1, "image_url": null }
-  ],
-  "total_amount": 28.75
-}
+```bash
+copy backend.env.example .env
+npm run dev:api
 ```
 
-### `GET /api/orders`
+Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md)**.
 
-Returns all orders (newest first).
+## Stack
 
-### `PATCH /api/orders/:id/payment`
+| Layer | Technology |
+|-------|------------|
+| UI | React 19, Tailwind CSS 4, Next.js 16 |
+| API | Node.js (Next Route Handlers + optional Express) |
+| Database | MySQL (`mysql2`) |
 
-Updates payment status (mock payment flow).
+## Main API routes (Next.js)
 
-Body:
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/products` | Menu products |
+| POST | `/api/orders` | Place order |
+| GET | `/api/orders` | List orders (admin) |
+| PATCH | `/api/admin/orders/[id]` | Kitchen / payment updates |
 
-```json
-{ "payment_status": "Paid" }
-```
-
-## UI routes
-
-- `/`: Customer menu + cart + checkout entry
-- `/checkout`: Mock payment screen
-- `/admin`: Admin dashboard (view orders + update payment status)
-
-## Notes
-
-- QR code is generated in the frontend and links to the menu URL.
-- Input validation uses `zod`, errors are returned as JSON.
-
-## Deploy to Vercel
-
-This app is configured for [Vercel](https://vercel.com) (see `vercel.json`, `.env.example`, and **[docs/VERCEL.md](docs/VERCEL.md)**).
-
-1. Push the repo to GitHub and import it in Vercel (Next.js preset).
-2. Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://your-app.vercel.app`).
-3. Leave `NEXT_PUBLIC_API_BASE_URL` empty so `/api/*` runs on the same deployment.
-4. Deploy — only `npm run build` is required; `server.js` is not used on Vercel.
+Deployment notes: **[docs/VERCEL.md](docs/VERCEL.md)**

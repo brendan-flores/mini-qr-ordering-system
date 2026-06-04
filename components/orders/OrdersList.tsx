@@ -251,7 +251,6 @@ export function OrdersList({
     },
     {
       enabled: pollEnabled && trackedOrderIds.length > 0,
-      scope: { orderIds: trackedOrderIds },
       scopeKey: trackedOrderIds.join(","),
     }
   );

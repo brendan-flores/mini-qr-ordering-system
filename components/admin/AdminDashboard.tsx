@@ -73,7 +73,7 @@ export function AdminDashboard() {
     void refresh();
   }, []);
 
-  useLiveOrderSync(syncOrders, { scope: "admin", scopeKey: "admin" });
+  useLiveOrderSync(syncOrders, { scopeKey: "admin" });
 
   const totals = useMemo(
     () => ({

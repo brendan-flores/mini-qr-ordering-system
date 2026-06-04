@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@supabase/supabase-js"],
+  serverExternalPackages: ["mysql2"],
   // Stable project root (path has spaces on some machines)
   turbopack: {
     root: projectRoot,
