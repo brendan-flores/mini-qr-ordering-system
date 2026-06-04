@@ -57,9 +57,13 @@ export function getMysqlSettings() {
     mysqlEnv("MYSQL_PASSWORD", "MYSQLPASSWORD") ?? pub?.password ?? "";
   const database =
     mysqlEnv("MYSQL_DATABASE", "MYSQLDATABASE") ?? pub?.database;
-  const ssl = process.env["MYSQL_SSL"]?.trim() === "true";
+  const hostIsRailwayPublic =
+    Boolean(host?.includes(".rlwy.net")) ||
+    Boolean(host?.includes(".railway.app"));
+  const ssl =
+    process.env["MYSQL_SSL"]?.trim() === "true" || hostIsRailwayPublic;
 
-  return { host, port, user, password, database, ssl };
+  return { host, port, user, password, database, ssl, hostIsRailwayPublic };
 }
 
 export function assertMysqlHostReachable(): void {
@@ -87,7 +91,15 @@ export function getPool(): Pool {
   assertMysqlHostReachable();
 
   if (!pool) {
-    const { host, port, user, password, database, ssl } = getMysqlSettings();
+    const { host, port, user, password, database, ssl, hostIsRailwayPublic } =
+      getMysqlSettings();
+
+    if (hostIsRailwayPublic && port === 3306) {
+      console.warn(
+        "[mysql] Railway public host with port 3306 — use the TCP proxy port from Railway Connect (often 5 digits), not 3306."
+      );
+    }
+
     pool = mysql.createPool({
       host: host!,
       port,
@@ -96,6 +108,7 @@ export function getPool(): Pool {
       database: database!,
       waitForConnections: true,
       connectionLimit: 10,
+      connectTimeout: 15_000,
       ...(ssl ? { ssl: { rejectUnauthorized: false } } : {}),
     });
   }

@@ -87,8 +87,21 @@ Use **Connect** on Railway → public host/port → open `mysql/schema.sql` in W
 | Issue | Fix |
 |-------|-----|
 | `ENOTFOUND mysql.railway.internal` | You used Railway’s **private** host on Vercel. Use **Connect → Public** host or set `MYSQL_PUBLIC_URL`; redeploy |
-| `ETIMEDOUT` / cannot connect | Turn on Railway **public** networking; check host/port in Vercel |
-| SSL / handshake errors | Set `MYSQL_SSL=true` on Vercel and redeploy |
+| `ETIMEDOUT` | See **Fix ETIMEDOUT** below — almost always **wrong port** (used `3306` instead of TCP proxy port) or TCP Proxy off |
+| SSL / handshake errors | Set `MYSQL_SSL=true` on Vercel (auto-enabled for `*.rlwy.net` hosts) and redeploy |
+
+### Fix ETIMEDOUT (Vercel → Railway)
+
+1. Railway → MySQL → **Settings** → **Networking** → **TCP Proxy** → **Enable** (note the generated `host:port`, e.g. `monorail.proxy.rlwy.net:41234`).
+2. Railway → **Connect** → copy **public** host and port (not `mysql.railway.internal`, not port `3306` unless Connect shows `3306`).
+3. On **Vercel**, set **either**:
+   - `MYSQL_PUBLIC_URL` = full value from Railway Variables (recommended), **and**
+   - `MYSQL_DATABASE` = `mini_qr_ordering`
+   - **or** `MYSQL_HOST` + `MYSQL_PORT` = exact public host + proxy port from step 2.
+4. `MYSQL_SSL` = `true`
+5. **Redeploy** Vercel (env changes do not apply until redeploy).
+
+Quick check: public host should end with **`.proxy.rlwy.net`** and port is often **5 digits** (e.g. `15432`), not `3306`.
 | 503 MySQL not configured | All `MYSQL_*` vars set on Vercel; redeploy |
 | Empty `orders` on Railway | Schema run on the **same** DB Vercel points to |
 
