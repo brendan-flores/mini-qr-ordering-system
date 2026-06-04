@@ -10,15 +10,65 @@ function mysqlEnv(primary: string, railway?: string): string | undefined {
   return undefined;
 }
 
+/** Railway `MYSQL_PUBLIC_URL` — required for Vercel (not `mysql.railway.internal`). */
+function fromMysqlPublicUrl():
+  | {
+      host: string;
+      port: number;
+      user: string;
+      password: string;
+      database: string;
+    }
+  | undefined {
+  const raw = process.env["MYSQL_PUBLIC_URL"]?.trim();
+  if (!raw) return undefined;
+  try {
+    const url = new URL(
+      raw.startsWith("mysql://") ? raw : `mysql://${raw.replace(/^\/\//, "")}`
+    );
+    const database = url.pathname.replace(/^\//, "");
+    if (!url.hostname || !database) return undefined;
+    return {
+      host: url.hostname,
+      port: Number(url.port || 3306),
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+const RAILWAY_PRIVATE_HOST = "mysql.railway.internal";
+
 export function getMysqlSettings() {
-  return {
-    host: mysqlEnv("MYSQL_HOST", "MYSQLHOST"),
-    port: Number(mysqlEnv("MYSQL_PORT", "MYSQLPORT") || 3306),
-    user: mysqlEnv("MYSQL_USER", "MYSQLUSER"),
-    password: mysqlEnv("MYSQL_PASSWORD", "MYSQLPASSWORD") ?? "",
-    database: mysqlEnv("MYSQL_DATABASE", "MYSQLDATABASE"),
-    ssl: process.env["MYSQL_SSL"]?.trim() === "true",
-  };
+  const pub = fromMysqlPublicUrl();
+  let host = mysqlEnv("MYSQL_HOST", "MYSQLHOST") ?? pub?.host;
+  if (host === RAILWAY_PRIVATE_HOST && pub?.host) {
+    host = pub.host;
+  }
+
+  const port = Number(
+    mysqlEnv("MYSQL_PORT", "MYSQLPORT") || pub?.port || 3306
+  );
+  const user = mysqlEnv("MYSQL_USER", "MYSQLUSER") ?? pub?.user;
+  const password =
+    mysqlEnv("MYSQL_PASSWORD", "MYSQLPASSWORD") ?? pub?.password ?? "";
+  const database =
+    mysqlEnv("MYSQL_DATABASE", "MYSQLDATABASE") ?? pub?.database;
+  const ssl = process.env["MYSQL_SSL"]?.trim() === "true";
+
+  return { host, port, user, password, database, ssl };
+}
+
+export function assertMysqlHostReachable(): void {
+  const { host } = getMysqlSettings();
+  if (host === RAILWAY_PRIVATE_HOST) {
+    throw new Error(
+      "MYSQL_HOST is mysql.railway.internal (Railway private network). Vercel cannot reach it. In Railway → MySQL → Connect, enable Public networking and set MYSQL_HOST to the public host, or set MYSQL_PUBLIC_URL on Vercel."
+    );
+  }
 }
 
 export function isMysqlConfigured(): boolean {
@@ -34,6 +84,7 @@ export function getPool(): Pool {
   if (!isMysqlConfigured()) {
     throw new Error(mysqlConfigError());
   }
+  assertMysqlHostReachable();
 
   if (!pool) {
     const { host, port, user, password, database, ssl } = getMysqlSettings();

@@ -23,12 +23,13 @@ In **Vercel** → your project → **Settings** → **Environment Variables** (P
 
 | Vercel variable | Value |
 |-----------------|--------|
-| `MYSQL_HOST` | Railway `MYSQLHOST` |
-| `MYSQL_PORT` | Railway `MYSQLPORT` (usually `3306`) |
+| `MYSQL_PUBLIC_URL` | **Best:** copy Railway `MYSQL_PUBLIC_URL` (public TCP URL). The app parses host/port/user/password from it. |
+| `MYSQL_HOST` | **Public** host only (e.g. `xxxx.proxy.rlwy.net`) — **never** `mysql.railway.internal` |
+| `MYSQL_PORT` | Public port from **Connect** (often not `3306`) |
 | `MYSQL_USER` | Railway `MYSQLUSER` |
 | `MYSQL_PASSWORD` | Railway `MYSQLPASSWORD` |
-| `MYSQL_DATABASE` | Railway `MYSQLDATABASE` |
-| `MYSQL_SSL` | `true` (recommended for Railway public MySQL) |
+| `MYSQL_DATABASE` | `mini_qr_ordering` (where your tables live) |
+| `MYSQL_SSL` | `true` |
 | `ADMIN_SESSION_SECRET` | Long random string |
 | `NEXT_PUBLIC_APP_URL` | `https://your-menu.vercel.app` |
 | `NEXT_PUBLIC_ADMIN_APP_URL` | `https://brencravings-admin.vercel.app` (or your admin domain) |
@@ -85,6 +86,7 @@ Use **Connect** on Railway → public host/port → open `mysql/schema.sql` in W
 
 | Issue | Fix |
 |-------|-----|
+| `ENOTFOUND mysql.railway.internal` | You used Railway’s **private** host on Vercel. Use **Connect → Public** host or set `MYSQL_PUBLIC_URL`; redeploy |
 | `ETIMEDOUT` / cannot connect | Turn on Railway **public** networking; check host/port in Vercel |
 | SSL / handshake errors | Set `MYSQL_SSL=true` on Vercel and redeploy |
 | 503 MySQL not configured | All `MYSQL_*` vars set on Vercel; redeploy |
