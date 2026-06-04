@@ -43,3 +43,7 @@ npm run dev:api
 ```
 
 See [BACKEND_API.md](./BACKEND_API.md).
+
+## Production (Railway + Vercel)
+
+Hosted MySQL on Railway and the live app on Vercel: **[RAILWAY.md](./RAILWAY.md)**.

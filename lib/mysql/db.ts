@@ -2,16 +2,32 @@ import mysql, { type Pool, type RowDataPacket } from "mysql2/promise";
 
 let pool: Pool | null = null;
 
+/** Supports MYSQL_* and Railway’s MYSQLHOST / MYSQLUSER / … names. */
+function mysqlEnv(primary: string, railway?: string): string | undefined {
+  const v = process.env[primary]?.trim();
+  if (v) return v;
+  if (railway) return process.env[railway]?.trim();
+  return undefined;
+}
+
+export function getMysqlSettings() {
+  return {
+    host: mysqlEnv("MYSQL_HOST", "MYSQLHOST"),
+    port: Number(mysqlEnv("MYSQL_PORT", "MYSQLPORT") || 3306),
+    user: mysqlEnv("MYSQL_USER", "MYSQLUSER"),
+    password: mysqlEnv("MYSQL_PASSWORD", "MYSQLPASSWORD") ?? "",
+    database: mysqlEnv("MYSQL_DATABASE", "MYSQLDATABASE"),
+    ssl: process.env["MYSQL_SSL"]?.trim() === "true",
+  };
+}
+
 export function isMysqlConfigured(): boolean {
-  return Boolean(
-    process.env["MYSQL_HOST"]?.trim() &&
-      process.env["MYSQL_USER"]?.trim() &&
-      process.env["MYSQL_DATABASE"]?.trim()
-  );
+  const { host, user, database } = getMysqlSettings();
+  return Boolean(host && user && database);
 }
 
 export function mysqlConfigError(): string {
-  return "MySQL is not configured. Set MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, and MYSQL_DATABASE in .env.local, then run mysql/schema.sql.";
+  return "MySQL is not configured. Set MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, and MYSQL_DATABASE (or Railway MYSQLHOST, MYSQLUSER, …), then run mysql/schema.sql.";
 }
 
 export function getPool(): Pool {
@@ -20,14 +36,16 @@ export function getPool(): Pool {
   }
 
   if (!pool) {
+    const { host, port, user, password, database, ssl } = getMysqlSettings();
     pool = mysql.createPool({
-      host: process.env["MYSQL_HOST"]!.trim(),
-      port: Number(process.env["MYSQL_PORT"]?.trim() || 3306),
-      user: process.env["MYSQL_USER"]!.trim(),
-      password: process.env["MYSQL_PASSWORD"] ?? "",
-      database: process.env["MYSQL_DATABASE"]!.trim(),
+      host: host!,
+      port,
+      user: user!,
+      password,
+      database: database!,
       waitForConnections: true,
       connectionLimit: 10,
+      ...(ssl ? { ssl: { rejectUnauthorized: false } } : {}),
     });
   }
 

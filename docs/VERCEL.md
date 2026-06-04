@@ -62,7 +62,7 @@ vercel env add NEXT_PUBLIC_APP_URL production
 
 ## Database on serverless
 
-Configure a hosted **MySQL** instance and set the `MYSQL_*` variables in Vercel. Run `mysql/schema.sql` against that database before going live.
+Configure a hosted **MySQL** instance and set the `MYSQL_*` variables in Vercel. Run `mysql/schema.sql` against that database before going live. Step-by-step for **Railway**: [RAILWAY.md](./RAILWAY.md).
 
 ## Custom domain
 
