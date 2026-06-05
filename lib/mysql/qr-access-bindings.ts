@@ -50,6 +50,71 @@ export async function getQrAccessBinding(
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+/** All bindings for a table (any QR token version printed for that table). */
+export async function getQrAccessBindingsForTable(
+  tableNumber: string
+): Promise<QrAccessBindingRow[]> {
+  const rows = await query<RowDataPacket[]>(
+    `SELECT access_jti, table_number, device_id, bound_at, last_active_at
+     FROM qr_access_bindings
+     WHERE table_number = ?
+     ORDER BY last_active_at DESC`,
+    [tableNumber]
+  );
+  return rows.map((row) => mapRow(row));
+}
+
+/** Non-abandoned binding currently holding this table, if any. */
+export async function getActiveQrAccessBindingForTable(
+  tableNumber: string
+): Promise<QrAccessBindingRow | null> {
+  for (const binding of await getQrAccessBindingsForTable(tableNumber)) {
+    if (!isQrBindingAbandoned(binding.last_active_at)) {
+      return binding;
+    }
+  }
+  return null;
+}
+
+async function purgeAbandonedBindingsForTable(
+  tableNumber: string
+): Promise<void> {
+  for (const binding of await getQrAccessBindingsForTable(tableNumber)) {
+    if (isQrBindingAbandoned(binding.last_active_at)) {
+      await releaseQrAccessBinding(binding.access_jti, binding.device_id);
+    }
+  }
+}
+
+/** When multiple QR tokens created duplicate rows, keep the first active scan. */
+async function collapseDuplicateActiveTableBindings(): Promise<void> {
+  const rows = await query<RowDataPacket[]>(
+    `SELECT access_jti, table_number, device_id, bound_at, last_active_at
+     FROM qr_access_bindings`
+  );
+
+  const byTable = new Map<string, QrAccessBindingRow[]>();
+  for (const row of rows) {
+    const mapped = mapRow(row);
+    if (isQrBindingAbandoned(mapped.last_active_at)) continue;
+    const list = byTable.get(mapped.table_number) ?? [];
+    list.push(mapped);
+    byTable.set(mapped.table_number, list);
+  }
+
+  for (const bindings of byTable.values()) {
+    if (bindings.length <= 1) continue;
+
+    bindings.sort(
+      (a, b) =>
+        new Date(a.bound_at).getTime() - new Date(b.bound_at).getTime()
+    );
+    for (const duplicate of bindings.slice(1)) {
+      await releaseQrAccessBinding(duplicate.access_jti, duplicate.device_id);
+    }
+  }
+}
+
 export async function touchQrAccessBinding(
   accessJti: string,
   deviceId: string
@@ -63,9 +128,9 @@ export async function touchQrAccessBinding(
 }
 
 /**
- * First device to activate a QR access token wins.
- * Same device may re-activate (cookie refresh); other devices are denied
- * unless the current binding is abandoned (2 min idle or ~45s without heartbeat).
+ * First device to activate a table QR wins — one active session per table.
+ * Same device may re-activate (cookie refresh or a newly printed token);
+ * other devices are denied until the table session is abandoned or released.
  */
 export async function bindQrAccessToDevice(
   accessJti: string,
@@ -76,6 +141,9 @@ export async function bindQrAccessToDevice(
     return "revoked";
   }
 
+  await purgeAbandonedBindingsForTable(tableNumber);
+  await collapseDuplicateActiveTableBindings();
+
   const existing = await getQrAccessBinding(accessJti);
   if (existing) {
     if (existing.device_id === deviceId) {
@@ -83,12 +151,27 @@ export async function bindQrAccessToDevice(
       return "renewed";
     }
 
-    // Another device holds this QR — deny until binding is abandoned or released.
+    // Another device holds this exact QR token — deny until abandoned or released.
     if (!isQrBindingAbandoned(existing.last_active_at)) {
       return "denied";
     }
 
     await releaseQrAccessBinding(existing.access_jti, existing.device_id);
+  }
+
+  const activeForTable = await getActiveQrAccessBindingForTable(tableNumber);
+  if (activeForTable) {
+    if (activeForTable.device_id === deviceId) {
+      // Same phone, newer printed QR — drop the older token row for this table.
+      if (activeForTable.access_jti !== accessJti) {
+        await releaseQrAccessBinding(
+          activeForTable.access_jti,
+          activeForTable.device_id
+        );
+      }
+    } else {
+      return "denied";
+    }
   }
 
   try {
@@ -132,6 +215,17 @@ export async function isDeviceAuthorizedForQrAccess(
     return false;
   }
 
+  const activeForTable = await getActiveQrAccessBindingForTable(
+    binding.table_number
+  );
+  if (
+    activeForTable &&
+    (activeForTable.access_jti !== accessJti ||
+      activeForTable.device_id !== deviceId)
+  ) {
+    return false;
+  }
+
   return true;
 }
 
@@ -167,6 +261,8 @@ export async function purgeAbandonedQrAccessBindings(): Promise<number> {
     ]);
     purged++;
   }
+
+  await collapseDuplicateActiveTableBindings();
   return purged;
 }
 
@@ -184,7 +280,7 @@ export async function listQrAccessBindings(): Promise<QrAccessBindingRow[]> {
 
 /**
  * Admin override — delete binding immediately without device_id check.
- * Bypasses inactivity and heartbeat rules so the QR is free for the next scan.
+ * Also clears any duplicate active bindings for the same table (legacy tokens).
  */
 export async function adminForceReleaseQrAccessBinding(
   accessJti: string
@@ -192,9 +288,15 @@ export async function adminForceReleaseQrAccessBinding(
   const existing = await getQrAccessBinding(accessJti);
   if (!existing) return false;
 
-  await revokeQrAccessForDevice(existing.access_jti, existing.device_id);
-  await query(`DELETE FROM qr_access_bindings WHERE access_jti = ?`, [
-    accessJti,
-  ]);
+  const tableNumber = existing.table_number;
+  const bindings = await getQrAccessBindingsForTable(tableNumber);
+
+  for (const binding of bindings) {
+    await revokeQrAccessForDevice(binding.access_jti, binding.device_id);
+    await query(`DELETE FROM qr_access_bindings WHERE access_jti = ?`, [
+      binding.access_jti,
+    ]);
+  }
+
   return true;
 }
