@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 export const QR_ORDER_SESSION_COOKIE = "bc_qr_order_session";
-const SESSION_TTL_SEC = 60 * 60 * 4; // hard cap — inactivity ends sooner (15 min)
+const SESSION_TTL_SEC = 60 * 60 * 4; // hard cap — inactivity ends sooner (2 min)
 
 export type QrOrderSessionPayload = {
   table: string;

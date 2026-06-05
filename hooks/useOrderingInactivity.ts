@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { getOrCreateDeviceId } from "@/lib/device-session";
+import { QR_BINDING_HEARTBEAT_INTERVAL_MS } from "@/lib/qr-binding-heartbeat";
 import {
   isClientOrderingInactive,
   touchOrderingActivity,
@@ -13,8 +14,7 @@ import {
 import { isAdminPath } from "@/lib/routes";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
-const CHECK_INTERVAL_MS = 30_000;
-const PING_INTERVAL_MS = 60_000;
+const CHECK_INTERVAL_MS = 15_000;
 
 export function useOrderingInactivity(onExpired: (message: string) => void) {
   useEffect(() => {
@@ -50,7 +50,7 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
     function onUserActivity() {
       touchOrderingActivity();
       const now = Date.now();
-      if (now - lastPingAt >= PING_INTERVAL_MS) {
+      if (now - lastPingAt >= QR_BINDING_HEARTBEAT_INTERVAL_MS) {
         lastPingAt = now;
         void pingServerActivity();
       }
@@ -58,6 +58,7 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
 
     function onVisible() {
       if (document.visibilityState === "visible") {
+        touchOrderingActivity();
         void expireIfNeeded();
       }
     }
@@ -66,21 +67,38 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
     void pingServerActivity();
     lastPingAt = Date.now();
 
-    window.addEventListener("pointerdown", onUserActivity, { passive: true });
+    const activityOptions = { passive: true } as const;
+    window.addEventListener("pointerdown", onUserActivity, activityOptions);
+    window.addEventListener("touchstart", onUserActivity, activityOptions);
+    window.addEventListener("touchmove", onUserActivity, activityOptions);
     window.addEventListener("keydown", onUserActivity);
-    window.addEventListener("scroll", onUserActivity, { passive: true });
+    window.addEventListener("scroll", onUserActivity, activityOptions);
+    window.addEventListener("click", onUserActivity, activityOptions);
     document.addEventListener("visibilitychange", onVisible);
 
-    const interval = window.setInterval(() => {
+    const checkInterval = window.setInterval(() => {
       void expireIfNeeded();
     }, CHECK_INTERVAL_MS);
 
+    const heartbeatInterval = window.setInterval(() => {
+      if (!hasTableFromQr()) return;
+      const now = Date.now();
+      if (now - lastPingAt >= QR_BINDING_HEARTBEAT_INTERVAL_MS) {
+        lastPingAt = now;
+        void pingServerActivity();
+      }
+    }, QR_BINDING_HEARTBEAT_INTERVAL_MS);
+
     return () => {
       window.removeEventListener("pointerdown", onUserActivity);
+      window.removeEventListener("touchstart", onUserActivity);
+      window.removeEventListener("touchmove", onUserActivity);
       window.removeEventListener("keydown", onUserActivity);
       window.removeEventListener("scroll", onUserActivity);
+      window.removeEventListener("click", onUserActivity);
       document.removeEventListener("visibilitychange", onVisible);
-      window.clearInterval(interval);
+      window.clearInterval(checkInterval);
+      window.clearInterval(heartbeatInterval);
     };
   }, [onExpired]);
 }

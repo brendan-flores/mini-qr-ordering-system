@@ -6,6 +6,8 @@ const ORDERING_SESSION_KEY = "brencravings-ordering-session";
 const TABLE_FROM_QR_KEY = "brencravings-table-from-qr";
 /** Tracks an active server-side QR binding for reliable tab/browser-close logout. */
 const QR_BINDING_ACTIVE_KEY = "brencravings-qr-binding-active";
+/** Scanned access token — used for cookie-free logout on mobile tab close. */
+const QR_ACCESS_TOKEN_KEY = "brencravings-qr-access-token";
 export const TABLE_UPDATE_EVENT = "brencravings-table-update";
 export const ORDERING_UPDATE_EVENT = "brencravings-ordering-update";
 
@@ -129,7 +131,10 @@ export function subscribeToOrdering(onStoreChange: () => void) {
 }
 
 /** Table QR scan — enables dine-in + shows table number. */
-export function markOrderingSessionFromQr(table: string) {
+export function markOrderingSessionFromQr(
+  table: string,
+  accessToken?: string | null
+) {
   if (typeof window === "undefined") return;
   const normalized = normalizeTableNumber(table);
   if (!normalized) return;
@@ -141,7 +146,16 @@ export function markOrderingSessionFromQr(table: string) {
     String(Date.now())
   );
   window.sessionStorage.setItem(QR_BINDING_ACTIVE_KEY, "1");
+  if (accessToken?.trim()) {
+    window.sessionStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken.trim());
+  }
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
+}
+
+export function getStoredQrAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const token = window.sessionStorage.getItem(QR_ACCESS_TOKEN_KEY)?.trim();
+  return token || null;
 }
 
 /** @deprecated Use markOrderingSessionFromQr */
@@ -165,6 +179,7 @@ export function clearOrderingSession() {
   window.sessionStorage.removeItem(TABLE_STORAGE_KEY);
   window.sessionStorage.removeItem("brencravings-ordering-last-activity");
   window.sessionStorage.removeItem(QR_BINDING_ACTIVE_KEY);
+  window.sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
   window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
 }

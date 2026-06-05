@@ -1,20 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   endQrOrderingSession,
   releaseQrSessionOnUnload,
 } from "@/lib/qr-session-end";
-import {
-  isBareMenuVisit,
-  isQrOrderingFlowPath,
-} from "@/lib/qr-session-flow";
+import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
+import { logQrSession } from "@/lib/qr-session-log";
 import {
   hasActiveQrBinding,
   hasTableFromQr,
   isQrOrderEnforcedOnClient,
-  normalizeTableNumber,
 } from "@/lib/table";
 
 function sessionShouldEnd(): boolean {
@@ -22,47 +19,53 @@ function sessionShouldEnd(): boolean {
 }
 
 /**
- * End the table-QR session when the guest closes a tab/browser or leaves the
- * ordering flow. Same rules on localhost, LAN IP, and production.
+ * End the table-QR session when the guest closes a tab/browser or navigates
+ * completely outside the ordering flow. Bare menu visits do NOT end the session
+ * here — TableProvider restores an active server session instead.
  */
 export function useQrSessionLifecycle() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tableFromUrl = normalizeTableNumber(searchParams.get("table"));
-  const accessFromUrl = searchParams.get("access")?.trim() ?? null;
   const prevPathRef = useRef(pathname);
   const unloadNotifiedRef = useRef(false);
 
   useEffect(() => {
     if (!isQrOrderEnforcedOnClient()) return;
 
-    function notifyUnloadOnce() {
+    function notifyUnloadOnce(reason: string) {
       if (unloadNotifiedRef.current) return;
       if (!sessionShouldEnd()) return;
       unloadNotifiedRef.current = true;
+      logQrSession("unload_event", { reason });
       releaseQrSessionOnUnload();
     }
 
     function onPageHide(event: PageTransitionEvent) {
       if (event.persisted) return;
-      notifyUnloadOnce();
+      notifyUnloadOnce("pagehide");
     }
 
     function onBeforeUnload() {
-      notifyUnloadOnce();
+      notifyUnloadOnce("beforeunload");
+    }
+
+    function onFreeze() {
+      notifyUnloadOnce("freeze");
     }
 
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("freeze", onFreeze);
 
     return () => {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("freeze", onFreeze);
     };
   }, []);
 
   useEffect(() => {
     if (!isQrOrderEnforcedOnClient()) return;
+    if (!sessionShouldEnd()) return;
 
     const previousPath = prevPathRef.current;
     prevPathRef.current = pathname;
@@ -72,12 +75,9 @@ export function useQrSessionLifecycle() {
       isQrOrderingFlowPath(previousPath) &&
       !isQrOrderingFlowPath(pathname);
 
-    const onBareMenu =
-      sessionShouldEnd() &&
-      isBareMenuVisit(pathname, tableFromUrl, accessFromUrl);
-
-    if (leftOrderingFlow || onBareMenu) {
+    if (leftOrderingFlow) {
+      logQrSession("left_ordering_flow", { from: previousPath, to: pathname });
       void endQrOrderingSession();
     }
-  }, [pathname, tableFromUrl, accessFromUrl]);
+  }, [pathname]);
 }

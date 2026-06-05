@@ -22,6 +22,7 @@ import {
 import { isBareMenuVisit } from "@/lib/qr-session-flow";
 import {
   clearOrderingSession,
+  getStoredQrAccessToken,
   getStoredTableNumber,
   hasTableFromQr,
   markOrderingSessionFromQr,
@@ -72,7 +73,10 @@ async function syncQrSessionFromServer(
 
   if (tableFromUrl && data.table !== tableFromUrl) return false;
 
-  markOrderingSessionFromQr(data.table);
+  markOrderingSessionFromQr(
+    data.table,
+    getStoredQrAccessToken() ?? undefined
+  );
   return true;
 }
 
@@ -100,11 +104,22 @@ export function TableProvider({ children }: { children: ReactNode }) {
     async function syncSession() {
       const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
 
-      // Bare menu (home redirect, header Menu link, etc.) — end session on all
-      // environments so the guest must scan again and the QR can be released.
+      // Bare menu — keep an active server binding for this device (Phone A).
+      // Only clear local state when the server has no session; never release
+      // the binding while this device is still in the ordering flow.
       if (isBareMenuVisit(pathname, tableFromUrl, accessFromUrl)) {
-        await endQrOrderingSession();
+        const restored = await syncQrSessionFromServer(null);
         if (cancelled) return;
+        if (restored) {
+          setQrActivationMessage(null);
+          return;
+        }
+
+        if (hasTableFromQr()) {
+          clearLocalOrderingSession();
+        } else {
+          clearOrderingSession();
+        }
         setQrActivationMessage(null);
         return;
       }
@@ -125,7 +140,10 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
         if (res.ok && data?.ok) {
           setQrActivationMessage(null);
-          markOrderingSessionFromQr(data.table ?? tableFromUrl ?? "");
+          markOrderingSessionFromQr(
+            data.table ?? tableFromUrl ?? "",
+            accessFromUrl
+          );
           return;
         }
 

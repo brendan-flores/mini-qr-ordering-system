@@ -6,6 +6,7 @@ import {
   attachQrOrderSessionCookie,
   tryActivateQrOrderSession,
 } from "@/lib/qr-order-activate";
+import { logQrSession } from "@/lib/qr-session-log";
 import { normalizeTableNumber } from "@/lib/table";
 
 export async function GET(request: NextRequest) {
@@ -39,6 +40,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!result.ok) {
+      logQrSession("activate_denied", {
+        table,
+        deviceId,
+        reason: result.reason,
+        userAgent: request.headers.get("user-agent")?.slice(0, 120) ?? null,
+      });
       const message =
         result.reason === "device_mismatch"
           ? "This QR link is registered to another device. Scan the code on your own phone to order."
@@ -55,6 +62,13 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    logQrSession("activate_ok", {
+      table: result.table,
+      deviceId,
+      bind: result.bind,
+      userAgent: request.headers.get("user-agent")?.slice(0, 120) ?? null,
+    });
 
     const res = NextResponse.json({ ok: true, table: result.table });
     attachQrOrderSessionCookie(res, result.sessionToken);

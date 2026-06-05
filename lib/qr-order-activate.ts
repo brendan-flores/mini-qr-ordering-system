@@ -8,7 +8,7 @@ import { resolveQrActivateCredentials } from "@/lib/qr-resolve-access";
 import type { NextResponse } from "next/server";
 
 export type QrActivateResult =
-  | { ok: true; sessionToken: string; table: string }
+  | { ok: true; sessionToken: string; table: string; bind: string }
   | { ok: false; reason: "invalid" | "device_mismatch" };
 
 export async function tryActivateQrOrderSession(input: {
@@ -38,7 +38,7 @@ export async function tryActivateQrOrderSession(input: {
     access.jti,
     input.deviceId
   );
-  return { ok: true, sessionToken, table };
+  return { ok: true, sessionToken, table, bind: bindResult };
 }
 
 export function attachQrOrderSessionCookie(

@@ -11,6 +11,7 @@ import {
   clearQrOrderSessionCookie,
   releaseQrOrderSessionBinding,
 } from "@/lib/qr-order-end-session";
+import { logQrSession } from "@/lib/qr-session-log";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
 export async function GET(request: NextRequest) {
@@ -35,6 +36,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (isQrSessionInactive(session.lastActive)) {
+    logQrSession("session_inactive", {
+      table: session.table,
+      deviceId,
+      lastActive: session.lastActive,
+    });
     await releaseQrOrderSessionBinding(session, deviceId);
     const res = NextResponse.json({ active: false, inactive: true });
     clearQrOrderSessionCookie(res);

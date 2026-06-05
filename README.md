@@ -37,11 +37,11 @@ This is **intentional** — it prevents spam and fake orders. Only guests at a r
 |------|----------|
 | **One device per QR** | The first phone to scan locks the table QR; a second phone gets *“registered to another device”* until the session ends. |
 | **Fresh scan link** | Ordering starts only from a menu URL with `?table=` and `?access=` (QR scan). |
-| **Checkout / orders** | Moving between checkout and order tracking **keeps** the session until you return to the bare menu. |
-| **Bare menu / home** | Opening `/menu-page` without scan params, clicking **Menu**, or going **home** ends the session — scan again to order. |
+| **Checkout / orders / bare menu** | Same device keeps the session while moving between menu, checkout, and orders (server binding stays locked). |
+| **Leave the app** | Navigating outside menu/checkout/orders (e.g. admin) ends the session and releases the QR. |
 | **Close tab or browser** | Session ends and the QR is **released** so the next guest at the table can scan. |
-| **15 minutes idle** | Fallback: no activity ends the session and releases the QR (localhost, LAN, and production). |
-| **Force-quit browser** | If the OS kills the app without logout, the server releases the binding after **15 minutes** with no heartbeat (`last_active_at`). |
+| **2 minutes idle** | No scroll, tap, or navigation within the menu ends the session and releases the QR (localhost, LAN, and production). |
+| **Force-quit / failed tab close** | If unload logout fails (common on some Android browsers), the server reclaims the binding after **~45 seconds** without heartbeat, or after **2 minutes** of user inactivity. |
 
 Same rules apply on **localhost**, **LAN IP** (`192.168.x.x`), and **production** — QR enforcement is always on.
 
@@ -146,7 +146,7 @@ Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NET
 
 **QR workflow** — Admin → Table QR codes → enter table → **Go** → download PNG → guest scans to order.
 
-**QR session lifecycle** — One device per scan; auto-release on tab/browser close or 15 min idle; server heartbeat via `/api/qr/ping`.
+**QR session lifecycle** — One device per scan; auto-release on tab/browser close or 2 min idle; server heartbeat every 30s via `/api/qr/ping`.
 
 ---
 
@@ -171,7 +171,7 @@ Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NET
 | POST | `/api/admin/table-qr-token` | Issue QR `access` token (admin) |
 | GET | `/api/qr/activate` | Validate scan & set session cookie |
 | GET | `/api/qr/session` | Check active QR session |
-| GET | `/api/qr/ping` | Refresh session & binding heartbeat (15 min inactivity) |
+| GET | `/api/qr/ping` | Refresh session & binding heartbeat (2 min inactivity) |
 | POST / GET | `/api/qr/logout` | End session & release device binding (tab/browser close) |
 
 Optional local Express API: `npm run dev:api` → [docs/BACKEND_API.md](docs/BACKEND_API.md)
