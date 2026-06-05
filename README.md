@@ -21,12 +21,39 @@ QR codes are **generated on the admin page**, not the customer menu.
 
 1. Log in at `/admin` (default: `admin` / `admin12345`).
 2. Open **Table QR codes** in the left sidebar (desktop) or tap **QR** (mobile).
-3. Enter a table number → preview the QR → **Download PNG**.
+3. Enter a table number → click **Go** → preview the QR → **Download PNG**.
 4. Print and place at the table. Guests **scan** the QR to open the menu and order.
 
-Set `NEXT_PUBLIC_APP_URL` in `.env.local` so QR links point to your deployed menu URL.
+Set `NEXT_PUBLIC_APP_URL` in `.env.local` (and on Vercel) so QR links point to your deployed menu URL, e.g. `https://your-menu.vercel.app`.
 
-**Production security (scan-only ordering on live server):** On your deployed site (e.g. Vercel), each QR encodes a signed, unguessable `access` token (issued from the admin dashboard). Typing `?table=1` in the browser does **not** unlock ordering — guests must scan the printed QR. After a valid scan, the server sets a signed httpOnly cookie; `POST /api/orders` rejects requests without it. **On `localhost` / `127.0.0.1`**, this rule is skipped so you can order freely while developing.
+Each generated QR encodes a URL like:
+
+```text
+/menu-page?table=5&access=<signed-token>
+```
+
+The `access` value is a signed, random token created by the admin API. It cannot be guessed by typing table numbers in the browser.
+
+#### Scan-only ordering (live server)
+
+On your **deployed** customer site (e.g. Vercel), ordering is locked until a guest scans a valid table QR:
+
+| Guest action | Result |
+|--------------|--------|
+| Open menu without `?table=` | Browse only — no cart |
+| Type `?table=1` in the address bar | Browse only — no cart |
+| **Scan** a QR from the admin dashboard | Cart and checkout unlock |
+| Place order without a valid scan session | `POST /api/orders` returns **403** |
+
+After a valid scan, the server sets a signed **httpOnly cookie** (4-hour session). Dine-in orders must use the table number from that scan. Checkout still offers **take-out** (pickup) for guests who scanned any table QR.
+
+**Re-print QRs after deploying this feature** — older codes that only had `?table=N` no longer unlock ordering on the live site.
+
+#### Localhost (development)
+
+On `http://localhost:3000` or `127.0.0.1`, the scan-only rule is **disabled** so you can test ordering without printing QRs. You can add to cart, check out, and enter a table number manually at checkout.
+
+Requires `ADMIN_SESSION_SECRET` in `.env.local` / Vercel — used to sign QR `access` tokens and order session cookies.
 
 ### Admin dashboard
 
@@ -93,8 +120,11 @@ Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/products` | Menu products |
-| POST | `/api/orders` | Place order |
+| POST | `/api/orders` | Place order (live server requires QR session cookie) |
 | GET | `/api/orders` | List orders (admin) |
 | PATCH | `/api/admin/orders/[id]` | Kitchen / payment updates |
+| POST | `/api/admin/table-qr-token` | Issue signed `access` token for a table QR (admin) |
+| GET | `/api/qr/activate` | Validate scan URL and set order session cookie |
+| GET | `/api/qr/session` | Check whether guest has an active QR order session |
 
 Deployment notes: **[docs/VERCEL.md](docs/VERCEL.md)**
