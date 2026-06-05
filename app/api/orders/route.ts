@@ -3,7 +3,10 @@ import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { createOrderRecord } from "@/lib/orders/order-service";
 import { getErrorMessage } from "@/lib/orders/db-errors";
-import { assertQrOrderAllowed } from "@/lib/qr-order-guard";
+import {
+  assertQrOrderAllowed,
+  authorizedDineInTableNumber,
+} from "@/lib/qr-order-guard";
 import { IntegerTableNumberError } from "@/lib/table";
 import { readRequestJson } from "@/lib/json";
 import { CreateOrderSchema } from "../../../schemas/order.schemas.js";
@@ -33,8 +36,10 @@ export async function POST(request: NextRequest) {
     }
     const parsed = CreateOrderSchema.parse(body);
 
+    const service_type = parsed.service_type ?? "dine_in";
+
     await assertQrOrderAllowed(request, {
-      service_type: parsed.service_type,
+      service_type,
       table_number: parsed.table_number ?? null,
     });
 
@@ -43,9 +48,13 @@ export async function POST(request: NextRequest) {
         ? "Pending"
         : parsed.payment_status!;
 
-    const service_type = parsed.service_type ?? "dine_in";
     const table_number =
-      service_type === "takeout" ? null : (parsed.table_number ?? null);
+      service_type === "takeout"
+        ? null
+        : await authorizedDineInTableNumber(
+            request,
+            parsed.table_number ?? null
+          );
 
     const data = await createOrderRecord({
       items: parsed.items,

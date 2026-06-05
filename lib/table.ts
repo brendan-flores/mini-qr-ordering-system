@@ -200,6 +200,16 @@ export function resolveTableNumber(
   return getStoredTableNumber() ?? "";
 }
 
+/** Live server: table comes only from the QR scan session, not the URL bar. */
+export function resolveScannedTableNumber(
+  fromUrl: string | null | undefined
+): string {
+  if (isQrOrderEnforcedOnClient()) {
+    return getStoredTableNumber() ?? "";
+  }
+  return resolveTableNumber(fromUrl);
+}
+
 export function menuUrlWithTable(
   baseUrl: string,
   tableNumber: string,

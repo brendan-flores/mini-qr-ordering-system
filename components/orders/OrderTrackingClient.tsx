@@ -30,6 +30,7 @@ import { formatMoney } from "../cart/cartUtils";
 import { OrderLineItem, GcashLogoMark } from "../checkout/checkoutParts";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { downloadOrderReceipt } from "@/lib/order-receipt-pdf";
 import { OrderStatusStepper } from "./OrderStatusStepper";
 
 export function OrderTrackingClient({ orderId }: { orderId: string }) {
@@ -43,6 +44,7 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
 
   const loadOrder = useCallback(async (quiet: boolean) => {
     if (!quiet) {
@@ -93,6 +95,21 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
       scopeKey: String(orderId),
     }
   );
+
+  async function handleDownloadReceipt() {
+    if (!order || downloadingReceipt) return;
+    setDownloadingReceipt(true);
+    setError(null);
+    try {
+      await downloadOrderReceipt(order);
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error ? e.message : "Could not download receipt.";
+      setError(message);
+    } finally {
+      setDownloadingReceipt(false);
+    }
+  }
 
   async function handleCancel() {
     if (!order || !canCustomerCancel(order)) return;
@@ -288,6 +305,24 @@ export function OrderTrackingClient({ orderId }: { orderId: string }) {
                 All orders
               </Link>
             </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full gap-2 py-3.5 text-base"
+              disabled={downloadingReceipt}
+              onClick={() => void handleDownloadReceipt()}
+            >
+              <MaterialIcon
+                name={downloadingReceipt ? "progress_activity" : "download"}
+                filled={false}
+                className={[
+                  "text-lg",
+                  downloadingReceipt ? "animate-spin" : "",
+                ].join(" ")}
+              />
+              {downloadingReceipt ? "Preparing PDF…" : "Download receipt (PDF)"}
+            </Button>
 
             {showCustomerCancelButton(order) ? (
               <button

@@ -11,12 +11,14 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   allowsMenuOrderingWithoutTable,
+  clearOrderingSession,
+  getStoredTableNumber,
   hasTableFromQr,
   isQrOrderEnforcedOnClient,
   markMenuOrderingSession,
   markOrderingSessionFromQr,
   normalizeTableNumber,
-  resolveTableNumber,
+  resolveScannedTableNumber,
   subscribeToOrdering,
 } from "@/lib/table";
 
@@ -35,11 +37,23 @@ function readOrderingEnabled(): boolean {
   return hasTableFromQr();
 }
 
-function readHasTableFromQr(tableFromUrl: string | null): boolean {
-  if (!isQrOrderEnforcedOnClient()) {
-    return hasTableFromQr() || !!tableFromUrl;
-  }
+function readHasTableFromQr(): boolean {
   return hasTableFromQr();
+}
+
+async function syncQrSessionFromServer(
+  tableFromUrl: string | null
+): Promise<boolean> {
+  const res = await fetch("/api/qr/session", { credentials: "include" });
+  if (!res.ok) return false;
+
+  const data = (await res.json()) as { active?: boolean; table?: string };
+  if (!data.active || !data.table) return false;
+
+  if (tableFromUrl && data.table !== tableFromUrl) return false;
+
+  markOrderingSessionFromQr(data.table);
+  return true;
 }
 
 export function TableProvider({ children }: { children: ReactNode }) {
@@ -75,16 +89,25 @@ export function TableProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         if (res.ok) {
           const data = (await res.json()) as { ok?: boolean };
-          if (data.ok) markOrderingSessionFromQr(tableFromUrl);
+          if (data.ok) {
+            markOrderingSessionFromQr(tableFromUrl);
+            return;
+          }
         }
+        clearOrderingSession();
         return;
       }
 
-      const res = await fetch("/api/qr/session", { credentials: "include" });
-      if (cancelled || !res.ok) return;
-      const data = (await res.json()) as { active?: boolean; table?: string };
-      if (data.active && data.table) {
-        markOrderingSessionFromQr(data.table);
+      const stored = getStoredTableNumber();
+      if (tableFromUrl && stored && tableFromUrl !== stored) {
+        clearOrderingSession();
+        return;
+      }
+
+      const active = await syncQrSessionFromServer(tableFromUrl);
+      if (cancelled) return;
+      if (!active) {
+        clearOrderingSession();
       }
     }
 
@@ -102,16 +125,13 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
   const tableFromQr = useSyncExternalStore(
     subscribeToOrdering,
-    () => readHasTableFromQr(tableFromUrl),
+    () => readHasTableFromQr(),
     () => process.env.NODE_ENV === "development"
   );
 
   const tableNumber = useSyncExternalStore(
     subscribeToOrdering,
-    () =>
-      tableFromQr || !isQrOrderEnforcedOnClient()
-        ? resolveTableNumber(fromUrl)
-        : "",
+    () => (tableFromQr ? resolveScannedTableNumber(fromUrl) : ""),
     () => ""
   );
 

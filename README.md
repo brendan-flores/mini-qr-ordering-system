@@ -42,10 +42,11 @@ On your **deployed** customer site (e.g. Vercel), ordering is locked until a gue
 |--------------|--------|
 | Open menu without `?table=` | Browse only — no cart |
 | Type `?table=1` in the address bar | Browse only — no cart |
+| Change `?table=` after scanning another table | Ordering locks — cart disabled |
 | **Scan** a QR from the admin dashboard | Cart and checkout unlock |
 | Place order without a valid scan session | `POST /api/orders` returns **403** |
 
-After a valid scan, the server sets a signed **httpOnly cookie** (4-hour session). Dine-in orders must use the table number from that scan. Checkout still offers **take-out** (pickup) for guests who scanned any table QR.
+After a valid scan, the server sets a signed **httpOnly cookie** (4-hour session). The table number is **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned any table QR.
 
 **Re-print QRs after deploying this feature** — older codes that only had `?table=N` no longer unlock ordering on the live site.
 
