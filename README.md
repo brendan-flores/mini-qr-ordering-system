@@ -66,7 +66,40 @@ npm install
 
 The GitHub ZIP does **not** include `.env.local`. The first time you run `npm run dev`, the project copies `.env.example` → `.env.local` automatically.
 
-If your MySQL `root` user has a password, open `.env.local` and set `MYSQL_PASSWORD`.
+You must edit **`.env.local`** in the project root (same folder as `package.json`). Do **not** edit `.env.example` — the app reads `.env.local` only.
+
+#### MySQL password (each PC is different)
+
+The app connects to MySQL using `MYSQL_PASSWORD` in `.env.local`. This is **not** the admin login (`admin` / `admin12345`). It is the password for your **MySQL `root` user on this computer**.
+
+| Where | What it does |
+|-------|----------------|
+| **MySQL Workbench** (connection / vault) | Lets *you* open Workbench on this PC |
+| **`.env.local` → `MYSQL_PASSWORD`** | Lets the *app* connect to MySQL on this PC |
+
+Saving a password in Workbench alone does **not** update the app. Copy the **same** password into `.env.local`:
+
+```env
+MYSQL_USER=root
+MYSQL_PASSWORD=your_mysql_root_password_here
+MYSQL_DATABASE=mini_qr_ordering
+```
+
+- If MySQL `root` has **no** password on this PC, leave it empty: `MYSQL_PASSWORD=`
+- Each laptop has its **own** MySQL — use **that machine’s** password, not someone else’s
+- Do **not** share or commit `.env.local` (it stays on each PC only)
+
+Also set a local dev secret (any long random string):
+
+```env
+ADMIN_SESSION_SECRET=dev-only-brencravings-local-secret
+```
+
+After saving `.env.local`, **restart** the dev server (`Ctrl+C`, then `npm run dev` again). Next.js only reads env files on startup.
+
+**Test:** open `http://localhost:3000/api/products` — you should see JSON with menu items.
+
+**Common error:** `Access denied for user 'root'@'localhost' (using password: NO)` means `MYSQL_PASSWORD` is still empty in `.env.local`, or you forgot to restart `npm run dev`.
 
 ### Step 4 — Set up the database
 
@@ -90,7 +123,7 @@ Open in your browser:
 - **On this PC:** [http://localhost:3000](http://localhost:3000) (menu) · [http://localhost:3000/admin](http://localhost:3000/admin) (admin)
 - **On your phone / another laptop (same Wi‑Fi):** use the **Network** line from the terminal, e.g. `http://192.168.1.10:3000` (menu) and `http://192.168.1.10:3000/admin` (admin)
 
-If the menu or admin page loads but shows no data, check that `mysql/schema.sql` was executed and that `MYSQL_PASSWORD` in `.env.local` matches your MySQL server.
+If the menu or admin page loads but shows no data, see **Step 3 — MySQL password** above: run `mysql/schema.sql`, set `MYSQL_PASSWORD` in `.env.local` to match MySQL Workbench on this PC, and restart `npm run dev`.
 
 ---
 
