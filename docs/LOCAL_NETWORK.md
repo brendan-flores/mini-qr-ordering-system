@@ -13,7 +13,9 @@ The dev server listens on all interfaces, but the terminal prints your real **Ne
 
 **First-time setup on a new PC:** `npm run dev` creates `.env.local` from `.env.example` if missing. Run `mysql/schema.sql` in MySQL Workbench and set `MYSQL_PASSWORD` in `.env.local` if your MySQL root user has a password.
 
-Optional — QR codes that open the menu on phones should use your PC’s LAN IP:
+**QR codes for phones:** open the admin dashboard at your **Network** URL (e.g. `http://192.168.1.25:3000/admin`) before generating a table QR — the code will use that same host automatically.
+
+Only if you generate QRs from `localhost` but need phones to scan a LAN link, set:
 
 ```env
 NEXT_PUBLIC_APP_URL=http://192.168.1.25:3000

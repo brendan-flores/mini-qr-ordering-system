@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import {
   IntegerTableNumberError,
   menuUrlWithTable,
   validateIntegerTableNumber,
 } from "@/lib/table";
+import { resolveMenuBaseUrlForQr } from "@/lib/app-hosts";
 import {
   getAdminQrTableNumber,
   setAdminQrTableNumber,
@@ -15,11 +16,6 @@ import { tableQrDownloadLabel } from "@/lib/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QrDownloadModal } from "./QrDownloadModal";
-
-function resolveInitialTable(explicit?: string) {
-  if (explicit !== undefined) return explicit;
-  return getAdminQrTableNumber();
-}
 
 export function TableQrGenerator({
   initialTable,
@@ -33,12 +29,12 @@ export function TableQrGenerator({
   layout?: "default" | "sidebar";
   className?: string;
 }) {
-  const [tableNumber, setTableNumber] = useState(() =>
-    resolveInitialTable(initialTable)
-  );
+  const [tableNumber, setTableNumber] = useState(initialTable ?? "");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [scanUrl, setScanUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [restoringQr, setRestoringQr] = useState(false);
+  const restoredRef = useRef(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [tableError, setTableError] = useState<string | null>(null);
 
@@ -51,8 +47,12 @@ export function TableQrGenerator({
     : "Table —";
   const canUseTable = validation.ok;
 
-  async function generate() {
-    const checked = validateIntegerTableNumber(tableNumber);
+  async function generate(
+    tableOverride?: string,
+    options?: { showProgress?: boolean }
+  ) {
+    const showProgress = options?.showProgress !== false;
+    const checked = validateIntegerTableNumber(tableOverride ?? tableNumber);
     if (!checked.ok) {
       setTableError(checked.message);
       setQrDataUrl(null);
@@ -62,7 +62,11 @@ export function TableQrGenerator({
     setTableError(null);
     const table = checked.table;
     setAdminQrTableNumber(table);
-    setGenerating(true);
+    if (showProgress) {
+      setGenerating(true);
+    } else {
+      setRestoringQr(true);
+    }
     try {
       const tokenRes = await fetch("/api/admin/table-qr-token", {
         method: "POST",
@@ -81,10 +85,7 @@ export function TableQrGenerator({
       const { access_token: accessToken } = (await tokenRes.json()) as {
         access_token: string;
       };
-      const base =
-        process.env.NEXT_PUBLIC_APP_URL ??
-        (typeof window !== "undefined" ? `${window.location.origin}/` : "/");
-      const url = menuUrlWithTable(base, table, accessToken);
+      const url = menuUrlWithTable(resolveMenuBaseUrlForQr(), table, accessToken);
       setScanUrl(url);
       const dataUrl = await QRCode.toDataURL(url, {
         margin: 2,
@@ -101,15 +102,29 @@ export function TableQrGenerator({
       setQrDataUrl(null);
       setScanUrl(null);
     } finally {
-      setGenerating(false);
+      if (showProgress) {
+        setGenerating(false);
+      } else {
+        setRestoringQr(false);
+      }
     }
   }
 
   useEffect(() => {
-    const checked = validateIntegerTableNumber(tableNumber);
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    const stored =
+      initialTable === undefined ? getAdminQrTableNumber() : initialTable;
+    if (stored && stored !== tableNumber) {
+      setTableNumber(stored);
+    }
+
+    const checked = validateIntegerTableNumber(stored || tableNumber);
     if (!checked.ok) return;
-    void generate();
-    // Restore the last admin table QR preview only — never default to table 1.
+
+    // Silent restore — avoids QR panel flash and hydration mismatch on admin load.
+    void generate(checked.table, { showProgress: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -156,7 +171,7 @@ export function TableQrGenerator({
         <button
           type="button"
           disabled={generating}
-          onClick={() => void generate()}
+          onClick={() => void generate(undefined, { showProgress: true })}
           className={[
             "shrink-0 cursor-pointer rounded-xl border border-[var(--color-surface-line)] bg-white font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] disabled:opacity-50",
             isSidebar ? "px-3 py-2 text-xs" : "px-4 py-2 text-sm",
@@ -230,12 +245,18 @@ export function TableQrGenerator({
                 style={{ width: qrSize, height: qrSize }}
               />
             </div>
+          ) : restoringQr ? (
+            <div
+              className="flex items-center justify-center text-sm text-zinc-400"
+              style={{ width: qrSize, height: qrSize }}
+              aria-hidden
+            />
           ) : (
             <p
-              className="text-sm text-zinc-500"
+              className="flex items-center justify-center text-sm text-zinc-500"
               style={{ width: qrSize, height: qrSize }}
             >
-              Generating…
+              {canUseTable ? "Press Go to generate" : "Enter a table number"}
             </p>
           )}
         </div>

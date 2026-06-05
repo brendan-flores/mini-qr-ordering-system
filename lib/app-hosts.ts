@@ -51,6 +51,27 @@ export function getMenuAppOrigin(): string | null {
   }
 }
 
+/**
+ * Base URL embedded in printed table QR codes.
+ * Same-origin dev (localhost or LAN IP): use the host the admin UI was opened on.
+ * Split admin host (e.g. brencravings-admin.*): use NEXT_PUBLIC_APP_URL.
+ */
+export function resolveMenuBaseUrlForQr(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (typeof window !== "undefined") {
+    if (isAdminHost(window.location.host) && configured) {
+      return configured.endsWith("/") ? configured : `${configured}/`;
+    }
+    return `${window.location.origin}/`;
+  }
+
+  if (configured) {
+    return configured.endsWith("/") ? configured : `${configured}/`;
+  }
+  return "/";
+}
+
 export function getAdminAppOrigin(): string {
   const url = process.env.NEXT_PUBLIC_ADMIN_APP_URL?.trim();
   if (url) {
