@@ -3,12 +3,15 @@ import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import { isQrSessionInactive } from "@/lib/qr-inactivity";
-import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import {
-  getQrOrderSessionFromRequest,
-  QR_ORDER_SESSION_COOKIE,
-  qrOrderSessionCookieOptions,
-} from "@/lib/qr-order-session";
+  isDeviceAuthorizedForQrAccess,
+  touchQrAccessBinding,
+} from "@/lib/mysql/qr-access-bindings";
+import {
+  clearQrOrderSessionCookie,
+  releaseQrOrderSessionBinding,
+} from "@/lib/qr-order-end-session";
+import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
 export async function GET(request: NextRequest) {
   const session = await getQrOrderSessionFromRequest(request);
@@ -32,13 +35,13 @@ export async function GET(request: NextRequest) {
   }
 
   if (isQrSessionInactive(session.lastActive)) {
+    await releaseQrOrderSessionBinding(session, deviceId);
     const res = NextResponse.json({ active: false, inactive: true });
-    res.cookies.set(QR_ORDER_SESSION_COOKIE, "", {
-      ...qrOrderSessionCookieOptions(0),
-      maxAge: 0,
-    });
+    clearQrOrderSessionCookie(res);
     return res;
   }
+
+  await touchQrAccessBinding(session.jti, deviceId);
 
   return NextResponse.json({ active: true, table: session.table });
 }

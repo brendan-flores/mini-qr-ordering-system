@@ -13,7 +13,12 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMounted } from "@/hooks/useMounted";
 import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
+import { useQrSessionLifecycle } from "@/hooks/useQrSessionLifecycle";
 import { getOrCreateDeviceId } from "@/lib/device-session";
+import {
+  clearLocalOrderingSession,
+  endQrOrderingSession,
+} from "@/lib/qr-session-end";
 import {
   allowsMenuOrderingWithoutTable,
   clearOrderingSession,
@@ -87,6 +92,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useOrderingInactivity(handleSessionExpired);
+  useQrSessionLifecycle();
 
   useEffect(() => {
     let cancelled = false;
@@ -94,10 +100,23 @@ export function TableProvider({ children }: { children: ReactNode }) {
     async function syncSession() {
       const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
 
-      // Menu page without QR activation should not show table state,
-      // even if a previous QR cookie/session exists in this browser.
+      // Menu without ?table=&access= in the URL — restore an in-progress session
+      // from the server cookie (e.g. "Order more", header Menu link). Do not
+      // release the QR binding while the guest is still in the ordering flow.
       if (allowsMenuOrderingWithoutTable(pathname) && !hasQrCredential) {
-        clearOrderingSession();
+        const hadClientSession = hasTableFromQr();
+        const restored = await syncQrSessionFromServer(null);
+        if (cancelled) return;
+        if (restored) {
+          setQrActivationMessage(null);
+          return;
+        }
+
+        if (hadClientSession) {
+          clearLocalOrderingSession();
+        } else {
+          clearOrderingSession();
+        }
         setQrActivationMessage(null);
         return;
       }
@@ -138,11 +157,11 @@ export function TableProvider({ children }: { children: ReactNode }) {
         }
 
         if (data?.error?.includes("another device")) {
-          clearOrderingSession();
+          clearLocalOrderingSession();
           return;
         }
 
-        clearOrderingSession();
+        clearLocalOrderingSession();
         return;
       }
 
@@ -150,14 +169,14 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
       const stored = getStoredTableNumber();
       if (tableFromUrl && stored && tableFromUrl !== stored) {
-        clearOrderingSession();
+        clearLocalOrderingSession();
         return;
       }
 
       const active = await syncQrSessionFromServer(tableFromUrl);
       if (cancelled) return;
-      if (!active) {
-        clearOrderingSession();
+      if (!active && hasTableFromQr()) {
+        clearLocalOrderingSession();
       }
     }
 

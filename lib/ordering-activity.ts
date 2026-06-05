@@ -2,7 +2,7 @@ import {
   QR_ORDER_INACTIVITY_MESSAGE,
   QR_ORDER_INACTIVITY_MS,
 } from "@/lib/qr-inactivity";
-import { clearOrderingSession, hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
+import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
 const LAST_ACTIVITY_KEY = "brencravings-ordering-last-activity";
 
@@ -28,19 +28,6 @@ export function isClientOrderingInactive(): boolean {
   if (!Number.isFinite(last)) return true;
 
   return Date.now() - last > QR_ORDER_INACTIVITY_MS;
-}
-
-export async function endOrderingSessionDueToInactivity(): Promise<void> {
-  clearOrderingActivity();
-  clearOrderingSession();
-  try {
-    await fetch("/api/qr/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch {
-    /* ignore */
-  }
 }
 
 export { QR_ORDER_INACTIVITY_MESSAGE };

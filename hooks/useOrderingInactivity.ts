@@ -3,11 +3,13 @@
 import { useEffect } from "react";
 import { getOrCreateDeviceId } from "@/lib/device-session";
 import {
+  isClientOrderingInactive,
+  touchOrderingActivity,
+} from "@/lib/ordering-activity";
+import {
   endOrderingSessionDueToInactivity,
   QR_ORDER_INACTIVITY_MESSAGE,
-  touchOrderingActivity,
-  isClientOrderingInactive,
-} from "@/lib/ordering-activity";
+} from "@/lib/qr-session-end";
 import { isAdminPath } from "@/lib/routes";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 

@@ -9,3 +9,15 @@ export function isAdminPath(pathname: string): boolean {
     pathname.startsWith(`${ADMIN_PAGE_PATH}/`)
   );
 }
+
+/** Customer routes where an active table-QR ordering session applies. */
+export function isQrSessionPath(pathname: string): boolean {
+  return (
+    pathname === MENU_PAGE_PATH ||
+    pathname.startsWith(`${MENU_PAGE_PATH}/`) ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/") ||
+    pathname === "/orders" ||
+    pathname.startsWith("/orders/")
+  );
+}

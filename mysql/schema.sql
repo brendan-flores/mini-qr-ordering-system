@@ -56,8 +56,27 @@ CREATE TABLE IF NOT EXISTS qr_access_bindings (
   table_number VARCHAR(32) NOT NULL,
   device_id VARCHAR(64) NOT NULL,
   bound_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_active_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_qr_access_device (device_id)
 );
+
+-- Upgrade older databases missing last_active_at (safe to re-run).
+SET @db = DATABASE();
+SET @qr_last_active_exists = (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db
+    AND TABLE_NAME = 'qr_access_bindings'
+    AND COLUMN_NAME = 'last_active_at'
+);
+SET @qr_last_active_sql = IF(
+  @qr_last_active_exists = 0,
+  'ALTER TABLE qr_access_bindings ADD COLUMN last_active_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER bound_at',
+  'SELECT 1'
+);
+PREPARE qr_last_active_stmt FROM @qr_last_active_sql;
+EXECUTE qr_last_active_stmt;
+DEALLOCATE PREPARE qr_last_active_stmt;
 
 -- Admin: username admin / password admin12345
 INSERT INTO admin_users (id, username, password_hash)

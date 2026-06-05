@@ -4,6 +4,8 @@ const TABLE_STORAGE_KEY = "brencravings-table";
 const ORDERING_SESSION_KEY = "brencravings-ordering-session";
 /** Set only when guest opened menu via table QR (?table=). */
 const TABLE_FROM_QR_KEY = "brencravings-table-from-qr";
+/** Tracks an active server-side QR binding for reliable tab/browser-close logout. */
+const QR_BINDING_ACTIVE_KEY = "brencravings-qr-binding-active";
 export const TABLE_UPDATE_EVENT = "brencravings-table-update";
 export const ORDERING_UPDATE_EVENT = "brencravings-ordering-update";
 
@@ -138,6 +140,7 @@ export function markOrderingSessionFromQr(table: string) {
     "brencravings-ordering-last-activity",
     String(Date.now())
   );
+  window.sessionStorage.setItem(QR_BINDING_ACTIVE_KEY, "1");
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
 }
 
@@ -161,8 +164,15 @@ export function clearOrderingSession() {
   window.sessionStorage.removeItem(TABLE_FROM_QR_KEY);
   window.sessionStorage.removeItem(TABLE_STORAGE_KEY);
   window.sessionStorage.removeItem("brencravings-ordering-last-activity");
+  window.sessionStorage.removeItem(QR_BINDING_ACTIVE_KEY);
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
   window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
+}
+
+/** True when this browser holds an active table-QR server binding. */
+export function hasActiveQrBinding(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.sessionStorage.getItem(QR_BINDING_ACTIVE_KEY) === "1";
 }
 
 /** True when cart, checkout, and orders are allowed. */

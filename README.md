@@ -31,8 +31,17 @@ Guests **must scan a table QR** (printed from the admin page) before they can or
 
 This is **intentional** — it prevents spam and fake orders. Only guests at a real table with a printed QR can place orders.
 
-- QR links are bound to **one device** (link sharing is blocked).
-- **15 minutes** of inactivity ends the session; guest must scan again.
+### QR session rules
+
+| Rule | Behavior |
+|------|----------|
+| **One device per QR** | The first phone to scan locks the table QR; a second phone gets *“registered to another device”* until the session ends. |
+| **In-app navigation** | Moving between menu, cart, checkout, and orders **keeps** the session (no rescan needed). |
+| **Close tab or browser** | Session ends and the QR is **released** so the next guest at the table can scan. |
+| **15 minutes idle** | No taps, scrolls, or keyboard activity ends the session and releases the QR. |
+| **Force-quit browser** | If the OS kills the app without running logout, the server releases the binding after **15 minutes** with no heartbeat (`last_active_at` on `qr_access_bindings`). |
+
+No admin action is required to free a table QR — it happens automatically when the current guest’s session ends.
 
 ---
 
@@ -63,6 +72,8 @@ npm install
 4. Confirm **4 tables** exist in `mini_qr_ordering`:
 
    `admin_users` · `products` · `orders` · `qr_access_bindings`
+
+   The `qr_access_bindings` table tracks which device holds each table QR (`device_id`, `bound_at`, `last_active_at`). Re-run `mysql/schema.sql` after pulling updates — it safely adds `last_active_at` to existing databases.
 
 More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 
@@ -116,6 +127,8 @@ Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NET
 
 **QR workflow** — Admin → Table QR codes → enter table → **Go** → download PNG → guest scans to order.
 
+**QR session lifecycle** — One device per scan; auto-release on tab/browser close or 15 min idle; server heartbeat via `/api/qr/ping`.
+
 ---
 
 ## Tech stack
@@ -139,8 +152,8 @@ Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NET
 | POST | `/api/admin/table-qr-token` | Issue QR `access` token (admin) |
 | GET | `/api/qr/activate` | Validate scan & set session cookie |
 | GET | `/api/qr/session` | Check active QR session |
-| GET | `/api/qr/ping` | Refresh session (15 min inactivity) |
-| POST | `/api/qr/logout` | Clear QR session |
+| GET | `/api/qr/ping` | Refresh session & binding heartbeat (15 min inactivity) |
+| POST | `/api/qr/logout` | End session & release device binding (tab/browser close) |
 
 Optional local Express API: `npm run dev:api` → [docs/BACKEND_API.md](docs/BACKEND_API.md)
 

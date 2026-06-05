@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { normalizeDeviceId } from "@/lib/device-id";
 import {
-  QR_ORDER_SESSION_COOKIE,
-  qrOrderSessionCookieOptions,
-} from "@/lib/qr-order-session";
+  clearQrOrderSessionCookie,
+  releaseQrOrderSessionBinding,
+} from "@/lib/qr-order-end-session";
+import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const session = await getQrOrderSessionFromRequest(request);
+  const deviceId = normalizeDeviceId(
+    request.nextUrl.searchParams.get("device_id")
+  );
+
+  await releaseQrOrderSessionBinding(session, deviceId);
+
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(QR_ORDER_SESSION_COOKIE, "", {
-    ...qrOrderSessionCookieOptions(0),
-    maxAge: 0,
-  });
+  clearQrOrderSessionCookie(res);
   return res;
 }
