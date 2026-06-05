@@ -19,36 +19,6 @@ The deployed sites are ready to use — no local setup required.
 
 ---
 
-## Quick setup (local)
-
-**Prerequisites:** Node.js 18+, MySQL 8, MySQL Workbench
-
-```bash
-# 1. Get the project (clone or unzip from GitHub)
-cd mini-qr-ordering-system
-
-# 2. Install & run
-npm install
-npm run dev
-```
-
-**3. Database** — In MySQL Workbench, run the full `mysql/schema.sql` script (Ctrl+A → Execute).
-
-**4. Config** — `.env.local` is included in the project (`MYSQL_PASSWORD` is empty). If MySQL `root` has a password on your PC, add it to `.env.local`, save, and restart `npm run dev`.
-
-**5. Open**
-
-| Where | Menu | Admin |
-|-------|------|-------|
-| This PC | [localhost:3000](http://localhost:3000) | [localhost:3000/admin](http://localhost:3000/admin) |
-| Phone / other device (same Wi‑Fi) | `http://192.168.x.x:3000` | `http://192.168.x.x:3000/admin` |
-
-Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)** for LAN details.
-
-**Verify:** `http://localhost:3000/api/products` should return JSON with menu items.
-
----
-
 ## How ordering works
 
 Guests **must scan a table QR** (printed from the admin page) before they can order.
@@ -66,7 +36,9 @@ This is **intentional** — it prevents spam and fake orders. Only guests at a r
 
 ---
 
-## Installation guide (detailed)
+## Installation guide
+
+**Prerequisites:** Node.js 18+, MySQL 8, MySQL Workbench
 
 ### Step 1 — Get the project
 
@@ -121,6 +93,17 @@ MYSQL_PASSWORD=your_mysql_root_password_here
 ```bash
 npm run dev
 ```
+
+### Step 6 — Open the app
+
+| Where | Menu | Admin |
+|-------|------|-------|
+| This PC | [localhost:3000](http://localhost:3000) | [localhost:3000/admin](http://localhost:3000/admin) |
+| Phone / other device (same Wi‑Fi) | `http://192.168.x.x:3000` | `http://192.168.x.x:3000/admin` |
+
+Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)** for LAN and QR testing.
+
+**Verify:** `http://localhost:3000/api/products` should return JSON with menu items.
 
 ---
 
