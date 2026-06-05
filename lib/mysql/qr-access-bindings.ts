@@ -1,5 +1,9 @@
 import type { RowDataPacket } from "mysql2";
 import { isQrBindingAbandoned } from "@/lib/qr-binding-abandoned";
+import {
+  isQrAccessRevokedForDevice,
+  revokeQrAccessForDevice,
+} from "./qr-access-revocations";
 import { query } from "./db";
 
 export type QrAccessBindingRow = {
@@ -10,7 +14,11 @@ export type QrAccessBindingRow = {
   last_active_at: string;
 };
 
-export type QrAccessBindResult = "activated" | "renewed" | "denied";
+export type QrAccessBindResult =
+  | "activated"
+  | "renewed"
+  | "denied"
+  | "revoked";
 
 function mapRow(row: RowDataPacket): QrAccessBindingRow {
   const lastActive = row.last_active_at ?? row.bound_at;
@@ -64,6 +72,10 @@ export async function bindQrAccessToDevice(
   tableNumber: string,
   deviceId: string
 ): Promise<QrAccessBindResult> {
+  if (await isQrAccessRevokedForDevice(accessJti, deviceId)) {
+    return "revoked";
+  }
+
   const existing = await getQrAccessBinding(accessJti);
   if (existing) {
     if (existing.device_id === deviceId) {
@@ -180,6 +192,7 @@ export async function adminForceReleaseQrAccessBinding(
   const existing = await getQrAccessBinding(accessJti);
   if (!existing) return false;
 
+  await revokeQrAccessForDevice(existing.access_jti, existing.device_id);
   await query(`DELETE FROM qr_access_bindings WHERE access_jti = ?`, [
     accessJti,
   ]);

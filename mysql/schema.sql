@@ -2,7 +2,7 @@
 -- BrenCravings — single database schema (local, LAN, Railway, Vercel)
 -- Run the ENTIRE file in MySQL Workbench → Execute (⚡)
 -- =============================================================================
--- Tables: admin_users, products, orders, qr_access_bindings
+-- Tables: admin_users, products, orders, qr_access_bindings, qr_access_revocations
 -- Safe to re-run: drops legacy tables, CREATE IF NOT EXISTS, seed when empty.
 -- =============================================================================
 
@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS qr_access_bindings (
   bound_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_active_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_qr_access_device (device_id)
+);
+
+-- Devices staff-terminated cannot re-bind the same printed QR (refresh / rescan).
+CREATE TABLE IF NOT EXISTS qr_access_revocations (
+  access_jti CHAR(36) NOT NULL,
+  device_id VARCHAR(64) NOT NULL,
+  revoked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (access_jti, device_id)
 );
 
 -- Upgrade older databases missing last_active_at (safe to re-run).

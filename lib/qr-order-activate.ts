@@ -9,7 +9,7 @@ import type { NextResponse } from "next/server";
 
 export type QrActivateResult =
   | { ok: true; sessionToken: string; table: string; bind: string }
-  | { ok: false; reason: "invalid" | "device_mismatch" };
+  | { ok: false; reason: "invalid" | "device_mismatch" | "revoked" };
 
 export async function tryActivateQrOrderSession(input: {
   tableNumber?: string | null;
@@ -29,6 +29,9 @@ export async function tryActivateQrOrderSession(input: {
     table,
     input.deviceId
   );
+  if (bindResult === "revoked") {
+    return { ok: false, reason: "revoked" };
+  }
   if (bindResult === "denied") {
     return { ok: false, reason: "device_mismatch" };
   }

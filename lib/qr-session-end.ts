@@ -17,6 +17,27 @@ export function clearLocalOrderingSession(): void {
   clearOrderingSession();
 }
 
+/** Remove table/access query params so a refresh cannot re-activate via URL alone. */
+export function stripQrCredentialsFromUrl(): void {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  const hadCredentials =
+    url.searchParams.has("table") || url.searchParams.has("access");
+  if (!hadCredentials) return;
+
+  url.searchParams.delete("table");
+  url.searchParams.delete("access");
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState(null, "", next);
+}
+
+/** Staff-terminated or invalid server session — clear state and scrub the QR URL. */
+export function handleQrSessionTerminated(): void {
+  clearLocalOrderingSession();
+  stripQrCredentialsFromUrl();
+}
+
 async function notifyServerQrLogout(options?: { beacon?: boolean }): Promise<void> {
   const deviceId = getOrCreateDeviceId();
   const url = deviceId ? logoutUrl(deviceId) : "/api/qr/logout";

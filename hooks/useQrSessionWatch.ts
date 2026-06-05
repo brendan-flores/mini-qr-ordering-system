@@ -6,7 +6,7 @@ import {
   QR_SESSION_WATCH_INTERVAL_MS,
 } from "@/lib/qr-inactivity";
 import { fetchQrSessionSnapshot } from "@/lib/qr-session-client";
-import { clearLocalOrderingSession } from "@/lib/qr-session-end";
+import { handleQrSessionTerminated } from "@/lib/qr-session-end";
 import { isAdminPath } from "@/lib/routes";
 import {
   hasActiveQrBinding,
@@ -35,7 +35,7 @@ export function useQrSessionWatch(onTerminated: (message: string) => void) {
       if (cancelled) return;
 
       if (snapshot.status === "terminated") {
-        clearLocalOrderingSession();
+        handleQrSessionTerminated();
         onTerminated(QR_SESSION_TERMINATED_MESSAGE);
       }
     }

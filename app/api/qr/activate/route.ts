@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { getErrorMessage } from "@/lib/orders/db-errors";
+import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/qr-inactivity";
 import {
   attachQrOrderSessionCookie,
   tryActivateQrOrderSession,
@@ -40,17 +41,21 @@ export async function GET(request: NextRequest) {
 
     if (!result.ok) {
       const message =
-        result.reason === "device_mismatch"
-          ? "This QR link is registered to another device. Scan the code on your own phone to order."
-          : "Invalid or expired table QR code.";
+        result.reason === "revoked"
+          ? QR_SESSION_TERMINATED_MESSAGE
+          : result.reason === "device_mismatch"
+            ? "This QR link is registered to another device. Scan the code on your own phone to order."
+            : "Invalid or expired table QR code.";
       return NextResponse.json(
         {
           ok: false,
           error: message,
           code:
-            result.reason === "device_mismatch"
-              ? "DEVICE_MISMATCH"
-              : "INVALID_QR",
+            result.reason === "revoked"
+              ? "REVOKED_BY_STAFF"
+              : result.reason === "device_mismatch"
+                ? "DEVICE_MISMATCH"
+                : "INVALID_QR",
         },
         { status: 403 }
       );

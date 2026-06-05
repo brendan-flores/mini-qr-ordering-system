@@ -13,8 +13,8 @@ import {
 } from "@/lib/qr-inactivity";
 import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
 import {
-  clearLocalOrderingSession,
   endOrderingSessionDueToInactivity,
+  handleQrSessionTerminated,
   QR_ORDER_INACTIVITY_MESSAGE,
   QR_SESSION_TERMINATED_MESSAGE,
 } from "@/lib/qr-session-end";
@@ -59,7 +59,7 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
           terminated?: boolean;
         } | null;
         if (data?.terminated) {
-          clearLocalOrderingSession();
+          handleQrSessionTerminated();
           onExpired(QR_SESSION_TERMINATED_MESSAGE);
           return;
         }

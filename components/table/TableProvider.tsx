@@ -22,6 +22,7 @@ import { fetchQrSessionSnapshot } from "@/lib/qr-session-client";
 import {
   clearLocalOrderingSession,
   endQrOrderingSession,
+  handleQrSessionTerminated,
 } from "@/lib/qr-session-end";
 import { isBareMenuVisit } from "@/lib/qr-session-flow";
 import {
@@ -117,7 +118,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
         if (restored.status === "terminated") {
           setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
-          clearLocalOrderingSession();
+          handleQrSessionTerminated();
           return;
         }
 
@@ -141,12 +142,21 @@ export function TableProvider({ children }: { children: ReactNode }) {
         const data = (await res.json().catch(() => null)) as {
           ok?: boolean;
           error?: string;
+          code?: string;
           table?: string;
         } | null;
 
         if (res.ok && data?.ok) {
           setQrActivationMessage(null);
           markOrderingSessionFromQr(data.table ?? tableFromUrl ?? "");
+          return;
+        }
+
+        if (data?.code === "REVOKED_BY_STAFF") {
+          setQrActivationMessage(
+            data.error ?? QR_SESSION_TERMINATED_MESSAGE
+          );
+          handleQrSessionTerminated();
           return;
         }
 
@@ -166,7 +176,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
         }
         if (restored.status === "terminated") {
           setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
-          clearLocalOrderingSession();
+          handleQrSessionTerminated();
           return;
         }
 
@@ -193,7 +203,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
       if (synced.status === "terminated") {
         setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
-        clearLocalOrderingSession();
+        handleQrSessionTerminated();
         return;
       }
 
