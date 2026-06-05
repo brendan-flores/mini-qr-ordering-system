@@ -140,6 +140,10 @@ export function markOrderingSessionFromQr(table: string) {
   window.sessionStorage.setItem(TABLE_STORAGE_KEY, normalized);
   window.sessionStorage.setItem(ORDERING_SESSION_KEY, "1");
   window.sessionStorage.setItem(TABLE_FROM_QR_KEY, "1");
+  window.sessionStorage.setItem(
+    "brencravings-ordering-last-activity",
+    String(Date.now())
+  );
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
 }
 
@@ -162,6 +166,7 @@ export function clearOrderingSession() {
   window.sessionStorage.removeItem(ORDERING_SESSION_KEY);
   window.sessionStorage.removeItem(TABLE_FROM_QR_KEY);
   window.sessionStorage.removeItem(TABLE_STORAGE_KEY);
+  window.sessionStorage.removeItem("brencravings-ordering-last-activity");
   window.dispatchEvent(new Event(ORDERING_UPDATE_EVENT));
   window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
 }

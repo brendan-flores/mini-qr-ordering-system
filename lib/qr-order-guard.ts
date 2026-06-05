@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
+import { isQrSessionInactive, QR_ORDER_INACTIVITY_MESSAGE } from "@/lib/qr-inactivity";
 import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
@@ -33,6 +34,14 @@ function qrTableMismatchError(): Error & { status: number } {
   return err;
 }
 
+function qrSessionInactiveError(): Error & { status: number } {
+  const err = new Error(QR_ORDER_INACTIVITY_MESSAGE) as Error & {
+    status: number;
+  };
+  err.status = 403;
+  return err;
+}
+
 async function assertQrSessionForDevice(
   request: NextRequest,
   deviceId: string | null | undefined
@@ -49,6 +58,10 @@ async function assertQrSessionForDevice(
     !(await isDeviceAuthorizedForQrAccess(session.jti, normalizedDeviceId))
   ) {
     throw qrDeviceMismatchError();
+  }
+
+  if (isQrSessionInactive(session.lastActive)) {
+    throw qrSessionInactiveError();
   }
 
   return session;

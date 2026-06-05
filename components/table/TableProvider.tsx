@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -10,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
 import { getOrCreateDeviceId } from "@/lib/device-session";
 import {
   allowsMenuOrderingWithoutTable,
@@ -81,6 +83,12 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const [qrActivationMessage, setQrActivationMessage] = useState<string | null>(
     null
   );
+
+  const handleSessionExpired = useCallback((message: string) => {
+    setQrActivationMessage(message);
+  }, []);
+
+  useOrderingInactivity(handleSessionExpired);
 
   useEffect(() => {
     let cancelled = false;

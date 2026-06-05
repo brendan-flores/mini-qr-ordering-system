@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import type { Product } from "../../client/services/products";
 import type { CartItem, CartState } from "./cartTypes";
+import { touchOrderingActivity } from "@/lib/ordering-activity";
 import {
   cartItemCount,
   cartLineCount,
@@ -95,6 +96,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const commit = useCallback((next: CartState) => {
     saveCartToStorage(next);
     emitCartUpdate();
+    touchOrderingActivity();
   }, []);
 
   const value = useMemo<CartContextValue>(() => {
@@ -111,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clear: () => {
         clearCartStorage();
         emitCartUpdate();
+        touchOrderingActivity();
       },
     };
   }, [cart, commit]);

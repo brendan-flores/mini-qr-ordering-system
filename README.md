@@ -47,7 +47,9 @@ On your **deployed** customer site (e.g. Vercel), ordering is locked until a gue
 | Copy/share the QR link to another phone | **Denied** — link is bound to the first device that scanned |
 | Place order without a valid scan session | `POST /api/orders` returns **403** |
 
-After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie** (4-hour session). The **first device** to scan a printed QR owns that link; opening the same URL on another device is rejected. The table number is also **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned on their own device.
+After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie**. The **first device** to scan a printed QR owns that link; opening the same URL on another device is rejected. The table number is also **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned on their own device.
+
+**Inactivity timeout (live server):** If the guest does nothing for **15 minutes** (no taps, scrolls, or cart changes), the ordering session ends. They must **scan the table QR again** to order. Activity is tracked in the browser and on the server (`/api/qr/ping`).
 
 **Database:** run `mysql/patch-qr-access-bindings.sql` on existing Railway/local DB (or re-import `mysql/schema.sql` for fresh installs).
 
@@ -130,5 +132,7 @@ Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md
 | POST | `/api/admin/table-qr-token` | Issue signed `access` token for a table QR (admin) |
 | GET | `/api/qr/activate` | Validate scan URL and set order session cookie |
 | GET | `/api/qr/session` | Check whether guest has an active QR order session |
+| GET | `/api/qr/ping` | Refresh session activity (15-minute inactivity limit) |
+| POST | `/api/qr/logout` | Clear QR order session cookie |
 
 Deployment notes: **[docs/VERCEL.md](docs/VERCEL.md)**

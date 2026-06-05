@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 export const QR_ORDER_SESSION_COOKIE = "bc_qr_order_session";
-const SESSION_TTL_SEC = 60 * 60 * 4; // 4 hours at the table
+const SESSION_TTL_SEC = 60 * 60 * 4; // hard cap — inactivity ends sooner (15 min)
 
 export type QrOrderSessionPayload = {
   table: string;
@@ -9,6 +9,8 @@ export type QrOrderSessionPayload = {
   jti?: string;
   /** Browser device id — must match the first device that scanned this QR. */
   deviceId?: string;
+  /** Unix seconds — updated on activity; inactivity timeout applies on live server. */
+  lastActive?: number;
   exp: number;
 };
 
@@ -46,19 +48,37 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+export async function signQrOrderSessionPayload(
+  payload: QrOrderSessionPayload
+): Promise<string> {
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${data}.${await hmacSign(data)}`;
+}
+
 export async function createQrOrderSessionToken(
   table: string,
   accessJti?: string,
   deviceId?: string
 ): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
   const payload: QrOrderSessionPayload = {
     table,
     ...(accessJti ? { jti: accessJti } : {}),
     ...(deviceId ? { deviceId } : {}),
-    exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SEC,
+    lastActive: now,
+    exp: now + SESSION_TTL_SEC,
   };
-  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  return `${data}.${await hmacSign(data)}`;
+  return signQrOrderSessionPayload(payload);
+}
+
+export async function touchQrOrderSessionToken(
+  payload: QrOrderSessionPayload
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  return signQrOrderSessionPayload({
+    ...payload,
+    lastActive: now,
+  });
 }
 
 export async function parseQrOrderSessionToken(
