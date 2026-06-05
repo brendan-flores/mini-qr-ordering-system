@@ -7,7 +7,6 @@ import {
   releaseQrSessionOnUnload,
 } from "@/lib/qr-session-end";
 import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
-import { logQrSession } from "@/lib/qr-session-log";
 import {
   hasActiveQrBinding,
   hasTableFromQr,
@@ -20,8 +19,8 @@ function sessionShouldEnd(): boolean {
 
 /**
  * End the table-QR session when the guest closes a tab/browser or navigates
- * completely outside the ordering flow. Bare menu visits do NOT end the session
- * here — TableProvider restores an active server session instead.
+ * completely outside the ordering flow. Bare menu visits restore an active
+ * server session via TableProvider instead of ending here.
  */
 export function useQrSessionLifecycle() {
   const pathname = usePathname();
@@ -31,25 +30,24 @@ export function useQrSessionLifecycle() {
   useEffect(() => {
     if (!isQrOrderEnforcedOnClient()) return;
 
-    function notifyUnloadOnce(reason: string) {
+    function notifyUnloadOnce() {
       if (unloadNotifiedRef.current) return;
       if (!sessionShouldEnd()) return;
       unloadNotifiedRef.current = true;
-      logQrSession("unload_event", { reason });
       releaseQrSessionOnUnload();
     }
 
     function onPageHide(event: PageTransitionEvent) {
       if (event.persisted) return;
-      notifyUnloadOnce("pagehide");
+      notifyUnloadOnce();
     }
 
     function onBeforeUnload() {
-      notifyUnloadOnce("beforeunload");
+      notifyUnloadOnce();
     }
 
     function onFreeze() {
-      notifyUnloadOnce("freeze");
+      notifyUnloadOnce();
     }
 
     window.addEventListener("pagehide", onPageHide);
@@ -76,7 +74,6 @@ export function useQrSessionLifecycle() {
       !isQrOrderingFlowPath(pathname);
 
     if (leftOrderingFlow) {
-      logQrSession("left_ordering_flow", { from: previousPath, to: pathname });
       void endQrOrderingSession();
     }
   }, [pathname]);

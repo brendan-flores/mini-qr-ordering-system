@@ -5,7 +5,6 @@ import {
   clearQrOrderSessionCookie,
   releaseQrOrderSessionBinding,
 } from "@/lib/qr-order-end-session";
-import { logQrSession } from "@/lib/qr-session-log";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
 async function endQrLogout(request: NextRequest) {
@@ -13,21 +12,10 @@ async function endQrLogout(request: NextRequest) {
   const deviceId = normalizeDeviceId(
     request.nextUrl.searchParams.get("device_id")
   );
-  const accessToken = request.nextUrl.searchParams.get("access");
 
-  logQrSession("logout_api", {
-    method: request.method,
-    hasSession: Boolean(session?.jti),
-    hasDeviceId: Boolean(deviceId),
-    hasAccessFallback: Boolean(accessToken),
-    userAgent: request.headers.get("user-agent")?.slice(0, 120) ?? null,
-  });
+  await releaseQrOrderSessionBinding(session, deviceId);
 
-  const released = await releaseQrOrderSessionBinding(session, deviceId, {
-    accessToken,
-  });
-
-  const res = NextResponse.json({ ok: true, released });
+  const res = NextResponse.json({ ok: true });
   clearQrOrderSessionCookie(res);
   return res;
 }
@@ -39,7 +27,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET — some mobile browsers send sendBeacon / unload pings as GET.
- * Same behavior as POST; cookie or access+device_id can release binding.
+ * Same behavior as POST; still requires the session cookie to release binding.
  */
 export async function GET(request: NextRequest) {
   return endQrLogout(request);

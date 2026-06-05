@@ -4,6 +4,7 @@ import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import { isQrSessionInactive } from "@/lib/qr-inactivity";
 import {
+  getQrAccessBinding,
   isDeviceAuthorizedForQrAccess,
   touchQrAccessBinding,
 } from "@/lib/mysql/qr-access-bindings";
@@ -30,6 +31,17 @@ export async function GET(request: NextRequest) {
   const deviceId = normalizeDeviceId(
     request.nextUrl.searchParams.get("device_id")
   );
+
+  const binding = await getQrAccessBinding(session.jti);
+  if (!binding) {
+    const res = NextResponse.json(
+      { ok: false, terminated: true },
+      { status: 403 }
+    );
+    clearQrOrderSessionCookie(res);
+    return res;
+  }
+
   if (
     !deviceId ||
     session.deviceId !== deviceId ||

@@ -9,15 +9,3 @@ export function isAdminPath(pathname: string): boolean {
     pathname.startsWith(`${ADMIN_PAGE_PATH}/`)
   );
 }
-
-/** @deprecated Use isQrOrderingFlowPath from @/lib/qr-session-flow */
-export function isQrSessionPath(pathname: string): boolean {
-  return (
-    pathname === MENU_PAGE_PATH ||
-    pathname.startsWith(`${MENU_PAGE_PATH}/`) ||
-    pathname === "/checkout" ||
-    pathname.startsWith("/checkout/") ||
-    pathname === "/orders" ||
-    pathname.startsWith("/orders/")
-  );
-}

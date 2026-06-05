@@ -1,7 +1,4 @@
-import {
-  QR_ORDER_INACTIVITY_MESSAGE,
-  QR_ORDER_INACTIVITY_MS,
-} from "@/lib/qr-inactivity";
+import { QR_ORDER_INACTIVITY_MS } from "@/lib/qr-inactivity";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
 const LAST_ACTIVITY_KEY = "brencravings-ordering-last-activity";
@@ -29,5 +26,3 @@ export function isClientOrderingInactive(): boolean {
 
   return Date.now() - last > QR_ORDER_INACTIVITY_MS;
 }
-
-export { QR_ORDER_INACTIVITY_MESSAGE };

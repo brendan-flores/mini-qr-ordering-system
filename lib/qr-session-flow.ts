@@ -24,7 +24,7 @@ export function hasQrCredentialsInUrl(
   return Boolean(table?.trim() && access?.trim());
 }
 
-/** Menu opened without ?table= & ?access= — browse only; ends any active QR session. */
+/** Menu opened without ?table= & ?access= (session restored from server if still active). */
 export function isBareMenuVisit(
   pathname: string,
   table: string | null | undefined,

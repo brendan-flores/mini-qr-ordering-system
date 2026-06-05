@@ -1,22 +1,41 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { getOrCreateDeviceId } from "@/lib/device-session";
-import { QR_BINDING_HEARTBEAT_INTERVAL_MS } from "@/lib/qr-binding-heartbeat";
 import {
   isClientOrderingInactive,
   touchOrderingActivity,
 } from "@/lib/ordering-activity";
 import {
+  QR_ACTIVITY_PING_THROTTLE_MS,
+  QR_INACTIVITY_CHECK_INTERVAL_MS,
+} from "@/lib/qr-inactivity";
+import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
+import {
   endOrderingSessionDueToInactivity,
   QR_ORDER_INACTIVITY_MESSAGE,
+  QR_SESSION_TERMINATED_MESSAGE,
 } from "@/lib/qr-session-end";
 import { isAdminPath } from "@/lib/routes";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
-const CHECK_INTERVAL_MS = 15_000;
+/** Keep server `last_active_at` fresh while the tab is open and the guest is active. */
+const TAB_HEARTBEAT_INTERVAL_MS = 30_000;
 
 export function useOrderingInactivity(onExpired: (message: string) => void) {
+  const pathname = usePathname();
+
+  // Navigation within menu / checkout / orders counts as activity.
+  useEffect(() => {
+    if (typeof window !== "undefined" && isAdminPath(window.location.pathname)) {
+      return;
+    }
+    if (!isQrOrderEnforcedOnClient() || !hasTableFromQr()) return;
+    if (!isQrOrderingFlowPath(pathname)) return;
+    touchOrderingActivity();
+  }, [pathname]);
+
   useEffect(() => {
     if (typeof window !== "undefined" && isAdminPath(window.location.pathname)) {
       return;
@@ -35,8 +54,15 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
         credentials: "include",
       });
       if (res.status === 403 || res.status === 401) {
+        const data = (await res.json().catch(() => null)) as {
+          terminated?: boolean;
+        } | null;
         await endOrderingSessionDueToInactivity();
-        onExpired(QR_ORDER_INACTIVITY_MESSAGE);
+        onExpired(
+          data?.terminated
+            ? QR_SESSION_TERMINATED_MESSAGE
+            : QR_ORDER_INACTIVITY_MESSAGE
+        );
       }
     }
 
@@ -50,7 +76,7 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
     function onUserActivity() {
       touchOrderingActivity();
       const now = Date.now();
-      if (now - lastPingAt >= QR_BINDING_HEARTBEAT_INTERVAL_MS) {
+      if (now - lastPingAt >= QR_ACTIVITY_PING_THROTTLE_MS) {
         lastPingAt = now;
         void pingServerActivity();
       }
@@ -58,8 +84,8 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
 
     function onVisible() {
       if (document.visibilityState === "visible") {
-        touchOrderingActivity();
         void expireIfNeeded();
+        void pingServerActivity();
       }
     }
 
@@ -67,38 +93,47 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
     void pingServerActivity();
     lastPingAt = Date.now();
 
-    const activityOptions = { passive: true } as const;
-    window.addEventListener("pointerdown", onUserActivity, activityOptions);
-    window.addEventListener("touchstart", onUserActivity, activityOptions);
-    window.addEventListener("touchmove", onUserActivity, activityOptions);
+    const passive = { passive: true } as const;
+    window.addEventListener("pointerdown", onUserActivity, passive);
+    window.addEventListener("touchstart", onUserActivity, passive);
+    window.addEventListener("touchmove", onUserActivity, passive);
+    window.addEventListener("click", onUserActivity, passive);
     window.addEventListener("keydown", onUserActivity);
-    window.addEventListener("scroll", onUserActivity, activityOptions);
-    window.addEventListener("click", onUserActivity, activityOptions);
+    window.addEventListener("scroll", onUserActivity, passive);
+    window.addEventListener("wheel", onUserActivity, passive);
+    document.addEventListener("input", onUserActivity, { capture: true });
     document.addEventListener("visibilitychange", onVisible);
 
-    const checkInterval = window.setInterval(() => {
+    const inactivityCheck = window.setInterval(() => {
       void expireIfNeeded();
-    }, CHECK_INTERVAL_MS);
+    }, QR_INACTIVITY_CHECK_INTERVAL_MS);
 
-    const heartbeatInterval = window.setInterval(() => {
+    const tabHeartbeat = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       if (!hasTableFromQr()) return;
+      if (isClientOrderingInactive()) {
+        void expireIfNeeded();
+        return;
+      }
       const now = Date.now();
-      if (now - lastPingAt >= QR_BINDING_HEARTBEAT_INTERVAL_MS) {
+      if (now - lastPingAt >= QR_ACTIVITY_PING_THROTTLE_MS) {
         lastPingAt = now;
         void pingServerActivity();
       }
-    }, QR_BINDING_HEARTBEAT_INTERVAL_MS);
+    }, TAB_HEARTBEAT_INTERVAL_MS);
 
     return () => {
       window.removeEventListener("pointerdown", onUserActivity);
       window.removeEventListener("touchstart", onUserActivity);
       window.removeEventListener("touchmove", onUserActivity);
+      window.removeEventListener("click", onUserActivity);
       window.removeEventListener("keydown", onUserActivity);
       window.removeEventListener("scroll", onUserActivity);
-      window.removeEventListener("click", onUserActivity);
+      window.removeEventListener("wheel", onUserActivity);
+      document.removeEventListener("input", onUserActivity, { capture: true });
       document.removeEventListener("visibilitychange", onVisible);
-      window.clearInterval(checkInterval);
-      window.clearInterval(heartbeatInterval);
+      window.clearInterval(inactivityCheck);
+      window.clearInterval(tabHeartbeat);
     };
   }, [onExpired]);
 }

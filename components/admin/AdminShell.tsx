@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminQrSidebar } from "./AdminQrSidebar";
@@ -19,6 +19,9 @@ function navLinkClass(active: boolean) {
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const onOrders = pathname === "/admin";
+  const onQrSessions = pathname.startsWith("/admin/qr-sessions");
   const [qrSheetOpen, setQrSheetOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -50,11 +53,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="shrink-0 py-3" aria-label="Admin">
-          <ul className="text-sm">
+          <ul className="space-y-0.5 text-sm">
             <li>
-              <Link href="/admin" className={navLinkClass(true)}>
+              <Link href="/admin" className={navLinkClass(onOrders)}>
                 <MaterialIcon name="dashboard" filled={false} className="text-xl" />
                 Live Orders
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/qr-sessions"
+                className={navLinkClass(onQrSessions)}
+              >
+                <MaterialIcon
+                  name="qr_code_scanner"
+                  filled={false}
+                  className="text-xl"
+                />
+                Active QR Sessions
               </Link>
             </li>
           </ul>
@@ -124,10 +140,27 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 z-50 flex w-full items-stretch justify-around gap-0.5 border-t border-[var(--color-surface-line)] bg-white/95 px-1.5 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur-sm lg:hidden">
         <Link
           href="/admin"
-          className="flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl bg-[var(--color-primary)] px-2 py-2 text-white"
+          className={[
+            "flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-2 transition",
+            onOrders
+              ? "bg-[var(--color-primary)] text-white"
+              : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
+          ].join(" ")}
         >
           <MaterialIcon name="receipt_long" className="text-[22px]" />
           <span className="mt-0.5 text-[10px] font-bold">Orders</span>
+        </Link>
+        <Link
+          href="/admin/qr-sessions"
+          className={[
+            "flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-2 transition",
+            onQrSessions
+              ? "bg-[var(--color-primary)] text-white"
+              : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]",
+          ].join(" ")}
+        >
+          <MaterialIcon name="qr_code_scanner" filled={false} className="text-[22px]" />
+          <span className="mt-0.5 text-[10px] font-semibold">Sessions</span>
         </Link>
         <button
           type="button"

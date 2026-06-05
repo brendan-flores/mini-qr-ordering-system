@@ -15,6 +15,7 @@ import { useMounted } from "@/hooks/useMounted";
 import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
 import { useQrSessionLifecycle } from "@/hooks/useQrSessionLifecycle";
 import { getOrCreateDeviceId } from "@/lib/device-session";
+import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/qr-inactivity";
 import {
   clearLocalOrderingSession,
   endQrOrderingSession,
@@ -22,7 +23,6 @@ import {
 import { isBareMenuVisit } from "@/lib/qr-session-flow";
 import {
   clearOrderingSession,
-  getStoredQrAccessToken,
   getStoredTableNumber,
   hasTableFromQr,
   markOrderingSessionFromQr,
@@ -55,9 +55,14 @@ async function requestQrActivate(params: URLSearchParams) {
   return fetch(`/api/qr/activate?${params}`, { credentials: "include" });
 }
 
+type QrSessionSyncResult =
+  | { status: "active"; table: string }
+  | { status: "inactive" }
+  | { status: "terminated" };
+
 async function syncQrSessionFromServer(
   tableFromUrl: string | null
-): Promise<boolean> {
+): Promise<QrSessionSyncResult> {
   const params = new URLSearchParams();
   const deviceId = getOrCreateDeviceId();
   if (deviceId) params.set("device_id", deviceId);
@@ -66,18 +71,20 @@ async function syncQrSessionFromServer(
     `/api/qr/session${params.size ? `?${params}` : ""}`,
     { credentials: "include" }
   );
-  if (!res.ok) return false;
+  if (!res.ok) return { status: "inactive" };
 
-  const data = (await res.json()) as { active?: boolean; table?: string };
-  if (!data.active || !data.table) return false;
+  const data = (await res.json()) as {
+    active?: boolean;
+    table?: string;
+    terminated?: boolean;
+  };
 
-  if (tableFromUrl && data.table !== tableFromUrl) return false;
+  if (data.terminated) return { status: "terminated" };
+  if (!data.active || !data.table) return { status: "inactive" };
+  if (tableFromUrl && data.table !== tableFromUrl) return { status: "inactive" };
 
-  markOrderingSessionFromQr(
-    data.table,
-    getStoredQrAccessToken() ?? undefined
-  );
-  return true;
+  markOrderingSessionFromQr(data.table);
+  return { status: "active", table: data.table };
 }
 
 export function TableProvider({ children }: { children: ReactNode }) {
@@ -110,8 +117,14 @@ export function TableProvider({ children }: { children: ReactNode }) {
       if (isBareMenuVisit(pathname, tableFromUrl, accessFromUrl)) {
         const restored = await syncQrSessionFromServer(null);
         if (cancelled) return;
-        if (restored) {
+        if (restored.status === "active") {
           setQrActivationMessage(null);
+          return;
+        }
+
+        if (restored.status === "terminated") {
+          setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
+          clearLocalOrderingSession();
           return;
         }
 
@@ -140,10 +153,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
         if (res.ok && data?.ok) {
           setQrActivationMessage(null);
-          markOrderingSessionFromQr(
-            data.table ?? tableFromUrl ?? "",
-            accessFromUrl
-          );
+          markOrderingSessionFromQr(data.table ?? tableFromUrl ?? "");
           return;
         }
 
@@ -157,8 +167,13 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
         const restored = await syncQrSessionFromServer(tableFromUrl);
         if (cancelled) return;
-        if (restored) {
+        if (restored.status === "active") {
           setQrActivationMessage(null);
+          return;
+        }
+        if (restored.status === "terminated") {
+          setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
+          clearLocalOrderingSession();
           return;
         }
 
@@ -179,14 +194,20 @@ export function TableProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const active = await syncQrSessionFromServer(tableFromUrl);
+      const synced = await syncQrSessionFromServer(tableFromUrl);
       if (cancelled) return;
-      if (!active) {
-        if (hasTableFromQr()) {
-          await endQrOrderingSession();
-        } else {
-          clearOrderingSession();
-        }
+      if (synced.status === "active") return;
+
+      if (synced.status === "terminated") {
+        setQrActivationMessage(QR_SESSION_TERMINATED_MESSAGE);
+        clearLocalOrderingSession();
+        return;
+      }
+
+      if (hasTableFromQr()) {
+        await endQrOrderingSession();
+      } else {
+        clearOrderingSession();
       }
     }
 
