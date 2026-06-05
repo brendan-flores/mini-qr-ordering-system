@@ -43,9 +43,10 @@ async function notifyServerQrLogout(options?: { beacon?: boolean }): Promise<voi
 
 /**
  * End the table-QR ordering session and release the server device binding so
- * another phone may scan the same printed QR. Only call on tab close, app
- * exit, inactivity timeout, or leaving the ordering app — not during in-app
- * navigation between menu, cart, checkout, and orders.
+ * another phone may scan the same printed QR. Used on tab/browser close, bare
+ * menu visit, leaving checkout/orders, inactivity timeout, and invalid session.
+ * Checkout ↔ orders navigation keeps the session until the guest returns to
+ * bare menu or leaves the flow.
  */
 export async function endQrOrderingSession(options?: {
   /** Use sendBeacon for tab close / page unload (best-effort). */

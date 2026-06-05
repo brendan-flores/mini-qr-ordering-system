@@ -1,20 +1,35 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   endQrOrderingSession,
   releaseQrSessionOnUnload,
 } from "@/lib/qr-session-end";
-import { isQrSessionPath } from "@/lib/routes";
-import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
+import {
+  isBareMenuVisit,
+  isQrOrderingFlowPath,
+} from "@/lib/qr-session-flow";
+import {
+  hasActiveQrBinding,
+  hasTableFromQr,
+  isQrOrderEnforcedOnClient,
+  normalizeTableNumber,
+} from "@/lib/table";
+
+function sessionShouldEnd(): boolean {
+  return hasTableFromQr() || hasActiveQrBinding();
+}
 
 /**
- * Release the table-QR session when the guest closes a tab, closes the entire
- * browser, navigates away from the ordering app, or leaves customer routes.
+ * End the table-QR session when the guest closes a tab/browser or leaves the
+ * ordering flow. Same rules on localhost, LAN IP, and production.
  */
 export function useQrSessionLifecycle() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tableFromUrl = normalizeTableNumber(searchParams.get("table"));
+  const accessFromUrl = searchParams.get("access")?.trim() ?? null;
   const prevPathRef = useRef(pathname);
   const unloadNotifiedRef = useRef(false);
 
@@ -23,12 +38,12 @@ export function useQrSessionLifecycle() {
 
     function notifyUnloadOnce() {
       if (unloadNotifiedRef.current) return;
+      if (!sessionShouldEnd()) return;
       unloadNotifiedRef.current = true;
       releaseQrSessionOnUnload();
     }
 
     function onPageHide(event: PageTransitionEvent) {
-      // Skip bfcache restores (e.g. back-forward) — session should stay active.
       if (event.persisted) return;
       notifyUnloadOnce();
     }
@@ -52,13 +67,17 @@ export function useQrSessionLifecycle() {
     const previousPath = prevPathRef.current;
     prevPathRef.current = pathname;
 
-    if (previousPath === pathname) return;
+    const leftOrderingFlow =
+      previousPath !== pathname &&
+      isQrOrderingFlowPath(previousPath) &&
+      !isQrOrderingFlowPath(pathname);
 
-    const leftSessionRoute =
-      isQrSessionPath(previousPath) && !isQrSessionPath(pathname);
+    const onBareMenu =
+      sessionShouldEnd() &&
+      isBareMenuVisit(pathname, tableFromUrl, accessFromUrl);
 
-    if (leftSessionRoute && hasTableFromQr()) {
+    if (leftOrderingFlow || onBareMenu) {
       void endQrOrderingSession();
     }
-  }, [pathname]);
+  }, [pathname, tableFromUrl, accessFromUrl]);
 }

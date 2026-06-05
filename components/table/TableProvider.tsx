@@ -19,8 +19,8 @@ import {
   clearLocalOrderingSession,
   endQrOrderingSession,
 } from "@/lib/qr-session-end";
+import { isBareMenuVisit } from "@/lib/qr-session-flow";
 import {
-  allowsMenuOrderingWithoutTable,
   clearOrderingSession,
   getStoredTableNumber,
   hasTableFromQr,
@@ -100,23 +100,11 @@ export function TableProvider({ children }: { children: ReactNode }) {
     async function syncSession() {
       const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
 
-      // Menu without ?table=&access= in the URL — restore an in-progress session
-      // from the server cookie (e.g. "Order more", header Menu link). Do not
-      // release the QR binding while the guest is still in the ordering flow.
-      if (allowsMenuOrderingWithoutTable(pathname) && !hasQrCredential) {
-        const hadClientSession = hasTableFromQr();
-        const restored = await syncQrSessionFromServer(null);
+      // Bare menu (home redirect, header Menu link, etc.) — end session on all
+      // environments so the guest must scan again and the QR can be released.
+      if (isBareMenuVisit(pathname, tableFromUrl, accessFromUrl)) {
+        await endQrOrderingSession();
         if (cancelled) return;
-        if (restored) {
-          setQrActivationMessage(null);
-          return;
-        }
-
-        if (hadClientSession) {
-          clearLocalOrderingSession();
-        } else {
-          clearOrderingSession();
-        }
         setQrActivationMessage(null);
         return;
       }
@@ -161,7 +149,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        clearLocalOrderingSession();
+        await endQrOrderingSession();
         return;
       }
 
@@ -169,14 +157,18 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
       const stored = getStoredTableNumber();
       if (tableFromUrl && stored && tableFromUrl !== stored) {
-        clearLocalOrderingSession();
+        await endQrOrderingSession();
         return;
       }
 
       const active = await syncQrSessionFromServer(tableFromUrl);
       if (cancelled) return;
-      if (!active && hasTableFromQr()) {
-        clearLocalOrderingSession();
+      if (!active) {
+        if (hasTableFromQr()) {
+          await endQrOrderingSession();
+        } else {
+          clearOrderingSession();
+        }
       }
     }
 

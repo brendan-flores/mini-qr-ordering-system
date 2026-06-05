@@ -25,7 +25,7 @@ export function isMenuPagePath(pathname: string): boolean {
   );
 }
 
-/** Menu without ?table= — ordering allowed (takeout); table badge only after QR. */
+/** Menu route (ordering requires a fresh QR scan link or active checkout/orders flow). */
 export function allowsMenuOrderingWithoutTable(pathname: string): boolean {
   return isMenuPagePath(pathname);
 }

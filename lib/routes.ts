@@ -10,7 +10,7 @@ export function isAdminPath(pathname: string): boolean {
   );
 }
 
-/** Customer routes where an active table-QR ordering session applies. */
+/** @deprecated Use isQrOrderingFlowPath from @/lib/qr-session-flow */
 export function isQrSessionPath(pathname: string): boolean {
   return (
     pathname === MENU_PAGE_PATH ||

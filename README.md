@@ -36,10 +36,14 @@ This is **intentional** — it prevents spam and fake orders. Only guests at a r
 | Rule | Behavior |
 |------|----------|
 | **One device per QR** | The first phone to scan locks the table QR; a second phone gets *“registered to another device”* until the session ends. |
-| **In-app navigation** | Moving between menu, cart, checkout, and orders **keeps** the session (no rescan needed). |
+| **Fresh scan link** | Ordering starts only from a menu URL with `?table=` and `?access=` (QR scan). |
+| **Checkout / orders** | Moving between checkout and order tracking **keeps** the session until you return to the bare menu. |
+| **Bare menu / home** | Opening `/menu-page` without scan params, clicking **Menu**, or going **home** ends the session — scan again to order. |
 | **Close tab or browser** | Session ends and the QR is **released** so the next guest at the table can scan. |
-| **15 minutes idle** | No taps, scrolls, or keyboard activity ends the session and releases the QR. |
-| **Force-quit browser** | If the OS kills the app without running logout, the server releases the binding after **15 minutes** with no heartbeat (`last_active_at` on `qr_access_bindings`). |
+| **15 minutes idle** | Fallback: no activity ends the session and releases the QR (localhost, LAN, and production). |
+| **Force-quit browser** | If the OS kills the app without logout, the server releases the binding after **15 minutes** with no heartbeat (`last_active_at`). |
+
+Same rules apply on **localhost**, **LAN IP** (`192.168.x.x`), and **production** — QR enforcement is always on.
 
 No admin action is required to free a table QR — it happens automatically when the current guest’s session ends.
 
