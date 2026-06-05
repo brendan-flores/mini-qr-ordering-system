@@ -7,6 +7,7 @@ import { MobileMenuView } from "../../components/menu/MobileMenuView";
 import { ProductCard } from "../../components/menu/ProductCard";
 import { DesktopHeader } from "../../components/layout/DesktopHeader";
 import { getProducts, type Product } from "../../client/services/products";
+import { QrOneDeviceNotice } from "../../components/qr/QrOneDeviceNotice";
 import { useTable } from "../../components/table/TableProvider";
 import { UI_MOTION } from "@/lib/ui-motion";
 
@@ -88,7 +89,9 @@ export default function MenuPage() {
                 {qrActivationMessage ??
                   "Scan your table QR code to add items and place an order."}
               </div>
-            ) : null}
+            ) : (
+              <QrOneDeviceNotice className={`${UI_MOTION.fadeIn} mt-2`} />
+            )}
 
             <div
               className={`${UI_MOTION.fadeIn} sticky top-0 z-10 space-y-4 bg-[var(--color-background)]/95 pb-2 backdrop-blur-sm`}

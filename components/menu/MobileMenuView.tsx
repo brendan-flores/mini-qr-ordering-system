@@ -12,6 +12,7 @@ import { MobileOrdersPanel } from "./MobileOrdersPanel";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { BrandLogo } from "../brand/BrandLogo";
+import { QrOneDeviceNotice } from "../qr/QrOneDeviceNotice";
 import { TableBadge } from "../table/TableBadge";
 import { MENU_PAGE_PATH } from "@/lib/routes";
 import { useActiveOrderCount } from "../orders/useActiveOrderCount";
@@ -210,10 +211,13 @@ export function MobileMenuView({
           </div>
           {orderingEnabled ? (
             <div
-              className={`${UI_MOTION.fadeUp} mt-3 flex justify-center`}
+              className={`${UI_MOTION.fadeUp} mt-3 space-y-2.5`}
               style={{ animationDelay: "90ms" }}
             >
-              <TableBadge />
+              <div className="flex justify-center">
+                <TableBadge />
+              </div>
+              <QrOneDeviceNotice className="text-xs" />
             </div>
           ) : (
             <p

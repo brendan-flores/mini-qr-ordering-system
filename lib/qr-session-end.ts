@@ -82,6 +82,6 @@ export function releaseQrSessionOnUnload(): void {
   }
 
   if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-    navigator.sendBeacon(url);
+    navigator.sendBeacon(url, new Blob([], { type: "text/plain" }));
   }
 }

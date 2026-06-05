@@ -43,6 +43,21 @@ This is **intentional** — it prevents spam and fake orders. Only guests at a r
 
 No admin action is required to free a table QR — it happens automatically when the current guest’s session ends.
 
+### Live server checklist (Vercel + Railway)
+
+The QR session code runs on **Vercel**; the `last_active_at` column must exist on the **same MySQL database Vercel uses** (usually Railway), not only on local MySQL.
+
+1. **Deploy app code** — push to `main`; Vercel should redeploy [brencravings.vercel.app](https://brencravings.vercel.app). In the Vercel dashboard, confirm the latest deployment time matches your git push.
+2. **Migrate production DB** — in MySQL Workbench, connect using Railway **public** host/port from **Connect** (e.g. `*.proxy.rlwy.net`, not `localhost`). Run `mysql/schema.sql` or:
+
+   ```sql
+   USE mini_qr_ordering;
+   DESCRIBE qr_access_bindings;  -- must include last_active_at
+   ```
+
+3. **Hard-refresh phones** — close the browser tab completely, or use a private/incognito window, so cached JavaScript is not used.
+4. **Verify** — Phone A scans and orders → Phone B blocked → Phone A closes browser → Phone B scans again (should work).
+
 ---
 
 ## Installation guide
@@ -153,7 +168,7 @@ Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NET
 | GET | `/api/qr/activate` | Validate scan & set session cookie |
 | GET | `/api/qr/session` | Check active QR session |
 | GET | `/api/qr/ping` | Refresh session & binding heartbeat (15 min inactivity) |
-| POST | `/api/qr/logout` | End session & release device binding (tab/browser close) |
+| POST / GET | `/api/qr/logout` | End session & release device binding (tab/browser close) |
 
 Optional local Express API: `npm run dev:api` → [docs/BACKEND_API.md](docs/BACKEND_API.md)
 

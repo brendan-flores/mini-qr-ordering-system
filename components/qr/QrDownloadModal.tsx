@@ -83,7 +83,8 @@ export function QrDownloadModal({
               Download QR code
             </h2>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Print-ready image includes the table number.
+              Print-ready image includes the table number and one-device
+              instructions.
             </p>
           </div>
           <button
@@ -97,9 +98,9 @@ export function QrDownloadModal({
         </div>
 
         <div className="bg-[var(--color-surface-subtle)] px-5 py-5">
-          <div className="mx-auto flex max-w-[280px] flex-col items-center justify-center rounded-2xl border border-[var(--color-surface-line)] bg-white p-3 shadow-sm sm:max-w-[320px]">
+          <div className="mx-auto flex max-w-[300px] flex-col items-center justify-center rounded-2xl border border-[var(--color-surface-line)] bg-white p-3 shadow-sm sm:max-w-[340px]">
             {building ? (
-              <div className="flex aspect-[440/568] w-full items-center justify-center">
+              <div className="flex aspect-[440/700] w-full items-center justify-center">
                 <MaterialIcon
                   name="progress_activity"
                   className="animate-spin text-4xl text-[var(--color-primary)]"

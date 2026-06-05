@@ -7,7 +7,7 @@ import {
 } from "@/lib/qr-order-end-session";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
-export async function POST(request: NextRequest) {
+async function endQrLogout(request: NextRequest) {
   const session = await getQrOrderSessionFromRequest(request);
   const deviceId = normalizeDeviceId(
     request.nextUrl.searchParams.get("device_id")
@@ -18,4 +18,17 @@ export async function POST(request: NextRequest) {
   const res = NextResponse.json({ ok: true });
   clearQrOrderSessionCookie(res);
   return res;
+}
+
+/** POST — normal logout and tab/browser-close keepalive requests. */
+export async function POST(request: NextRequest) {
+  return endQrLogout(request);
+}
+
+/**
+ * GET — some mobile browsers send sendBeacon / unload pings as GET.
+ * Same behavior as POST; still requires the session cookie to release binding.
+ */
+export async function GET(request: NextRequest) {
+  return endQrLogout(request);
 }
