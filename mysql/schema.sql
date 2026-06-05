@@ -44,6 +44,15 @@ CREATE TABLE IF NOT EXISTS admin_users (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Binds each printed QR access token (jti) to the first device that scans it.
+CREATE TABLE IF NOT EXISTS qr_access_bindings (
+  access_jti CHAR(36) NOT NULL PRIMARY KEY,
+  table_number VARCHAR(32) NOT NULL,
+  device_id VARCHAR(64) NOT NULL,
+  bound_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_qr_access_device (device_id)
+);
+
 -- Default admin: username `admin`, password `admin12345` (change after first login)
 INSERT INTO admin_users (id, username, password_hash)
 SELECT * FROM (

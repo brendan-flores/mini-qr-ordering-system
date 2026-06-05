@@ -7,6 +7,8 @@ export type QrOrderSessionPayload = {
   table: string;
   /** Access token id from the scanned QR — binds session to that code. */
   jti?: string;
+  /** Browser device id — must match the first device that scanned this QR. */
+  deviceId?: string;
   exp: number;
 };
 
@@ -46,11 +48,13 @@ function safeEqual(a: string, b: string): boolean {
 
 export async function createQrOrderSessionToken(
   table: string,
-  accessJti?: string
+  accessJti?: string,
+  deviceId?: string
 ): Promise<string> {
   const payload: QrOrderSessionPayload = {
     table,
     ...(accessJti ? { jti: accessJti } : {}),
+    ...(deviceId ? { deviceId } : {}),
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SEC,
   };
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");

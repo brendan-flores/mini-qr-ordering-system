@@ -43,12 +43,15 @@ On your **deployed** customer site (e.g. Vercel), ordering is locked until a gue
 | Open menu without `?table=` | Browse only — no cart |
 | Type `?table=1` in the address bar | Browse only — no cart |
 | Change `?table=` after scanning another table | Ordering locks — cart disabled |
-| **Scan** a QR from the admin dashboard | Cart and checkout unlock |
+| **Scan** a QR from the admin dashboard | Cart and checkout unlock on **that device only** |
+| Copy/share the QR link to another phone | **Denied** — link is bound to the first device that scanned |
 | Place order without a valid scan session | `POST /api/orders` returns **403** |
 
-After a valid scan, the server sets a signed **httpOnly cookie** (4-hour session). The table number is **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned any table QR.
+After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie** (4-hour session). The **first device** to scan a printed QR owns that link; opening the same URL on another device is rejected. The table number is also **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned on their own device.
 
-**Re-print QRs after deploying this feature** — older codes that only had `?table=N` no longer unlock ordering on the live site.
+**Database:** run `mysql/patch-qr-access-bindings.sql` on existing Railway/local DB (or re-import `mysql/schema.sql` for fresh installs).
+
+**Re-print QRs** when you need a new guest at the same table — each admin **Go** click issues a new `access` token.
 
 #### Localhost (development)
 

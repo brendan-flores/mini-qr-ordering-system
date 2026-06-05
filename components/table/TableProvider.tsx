@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { getOrCreateDeviceId } from "@/lib/device-session";
 import {
   allowsMenuOrderingWithoutTable,
   clearOrderingSession,
@@ -44,7 +45,14 @@ function readHasTableFromQr(): boolean {
 async function syncQrSessionFromServer(
   tableFromUrl: string | null
 ): Promise<boolean> {
-  const res = await fetch("/api/qr/session", { credentials: "include" });
+  const params = new URLSearchParams();
+  const deviceId = getOrCreateDeviceId();
+  if (deviceId) params.set("device_id", deviceId);
+
+  const res = await fetch(
+    `/api/qr/session${params.size ? `?${params}` : ""}`,
+    { credentials: "include" }
+  );
   if (!res.ok) return false;
 
   const data = (await res.json()) as { active?: boolean; table?: string };
@@ -79,10 +87,12 @@ export function TableProvider({ children }: { children: ReactNode }) {
       }
 
       if (tableFromUrl && accessFromUrl) {
+        const deviceId = getOrCreateDeviceId();
         const params = new URLSearchParams({
           table: tableFromUrl,
           access: accessFromUrl,
         });
+        if (deviceId) params.set("device_id", deviceId);
         const res = await fetch(`/api/qr/activate?${params}`, {
           credentials: "include",
         });

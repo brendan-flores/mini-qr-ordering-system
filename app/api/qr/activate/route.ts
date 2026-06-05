@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { normalizeDeviceId } from "@/lib/device-id";
+import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import {
   attachQrOrderSessionCookie,
   tryActivateQrOrderSession,
@@ -11,6 +13,9 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("table")
   );
   const access = request.nextUrl.searchParams.get("access")?.trim();
+  const deviceId = normalizeDeviceId(
+    request.nextUrl.searchParams.get("device_id")
+  );
 
   if (!table || !access) {
     return NextResponse.json(
@@ -19,15 +24,39 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const sessionToken = await tryActivateQrOrderSession(table, access);
-  if (!sessionToken) {
+  if (isQrOrderEnforcedOnRequest(request) && !deviceId) {
     return NextResponse.json(
-      { ok: false, error: "Invalid or expired table QR code." },
+      { ok: false, error: "Device identification is required." },
+      { status: 400 }
+    );
+  }
+
+  const result = await tryActivateQrOrderSession(
+    table,
+    access,
+    deviceId ?? "local-dev",
+    isQrOrderEnforcedOnRequest(request)
+  );
+
+  if (!result.ok) {
+    const message =
+      result.reason === "device_mismatch"
+        ? "This QR link is registered to another device. Scan the code on your own phone to order."
+        : "Invalid or expired table QR code.";
+    return NextResponse.json(
+      {
+        ok: false,
+        error: message,
+        code:
+          result.reason === "device_mismatch"
+            ? "DEVICE_MISMATCH"
+            : "INVALID_QR",
+      },
       { status: 403 }
     );
   }
 
-  const res = NextResponse.json({ ok: true, table });
-  attachQrOrderSessionCookie(res, sessionToken);
+  const res = NextResponse.json({ ok: true, table: result.table });
+  attachQrOrderSessionCookie(res, result.sessionToken);
   return res;
 }

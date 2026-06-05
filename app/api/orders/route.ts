@@ -38,10 +38,14 @@ export async function POST(request: NextRequest) {
 
     const service_type = parsed.service_type ?? "dine_in";
 
-    await assertQrOrderAllowed(request, {
-      service_type,
-      table_number: parsed.table_number ?? null,
-    });
+    await assertQrOrderAllowed(
+      request,
+      {
+        service_type,
+        table_number: parsed.table_number ?? null,
+      },
+      parsed.device_id
+    );
 
     const payment_status =
       parsed.payment_method === "cod"
@@ -53,7 +57,8 @@ export async function POST(request: NextRequest) {
         ? null
         : await authorizedDineInTableNumber(
             request,
-            parsed.table_number ?? null
+            parsed.table_number ?? null,
+            parsed.device_id
           );
 
     const data = await createOrderRecord({
