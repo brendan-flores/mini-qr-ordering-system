@@ -212,23 +212,3 @@ Re-print a QR when you need a new guest at the same table — each **Go** click 
 | GET | `/api/qr/ping` | Refresh session activity (15-minute inactivity limit) |
 | POST | `/api/qr/logout` | Clear QR order session cookie |
 
----
-
-## Optional: Express API (local only)
-
-```bash
-npm run dev:api
-```
-
-Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md)**.
-
----
-
-## Further documentation
-
-| Topic | File |
-|-------|------|
-| MySQL setup | [docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md) |
-| LAN / phone testing | [docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md) |
-| Vercel deployment | [docs/VERCEL.md](docs/VERCEL.md) |
-| Railway MySQL | [docs/RAILWAY.md](docs/RAILWAY.md) |
