@@ -11,7 +11,7 @@ import { useTable } from "../../components/table/TableProvider";
 import { UI_MOTION } from "@/lib/ui-motion";
 
 export default function MenuPage() {
-  const { orderingEnabled } = useTable();
+  const { orderingEnabled, qrActivationMessage } = useTable();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +62,7 @@ export default function MenuPage() {
           onSearchChange={setSearch}
           filtered={filtered}
           orderingEnabled={orderingEnabled}
+          qrActivationMessage={qrActivationMessage}
         />
       </Suspense>
 
@@ -84,7 +85,8 @@ export default function MenuPage() {
                 className={`${UI_MOTION.fadeIn} mt-2 rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary-soft)]/40 px-4 py-3 text-sm text-zinc-800`}
                 role="status"
               >
-                Scan your table QR code to add items and place an order.
+                {qrActivationMessage ??
+                  "Scan your table QR code to add items and place an order."}
               </div>
             ) : null}
 

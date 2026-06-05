@@ -42,10 +42,16 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+export type TableQrAccessIssue = {
+  access: string;
+  jti: string;
+  table: string;
+};
+
 /** Admin-only: signed token embedded in printed QR codes. */
 export async function createTableQrAccessToken(
   tableNumber: string
-): Promise<string> {
+): Promise<TableQrAccessIssue> {
   const table = normalizeTableNumber(tableNumber);
   if (!table) {
     throw new Error("Invalid table number.");
@@ -57,7 +63,11 @@ export async function createTableQrAccessToken(
     exp: Math.floor(Date.now() / 1000) + ACCESS_TTL_SEC,
   };
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  return `${data}.${await hmacSign(data)}`;
+  return {
+    access: `${data}.${await hmacSign(data)}`,
+    jti: payload.jti,
+    table,
+  };
 }
 
 export async function parseTableQrAccessToken(

@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -25,9 +26,9 @@ import {
 
 type TableContextValue = {
   orderingEnabled: boolean;
-  /** Table label only after scanning a table QR. */
   hasTableFromQr: boolean;
   tableNumber: string;
+  qrActivationMessage: string | null;
   setTableNumber: (value: string) => void;
 };
 
@@ -40,6 +41,12 @@ function readOrderingEnabled(): boolean {
 
 function readHasTableFromQr(): boolean {
   return hasTableFromQr();
+}
+
+async function requestQrActivate(params: URLSearchParams) {
+  const deviceId = getOrCreateDeviceId();
+  if (deviceId) params.set("device_id", deviceId);
+  return fetch(`/api/qr/activate?${params}`, { credentials: "include" });
 }
 
 async function syncQrSessionFromServer(
@@ -69,13 +76,18 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("table");
   const accessFromUrl = searchParams.get("access")?.trim() ?? null;
+  const codeFromUrl = searchParams.get("code")?.trim() ?? null;
   const tableFromUrl = normalizeTableNumber(fromUrl);
+  const [qrActivationMessage, setQrActivationMessage] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     async function syncSession() {
       if (!isQrOrderEnforcedOnClient()) {
+        setQrActivationMessage(null);
         if (tableFromUrl) {
           markOrderingSessionFromQr(tableFromUrl);
           return;
@@ -86,27 +98,55 @@ export function TableProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (tableFromUrl && accessFromUrl) {
-        const deviceId = getOrCreateDeviceId();
-        const params = new URLSearchParams({
-          table: tableFromUrl,
-          access: accessFromUrl,
-        });
-        if (deviceId) params.set("device_id", deviceId);
-        const res = await fetch(`/api/qr/activate?${params}`, {
-          credentials: "include",
-        });
+      const hasQrCredential =
+        Boolean(codeFromUrl) || Boolean(tableFromUrl && accessFromUrl);
+
+      if (hasQrCredential) {
+        const params = new URLSearchParams();
+        if (codeFromUrl) params.set("code", codeFromUrl);
+        if (tableFromUrl) params.set("table", tableFromUrl);
+        if (accessFromUrl) params.set("access", accessFromUrl);
+
+        const res = await requestQrActivate(params);
         if (cancelled) return;
-        if (res.ok) {
-          const data = (await res.json()) as { ok?: boolean };
-          if (data.ok) {
-            markOrderingSessionFromQr(tableFromUrl);
-            return;
-          }
+
+        const data = (await res.json().catch(() => null)) as {
+          ok?: boolean;
+          error?: string;
+          table?: string;
+        } | null;
+
+        if (res.ok && data?.ok) {
+          setQrActivationMessage(null);
+          markOrderingSessionFromQr(data.table ?? tableFromUrl ?? "");
+          return;
         }
+
+        if (data?.error) {
+          setQrActivationMessage(data.error);
+        } else {
+          setQrActivationMessage(
+            "Could not verify this table QR. Ask staff for a newly printed code."
+          );
+        }
+
+        const restored = await syncQrSessionFromServer(tableFromUrl);
+        if (cancelled) return;
+        if (restored) {
+          setQrActivationMessage(null);
+          return;
+        }
+
+        if (data?.error?.includes("another device")) {
+          clearOrderingSession();
+          return;
+        }
+
         clearOrderingSession();
         return;
       }
+
+      setQrActivationMessage(null);
 
       const stored = getStoredTableNumber();
       if (tableFromUrl && stored && tableFromUrl !== stored) {
@@ -125,7 +165,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [tableFromUrl, accessFromUrl, pathname]);
+  }, [tableFromUrl, accessFromUrl, codeFromUrl, pathname]);
 
   const orderingEnabled = useSyncExternalStore(
     subscribeToOrdering,
@@ -150,13 +190,14 @@ export function TableProvider({ children }: { children: ReactNode }) {
       orderingEnabled,
       hasTableFromQr: tableFromQr,
       tableNumber,
+      qrActivationMessage,
       setTableNumber: (value: string) => {
         if (!isQrOrderEnforcedOnClient()) {
           markOrderingSessionFromQr(value);
         }
       },
     }),
-    [orderingEnabled, tableFromQr, tableNumber]
+    [orderingEnabled, tableFromQr, tableNumber, qrActivationMessage]
   );
 
   return (

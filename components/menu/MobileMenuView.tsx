@@ -106,6 +106,7 @@ export function MobileMenuView({
   onSearchChange,
   filtered,
   orderingEnabled,
+  qrActivationMessage = null,
 }: {
   loading: boolean;
   error: string | null;
@@ -115,6 +116,7 @@ export function MobileMenuView({
   onSearchChange(value: string): void;
   filtered: Product[];
   orderingEnabled: boolean;
+  qrActivationMessage?: string | null;
 }) {
   const searchParams = useSearchParams();
   const { pieceCount } = useCart();
@@ -213,7 +215,15 @@ export function MobileMenuView({
             >
               <TableBadge />
             </div>
-          ) : null}
+          ) : (
+            <p
+              className={`${UI_MOTION.fadeIn} mt-3 rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary-soft)]/40 px-3 py-2.5 text-center text-xs text-zinc-800`}
+              role="status"
+            >
+              {qrActivationMessage ??
+                "Scan your table QR code to add items and place an order."}
+            </p>
+          )}
           <MobileCategoryTabs value={tab} onChange={onTabChange} />
         </div>
       ) : null}

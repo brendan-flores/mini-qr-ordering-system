@@ -26,13 +26,13 @@ QR codes are **generated on the admin page**, not the customer menu.
 
 Set `NEXT_PUBLIC_APP_URL` in `.env.local` (and on Vercel) so QR links point to your deployed menu URL, e.g. `https://your-menu.vercel.app`.
 
-Each generated QR encodes a URL like:
+Each generated QR encodes a **short** URL like:
 
 ```text
-/menu-page?table=5&access=<signed-token>
+/menu-page?code=Ab12Cd34Ef56
 ```
 
-The `access` value is a signed, random token created by the admin API. It cannot be guessed by typing table numbers in the browser.
+The `code` maps server-side to a signed access token. Short URLs scan reliably on phone cameras (long `access=` links are easy to truncate and fail silently).
 
 #### Scan-only ordering (live server)
 

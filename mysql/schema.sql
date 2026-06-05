@@ -44,6 +44,16 @@ CREATE TABLE IF NOT EXISTS admin_users (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Short codes embedded in printed QRs (phone cameras read these reliably).
+CREATE TABLE IF NOT EXISTS qr_scan_codes (
+  scan_code CHAR(12) NOT NULL PRIMARY KEY,
+  table_number VARCHAR(32) NOT NULL,
+  access_jti CHAR(36) NOT NULL,
+  access_token TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_qr_scan_jti (access_jti)
+);
+
 -- Binds each printed QR access token (jti) to the first device that scans it.
 CREATE TABLE IF NOT EXISTS qr_access_bindings (
   access_jti CHAR(36) NOT NULL PRIMARY KEY,

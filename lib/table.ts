@@ -225,3 +225,16 @@ export function menuUrlWithTable(
   }
   return url.toString();
 }
+
+/** Short scan code URL — reliable for phone QR cameras. */
+export function menuUrlWithScanCode(baseUrl: string, scanCode: string): string {
+  const code = scanCode.trim();
+  if (!code) {
+    throw new Error("Scan code is required.");
+  }
+  const url = new URL(baseUrl);
+  url.pathname = MENU_PAGE_PATH;
+  url.search = "";
+  url.searchParams.set("code", code);
+  return url.toString();
+}
