@@ -18,7 +18,9 @@ import {
 } from "../../lib/orders/order-rules";
 import { notifyOrderUpdated } from "../../lib/order-events";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
+import { useNewOrderNotifications } from "@/hooks/useNewOrderNotifications";
 import { MaterialIcon } from "../ui/MaterialIcon";
+import { AdminOrderNotifications } from "./AdminOrderNotifications";
 import { AdminShell } from "./AdminShell";
 import { LiveOrdersHeader } from "./LiveOrdersHeader";
 import { LiveOrdersSection } from "./LiveOrdersSection";
@@ -74,6 +76,14 @@ export function AdminDashboard() {
   }, []);
 
   useLiveOrderSync(syncOrders, { scopeKey: "admin" });
+
+  const {
+    notifications,
+    unreadCount,
+    open: notificationsOpen,
+    setOpen: setNotificationsOpen,
+    markAllRead,
+  } = useNewOrderNotifications(orders, { enabled: !loading });
 
   const totals = useMemo(
     () => ({
@@ -182,12 +192,31 @@ export function AdminDashboard() {
     (updating === `payment-${selectedOrder.id}` ||
       updating === `kitchen-${selectedOrder.id}`);
 
+  function openOrderFromNotification(order: Order) {
+    const tabs: PaymentTab[] = ["Pending", "Paid", "Completed", "Cancelled"];
+    const tab = tabs.find((t) => matchesAdminPaymentTab(order, t)) ?? "Pending";
+    setActiveTab(tab);
+    setSelectedOrder(order);
+  }
+
   return (
     <AdminShell>
       <main className="admin-live mx-auto max-w-[1440px] space-y-4 p-3 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:p-4 sm:pb-24 lg:space-y-6 lg:p-6 lg:pb-6">
         <LiveOrdersSection
           header={
-            <LiveOrdersHeader activeTab={activeTab} />
+            <LiveOrdersHeader
+              activeTab={activeTab}
+              trailing={
+                <AdminOrderNotifications
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  open={notificationsOpen}
+                  onOpenChange={setNotificationsOpen}
+                  onSelectOrder={openOrderFromNotification}
+                  onMarkAllRead={markAllRead}
+                />
+              }
+            />
           }
           filters={
             <div className="admin-animate-fade-up space-y-2" style={{ animationDelay: "80ms" }}>

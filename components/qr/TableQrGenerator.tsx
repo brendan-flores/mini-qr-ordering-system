@@ -7,13 +7,22 @@ import {
   menuUrlWithTable,
   validateIntegerTableNumber,
 } from "@/lib/table";
+import {
+  getAdminQrTableNumber,
+  setAdminQrTableNumber,
+} from "@/lib/admin-qr-table";
 import { tableQrDownloadLabel } from "@/lib/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QrDownloadModal } from "./QrDownloadModal";
 
+function resolveInitialTable(explicit?: string) {
+  if (explicit !== undefined) return explicit;
+  return getAdminQrTableNumber();
+}
+
 export function TableQrGenerator({
-  initialTable = "1",
+  initialTable,
   onDownload,
   layout = "default",
   className = "",
@@ -24,7 +33,9 @@ export function TableQrGenerator({
   layout?: "default" | "sidebar";
   className?: string;
 }) {
-  const [tableNumber, setTableNumber] = useState(initialTable);
+  const [tableNumber, setTableNumber] = useState(() =>
+    resolveInitialTable(initialTable)
+  );
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [scanUrl, setScanUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -50,6 +61,7 @@ export function TableQrGenerator({
     }
     setTableError(null);
     const table = checked.table;
+    setAdminQrTableNumber(table);
     setGenerating(true);
     try {
       const tokenRes = await fetch("/api/admin/table-qr-token", {
@@ -94,12 +106,10 @@ export function TableQrGenerator({
   }
 
   useEffect(() => {
-    const checked = validateIntegerTableNumber(initialTable);
-    if (checked.ok) {
-      void generate();
-    } else {
-      setTableError(checked.message);
-    }
+    const checked = validateIntegerTableNumber(tableNumber);
+    if (!checked.ok) return;
+    void generate();
+    // Restore the last admin table QR preview only — never default to table 1.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,7 +136,9 @@ export function TableQrGenerator({
               setTableError(checked.message);
               setQrDataUrl(null);
               setScanUrl(null);
+              return;
             }
+            setAdminQrTableNumber(checked.table);
           }}
           inputMode="numeric"
           aria-invalid={!!tableError}

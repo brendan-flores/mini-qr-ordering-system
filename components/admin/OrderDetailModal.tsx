@@ -10,7 +10,7 @@ import {
   type Order,
   type PaymentStatus,
 } from "../../client/services/orders";
-import { effectivePaymentStatus, isOrderCancelled } from "../../lib/orders/order-rules";
+import { isOrderCancelled } from "../../lib/orders/order-rules";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { isOrderLocked, orderLocationLabel, shortOrderId } from "./adminUtils";
@@ -132,14 +132,12 @@ export function OrderDetailModal({
               this order cannot be changed.
             </p>
           ) : null}
-          {!locked && !isOrderCancelled(order) ? (
-            <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-              Payment: {effectivePaymentStatus(order.payment_status)}
-            </p>
-          ) : null}
 
           {!isOrderCancelled(order) ? (
-            <div className="admin-animate-fade-up mt-4" style={{ animationDelay: "120ms" }}>
+            <div
+              className="admin-animate-fade-up mt-5 w-full min-w-0"
+              style={{ animationDelay: "120ms" }}
+            >
               <AdminKitchenProgress order={order} />
             </div>
           ) : null}

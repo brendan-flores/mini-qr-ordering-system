@@ -8,6 +8,7 @@ import {
   touchOrderingActivity,
   isClientOrderingInactive,
 } from "@/lib/ordering-activity";
+import { isAdminPath } from "@/lib/routes";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
 const CHECK_INTERVAL_MS = 30_000;
@@ -15,6 +16,9 @@ const PING_INTERVAL_MS = 60_000;
 
 export function useOrderingInactivity(onExpired: (message: string) => void) {
   useEffect(() => {
+    if (typeof window !== "undefined" && isAdminPath(window.location.pathname)) {
+      return;
+    }
     if (!isQrOrderEnforcedOnClient()) return;
 
     let lastPingAt = 0;
