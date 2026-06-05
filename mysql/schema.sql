@@ -2,7 +2,7 @@
 -- BrenCravings — single database schema (local, LAN, Railway, Vercel)
 -- Run the ENTIRE file in MySQL Workbench → Execute (⚡)
 -- =============================================================================
--- Tables: admin_users, products, orders, qr_access_bindings, qr_access_revocations
+-- Tables: admin_users, products, orders, qr_access_bindings, qr_access_revocations, table_qr_tokens
 -- Safe to re-run: drops legacy tables, CREATE IF NOT EXISTS, seed when empty.
 -- =============================================================================
 
@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS qr_access_revocations (
   device_id VARCHAR(64) NOT NULL,
   revoked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (access_jti, device_id)
+);
+
+-- Permanent printed-QR link per table (same URL on every admin generate/download).
+CREATE TABLE IF NOT EXISTS table_qr_tokens (
+  table_number VARCHAR(32) NOT NULL PRIMARY KEY,
+  access_jti CHAR(36) NOT NULL UNIQUE,
+  access_token TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Upgrade older databases missing last_active_at (safe to re-run).

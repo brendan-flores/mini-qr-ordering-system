@@ -1,4 +1,5 @@
 import { normalizeTableNumber } from "@/lib/table";
+import { getTableQrToken, saveTableQrToken } from "@/lib/mysql/table-qr-tokens";
 
 export type TableQrAccessPayload = {
   table: string;
@@ -50,7 +51,8 @@ export type TableQrAccessIssue = {
 
 /** Admin-only: signed token embedded in printed QR codes. */
 export async function createTableQrAccessToken(
-  tableNumber: string
+  tableNumber: string,
+  options?: { jti?: string }
 ): Promise<TableQrAccessIssue> {
   const table = normalizeTableNumber(tableNumber);
   if (!table) {
@@ -59,7 +61,7 @@ export async function createTableQrAccessToken(
 
   const payload: TableQrAccessPayload = {
     table,
-    jti: crypto.randomUUID(),
+    jti: options?.jti?.trim() || crypto.randomUUID(),
     exp: Math.floor(Date.now() / 1000) + ACCESS_TTL_SEC,
   };
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -68,6 +70,39 @@ export async function createTableQrAccessToken(
     jti: payload.jti,
     table,
   };
+}
+
+/**
+ * Return the permanent QR access token for a table — created once, reused on
+ * every admin generate/download so printed codes stay valid and URLs match.
+ */
+export async function getOrCreateTableQrAccessToken(
+  tableNumber: string
+): Promise<TableQrAccessIssue> {
+  const table = normalizeTableNumber(tableNumber);
+  if (!table) {
+    throw new Error("Invalid table number.");
+  }
+
+  const existing = await getTableQrToken(table);
+  if (existing) {
+    const payload = await parseTableQrAccessToken(existing.access_token);
+    if (payload?.table === table && payload.jti === existing.access_jti) {
+      return {
+        access: existing.access_token,
+        jti: existing.access_jti,
+        table,
+      };
+    }
+  }
+
+  const issued = await createTableQrAccessToken(table);
+  await saveTableQrToken({
+    table_number: table,
+    access_jti: issued.jti,
+    access_token: issued.access,
+  });
+  return issued;
 }
 
 export async function parseTableQrAccessToken(

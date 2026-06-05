@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { getErrorMessage } from "@/lib/orders/db-errors";
-import { createTableQrAccessToken } from "@/lib/table-qr-access";
+import { getOrCreateTableQrAccessToken } from "@/lib/table-qr-access";
 import { normalizeTableNumber } from "@/lib/table";
 
 export async function POST(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const issued = await createTableQrAccessToken(table);
+    const issued = await getOrCreateTableQrAccessToken(table);
     return NextResponse.json({
       table_number: issued.table,
       access_token: issued.access,
