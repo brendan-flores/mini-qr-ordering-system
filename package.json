@@ -5,7 +5,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "node scripts/ensure-env-local.mjs && next dev --webpack -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

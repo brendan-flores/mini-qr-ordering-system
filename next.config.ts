@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getAllowedDevOrigins } from "./lib/dev-allowed-origins";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  // Allow phones/other devices on the LAN to load dev JS when using the network URL.
-  allowedDevOrigins: ["192.168.1.10"],
+  // LAN IPs on this machine + private-range wildcards (any laptop / phone on Wi‑Fi).
+  allowedDevOrigins: getAllowedDevOrigins(),
   serverExternalPackages: ["mysql2"],
   // Stable project root (path has spaces on some machines)
   turbopack: {

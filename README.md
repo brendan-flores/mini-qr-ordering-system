@@ -54,7 +54,13 @@ cd mini-qr-ordering-system
 npm install
 ```
 
-### Step 3 — Set up the database
+### Step 3 — Local config (first run)
+
+The GitHub ZIP does **not** include `.env.local`. The first time you run `npm run dev`, the project copies `.env.example` → `.env.local` automatically.
+
+If your MySQL `root` user has a password, open `.env.local` and set `MYSQL_PASSWORD`.
+
+### Step 4 — Set up the database
 
 1. Open **MySQL Workbench** and connect to your local MySQL server.
 2. **File → Open SQL Script** → select `mysql/schema.sql` in this project.
@@ -65,7 +71,7 @@ npm install
 
 More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 
-### Step 4 — Start the app
+### Step 5 — Start the app
 
 ```bash
 npm run dev
@@ -73,8 +79,10 @@ npm run dev
 
 Open in your browser:
 
-- Customer menu: [http://localhost:3000](http://localhost:3000)
-- Admin dashboard: [http://localhost:3000/admin](http://localhost:3000/admin)
+- **On this PC:** [http://localhost:3000](http://localhost:3000) (menu) · [http://localhost:3000/admin](http://localhost:3000/admin) (admin)
+- **On your phone / another laptop (same Wi‑Fi):** use the **Network** URL printed in the terminal (e.g. `http://192.168.1.25:3000`)
+
+If the menu or admin page loads but shows no data, check that `mysql/schema.sql` was executed and that `MYSQL_PASSWORD` in `.env.local` matches your MySQL server.
 
 ---
 

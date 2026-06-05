@@ -3,18 +3,23 @@
 ## Run on the network
 
 ```bash
+npm install
 npm run dev
 ```
 
-Use the **Network** URL on phones. Add your LAN IP to `allowedDevOrigins` in `next.config.ts`.
+The dev server listens on **all interfaces** (`0.0.0.0`). In the terminal, use the **Network** URL (e.g. `http://192.168.1.25:3000`) on phones or another laptop on the same Wi‑Fi.
 
-## Environment
+`next.config.ts` automatically allows your machine’s LAN IP and common private ranges (`192.168.*`, `10.*`, etc.) so client JavaScript loads correctly. No manual IP edit is required.
+
+**First-time setup on a new PC:** `npm run dev` creates `.env.local` from `.env.example` if missing. Run `mysql/schema.sql` in MySQL Workbench and set `MYSQL_PASSWORD` in `.env.local` if your MySQL root user has a password.
+
+Optional — QR codes that open the menu on phones should use your PC’s LAN IP:
 
 ```env
-NEXT_PUBLIC_APP_URL=http://192.168.1.10:3000
-MYSQL_HOST=127.0.0.1
-ADMIN_SESSION_SECRET=your-secret
+NEXT_PUBLIC_APP_URL=http://192.168.1.25:3000
 ```
+
+Replace with your actual IP from `ipconfig` (Windows) or `ifconfig` (Mac/Linux).
 
 ## QR device binding (localhost + LAN + production)
 
