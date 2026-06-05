@@ -9,7 +9,9 @@
 | **Customer menu** (order after scanning a table QR) | [https://brencravings.vercel.app](https://brencravings.vercel.app) |
 | **Admin dashboard** (kitchen, orders, QR generator) | [https://brencravings-admin.vercel.app](https://brencravings-admin.vercel.app) |
 
-Default admin login: `admin` / `admin12345`
+Default admin login: 
+`Username: admin` 
+`Password: admin12345`
 
 ## Use on your local network
 
