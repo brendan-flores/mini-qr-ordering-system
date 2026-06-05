@@ -6,6 +6,37 @@ Single repo with:
 - **Backend**: Next.js API routes (`app/api/`) and optional Express REST API (`server.js`, port 4000)
 - **Database**: MySQL 8 (`mysql/schema.sql`)
 
+## Features
+
+### Customer (mobile-responsive)
+
+- Browse menu products by category
+- Add to cart, update quantity, remove items
+- Checkout with computed total
+- Dine-in or takeout; order tracking page
+
+### QR codes (Admin dashboard)
+
+QR codes are **generated on the admin page**, not the customer menu.
+
+1. Log in at `/admin` (default: `admin` / `admin12345`).
+2. Open **Table QR codes** in the left sidebar (desktop) or tap **QR** (mobile).
+3. Enter a table number → preview the QR → **Download PNG**.
+4. Print and place at the table. Guests scan to open the menu with `?table=N` for dine-in ordering.
+
+Set `NEXT_PUBLIC_APP_URL` in `.env.local` so QR links point to your deployed menu URL.
+
+### Admin dashboard
+
+- View live orders (payment + kitchen status)
+- Update payment status and kitchen workflow
+- Table QR generator (above)
+
+### Payment simulation
+
+- **Pay at counter (cash)** — order sent to kitchen; pay when served
+- **GCash (mock)** — simulated success/failure flow (no real payment API)
+
 ## Quick start
 
 ### 1) MySQL schema
