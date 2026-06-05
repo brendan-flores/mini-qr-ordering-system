@@ -51,23 +51,89 @@ export function getMenuAppOrigin(): string | null {
   }
 }
 
+function isLoopbackHostname(hostname: string) {
+  const h = hostname.toLowerCase();
+  return h === "localhost" || h === "127.0.0.1";
+}
+
+function originToBaseUrl(origin: string) {
+  return origin.endsWith("/") ? origin : `${origin}/`;
+}
+
+/** NEXT_PUBLIC_APP_URL when it points at a non-loopback host (e.g. LAN IP). */
+function configuredNonLoopbackMenuOrigin(): string | null {
+  const url = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!url) return null;
+  try {
+    const { hostname, origin } = new URL(url);
+    if (isLoopbackHostname(hostname)) return null;
+    return origin;
+  } catch {
+    return null;
+  }
+}
+
+function devLanOriginFromEnv(): string | null {
+  const url = process.env.NEXT_PUBLIC_DEV_LAN_ORIGIN?.trim();
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDevLanOrigin(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch("/api/dev/lan-origin");
+    if (!res.ok) return null;
+    const data = (await res.json()) as { origin?: string };
+    return data.origin?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Base URL embedded in printed table QR codes.
- * Same-origin dev (localhost or LAN IP): use the host the admin UI was opened on.
- * Split admin host (e.g. brencravings-admin.*): use NEXT_PUBLIC_APP_URL.
+ * localhost admin → LAN IP so phones can reach the dev server.
+ * LAN IP admin → same host. Split admin host → NEXT_PUBLIC_APP_URL.
  */
-export function resolveMenuBaseUrlForQr(): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-
+export async function resolveMenuBaseUrlForQr(): Promise<string> {
   if (typeof window !== "undefined") {
-    if (isAdminHost(window.location.host) && configured) {
-      return configured.endsWith("/") ? configured : `${configured}/`;
+    const { host, hostname, origin } = window.location;
+
+    if (isAdminHost(host)) {
+      const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+      if (configured) {
+        return configured.endsWith("/") ? configured : `${configured}/`;
+      }
     }
-    return `${window.location.origin}/`;
+
+    if (isLoopbackHostname(hostname)) {
+      const configured = configuredNonLoopbackMenuOrigin();
+      if (configured) return originToBaseUrl(configured);
+
+      const devLan = devLanOriginFromEnv();
+      if (devLan) return originToBaseUrl(devLan);
+
+      const fetched = await fetchDevLanOrigin();
+      if (fetched) return originToBaseUrl(fetched);
+    }
+
+    return `${origin}/`;
   }
 
-  if (configured) {
-    return configured.endsWith("/") ? configured : `${configured}/`;
+  const configured = configuredNonLoopbackMenuOrigin();
+  if (configured) return originToBaseUrl(configured);
+
+  const devLan = devLanOriginFromEnv();
+  if (devLan) return originToBaseUrl(devLan);
+
+  const url = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (url) {
+    return url.endsWith("/") ? url : `${url}/`;
   }
   return "/";
 }

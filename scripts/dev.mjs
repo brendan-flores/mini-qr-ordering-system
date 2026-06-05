@@ -19,13 +19,18 @@ function rewriteOutput(chunk) {
     .replaceAll(`0.0.0.0:${port}`, `${lanIp}:${port}`);
 }
 
+const devEnv = { ...process.env };
+if (lanIp) {
+  devEnv.NEXT_PUBLIC_DEV_LAN_ORIGIN = `http://${lanIp}:${port}`;
+}
+
 const child = spawn(
   process.execPath,
   [nextCli, "dev", "--webpack", "-H", "0.0.0.0", "-p", port],
   {
     cwd: root,
     stdio: ["inherit", "pipe", "pipe"],
-    env: process.env,
+    env: devEnv,
   }
 );
 

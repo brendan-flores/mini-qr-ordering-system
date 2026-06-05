@@ -23,7 +23,7 @@ Default admin: `admin` / `admin12345`
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and set `MYSQL_*` and `ADMIN_SESSION_SECRET`.
+Copy `.env.example` to `.env.local` and set `MYSQL_*` if needed. `ADMIN_SESSION_SECRET` can stay empty for local dev.
 
 ## Another machine
 

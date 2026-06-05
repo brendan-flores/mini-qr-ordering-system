@@ -85,7 +85,11 @@ export function TableQrGenerator({
       const { access_token: accessToken } = (await tokenRes.json()) as {
         access_token: string;
       };
-      const url = menuUrlWithTable(resolveMenuBaseUrlForQr(), table, accessToken);
+      const url = menuUrlWithTable(
+        await resolveMenuBaseUrlForQr(),
+        table,
+        accessToken
+      );
       setScanUrl(url);
       const dataUrl = await QRCode.toDataURL(url, {
         margin: 2,

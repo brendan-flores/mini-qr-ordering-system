@@ -66,9 +66,15 @@ npm install
 
 More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 
-### Step 4 — Configure `.env.local`
+### Step 4 — Start the app
 
-The project includes `.env.local` with `MYSQL_PASSWORD` empty and a dev `ADMIN_SESSION_SECRET` already set.
+```bash
+npm run dev
+```
+
+On the **first** run, the project creates `.env.local` from `.env.example` (it is not in the GitHub repo). The copy starts with `MYSQL_PASSWORD` empty.
+
+### Step 5 — Configure `.env.local` (if needed)
 
 **Only edit if your MySQL `root` has a password on this PC:**
 
@@ -83,16 +89,11 @@ MYSQL_PASSWORD=your_mysql_root_password_here
 
 - Same password as Workbench, on **this PC only** — each laptop has its own MySQL.
 - If `root` has no password, leave `MYSQL_PASSWORD=` empty.
+- Leave `ADMIN_SESSION_SECRET` empty for local dev and LAN phone testing — not needed until you deploy to Vercel.
 - After editing, **restart** `npm run dev` (Ctrl+C, then run again).
-- Do **not** commit real passwords to GitHub.
+- Do **not** commit `.env.local` or real passwords to GitHub.
 
 **Error:** `Access denied for user 'root'@'localhost' (using password: NO)` → `MYSQL_PASSWORD` is empty or dev server was not restarted.
-
-### Step 5 — Start the app
-
-```bash
-npm run dev
-```
 
 ### Step 6 — Open the app
 
