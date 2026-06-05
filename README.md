@@ -1,60 +1,81 @@
-# Mini QR Restaurant Ordering System (React + Node.js + MySQL)
+# BrenCravings — Mini QR Restaurant Ordering System
 
-**BrenCravings** — a QR-based restaurant ordering app with a customer menu and an admin kitchen dashboard.
+A mobile-friendly restaurant ordering app: guests scan a table QR to order; staff manage live orders from an admin kitchen dashboard.
 
-## Live website
+**Stack:** React 19 · Next.js 16 · Tailwind CSS 4 · Node.js · MySQL 8
 
-| App | Link |
-|-----|------|
-| **Customer menu** (order after scanning a table QR) | [https://brencravings.vercel.app](https://brencravings.vercel.app) |
-| **Admin dashboard** (kitchen, orders, QR generator) | [https://brencravings-admin.vercel.app](https://brencravings-admin.vercel.app) |
+---
 
-Default admin login: `admin` / `admin12345`
+## Live demo
 
-## Use on your local network
+| App | URL |
+|-----|-----|
+| Customer menu | [https://brencravings.vercel.app](https://brencravings.vercel.app) |
+| Admin dashboard | [https://brencravings-admin.vercel.app](https://brencravings-admin.vercel.app) |
 
-You can run the same app on your Wi‑Fi for testing on phones and other devices:
+**Admin login:** `admin` / `admin12345`
+
+The deployed sites are ready to use — no local setup required.
+
+---
+
+## Quick setup (local)
+
+**Prerequisites:** Node.js 18+, MySQL 8, MySQL Workbench
 
 ```bash
+# 1. Get the project (clone or unzip from GitHub)
+cd mini-qr-ordering-system
+
+# 2. Install & run
 npm install
 npm run dev
 ```
 
-After `npm run dev`, the terminal prints your **Network** URL. Use that IP on any device on the same Wi‑Fi (replace `192.168.1.10` with your actual address from the terminal):
+**3. Database** — In MySQL Workbench, run the full `mysql/schema.sql` script (Ctrl+A → Execute).
 
-- **Customer menu:** `http://192.168.1.10:3000`
-- **Admin dashboard:** `http://192.168.1.10:3000/admin`
+**4. Config** — `.env.local` is included in the project (`MYSQL_PASSWORD` is empty). If MySQL `root` has a password on your PC, add it to `.env.local`, save, and restart `npm run dev`.
 
-Example (from terminal output):
+**5. Open**
 
-```text
-- Network:  http://192.168.1.10:3000
-```
+| Where | Menu | Admin |
+|-------|------|-------|
+| This PC | [localhost:3000](http://localhost:3000) | [localhost:3000/admin](http://localhost:3000/admin) |
+| Phone / other device (same Wi‑Fi) | `http://192.168.x.x:3000` | `http://192.168.x.x:3000/admin` |
 
-→ Menu: `http://192.168.1.10:3000` · Admin: `http://192.168.1.10:3000/admin`
+Use the **Network** URL from the terminal (not `0.0.0.0`). See **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)** for LAN details.
 
-Find your IP with `ipconfig` (Windows) or `ifconfig` / `ip addr` (Mac/Linux) if needed. Do not use `http://0.0.0.0:3000`.
-
-More LAN tips: **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
+**Verify:** `http://localhost:3000/api/products` should return JSON with menu items.
 
 ---
 
-## Installation guide
+## How ordering works
 
-Follow these steps in order to run the project on your own machine.
+Guests **must scan a table QR** (printed from the admin page) before they can order.
 
-### Prerequisites
+| Guest action | Result |
+|--------------|--------|
+| Opens menu **without** scanning a QR | Browse only — **cannot order** |
+| Types `?table=1` in the browser | Still **cannot order** |
+| **Scans** a valid table QR | Cart and checkout unlock on that device |
 
-- **Node.js** 18 or newer
-- **MySQL** 8 (MySQL Workbench recommended)
-- **Git**
+This is **intentional** — it prevents spam and fake orders. Only guests at a real table with a printed QR can place orders.
 
-### Step 1 — Clone the project
+- QR links are bound to **one device** (link sharing is blocked).
+- **15 minutes** of inactivity ends the session; guest must scan again.
+
+---
+
+## Installation guide (detailed)
+
+### Step 1 — Get the project
 
 ```bash
 git clone <your-repo-url>
 cd mini-qr-ordering-system
 ```
+
+Or download and unzip from GitHub.
 
 ### Step 2 — Install dependencies
 
@@ -62,55 +83,38 @@ cd mini-qr-ordering-system
 npm install
 ```
 
-### Step 3 — Local config (first run)
+### Step 3 — Set up the database
 
-The GitHub ZIP does **not** include `.env.local`. The first time you run `npm run dev`, the project copies `.env.example` → `.env.local` automatically.
-
-You must edit **`.env.local`** in the project root (same folder as `package.json`). Do **not** edit `.env.example` — the app reads `.env.local` only.
-
-#### MySQL password (each PC is different)
-
-The app connects to MySQL using `MYSQL_PASSWORD` in `.env.local`. This is **not** the admin login (`admin` / `admin12345`). It is the password for your **MySQL `root` user on this computer**.
-
-| Where | What it does |
-|-------|----------------|
-| **MySQL Workbench** (connection / vault) | Lets *you* open Workbench on this PC |
-| **`.env.local` → `MYSQL_PASSWORD`** | Lets the *app* connect to MySQL on this PC |
-
-Saving a password in Workbench alone does **not** update the app. Copy the **same** password into `.env.local`:
-
-```env
-MYSQL_USER=root
-MYSQL_PASSWORD=your_mysql_root_password_here
-MYSQL_DATABASE=mini_qr_ordering
-```
-
-- If MySQL `root` has **no** password on this PC, leave it empty: `MYSQL_PASSWORD=`
-- Each laptop has its **own** MySQL — use **that machine’s** password, not someone else’s
-- Do **not** share or commit `.env.local` (it stays on each PC only)
-
-Also set a local dev secret (any long random string):
-
-```env
-ADMIN_SESSION_SECRET=dev-only-brencravings-local-secret
-```
-
-After saving `.env.local`, **restart** the dev server (`Ctrl+C`, then `npm run dev` again). Next.js only reads env files on startup.
-
-**Test:** open `http://localhost:3000/api/products` — you should see JSON with menu items.
-
-**Common error:** `Access denied for user 'root'@'localhost' (using password: NO)` means `MYSQL_PASSWORD` is still empty in `.env.local`, or you forgot to restart `npm run dev`.
-
-### Step 4 — Set up the database
-
-1. Open **MySQL Workbench** and connect to your local MySQL server.
-2. **File → Open SQL Script** → select `mysql/schema.sql` in this project.
-3. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
-4. Refresh **Schemas** → open `mini_qr_ordering` → **Tables**. You should see **4 tables**:
+1. Open **MySQL Workbench** → connect to your local MySQL server.
+2. **File → Open SQL Script** → `mysql/schema.sql`
+3. Select all (Ctrl+A) → **Execute** (⚡)
+4. Confirm **4 tables** exist in `mini_qr_ordering`:
 
    `admin_users` · `products` · `orders` · `qr_access_bindings`
 
 More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
+
+### Step 4 — Configure `.env.local`
+
+The project includes `.env.local` with `MYSQL_PASSWORD` empty and a dev `ADMIN_SESSION_SECRET` already set.
+
+**Only edit if your MySQL `root` has a password on this PC:**
+
+```env
+MYSQL_PASSWORD=your_mysql_root_password_here
+```
+
+| | MySQL Workbench | `.env.local` |
+|--|-----------------|--------------|
+| Purpose | Opens Workbench on this PC | Lets the **app** connect to MySQL |
+| Password | Stored in Workbench vault | Must be set manually in `MYSQL_PASSWORD` |
+
+- Same password as Workbench, on **this PC only** — each laptop has its own MySQL.
+- If `root` has no password, leave `MYSQL_PASSWORD=` empty.
+- After editing, **restart** `npm run dev` (Ctrl+C, then run again).
+- Do **not** commit real passwords to GitHub.
+
+**Error:** `Access denied for user 'root'@'localhost' (using password: NO)` → `MYSQL_PASSWORD` is empty or dev server was not restarted.
 
 ### Step 5 — Start the app
 
@@ -118,85 +122,29 @@ More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 npm run dev
 ```
 
-Open in your browser:
-
-- **On this PC:** [http://localhost:3000](http://localhost:3000) (menu) · [http://localhost:3000/admin](http://localhost:3000/admin) (admin)
-- **On your phone / another laptop (same Wi‑Fi):** use the **Network** line from the terminal, e.g. `http://192.168.1.10:3000` (menu) and `http://192.168.1.10:3000/admin` (admin)
-
-If the menu or admin page loads but shows no data, see **Step 3 — MySQL password** above: run `mysql/schema.sql`, set `MYSQL_PASSWORD` in `.env.local` to match MySQL Workbench on this PC, and restart `npm run dev`.
-
----
-
-## How ordering works (important)
-
-Guests **must scan a table QR code** from the admin dashboard before they can add items to the cart or place an order.
-
-| What the guest does | What happens |
-|---------------------|--------------|
-| Opens the menu page **without** scanning a QR | Can **browse** the menu only — **cannot order** |
-| Types `?table=1` in the browser address bar | Still **cannot order** — the link must come from a valid QR scan |
-| **Scans** a table QR printed from the admin page | Cart and checkout **unlock** on that device |
-
-**This is intentional.** It protects the restaurant from fake, spam, or scam orders from random visitors on the internet. Only guests at a real table (with a printed QR) can place orders.
-
-After a valid scan:
-
-- The QR link is bound to **one device** — sharing the link to another phone is blocked.
-- If the guest is inactive for **15 minutes**, they must scan the QR again.
-
 ---
 
 ## Features
 
-### Customer (mobile-responsive)
+**Customer** — Browse menu, cart, checkout (cash / mock GCash), order tracking.
 
-- Browse menu products by category
-- Add to cart, update quantity, remove items
-- Checkout with computed total
-- Dine-in or takeout; order tracking page
+**Admin** — Live orders, payment & kitchen status, new-order notifications, table QR generator.
 
-### QR codes (admin dashboard)
-
-QR codes are **generated on the admin page**, not the customer menu.
-
-1. Log in at `/admin`.
-2. Open **Table QR codes** in the left sidebar (desktop) or tap **QR** (mobile).
-3. Enter a table number → click **Go** → preview the QR → **Download PNG**.
-4. Print and place at the table. Guests **scan** the QR to open the menu and order.
-
-Each QR encodes a signed URL like:
-
-```text
-/menu-page?table=1&access=<signed-token>
-```
-
-Re-print a QR when you need a new guest at the same table — each **Go** click issues a new `access` token.
-
-### Admin dashboard
-
-- View live orders (payment + kitchen status)
-- New-order notification bell
-- Update payment status and kitchen workflow
-- Table QR generator
-
-### Payment simulation
-
-- **Pay at counter (cash)** — order sent to kitchen; pay when served
-- **GCash (mock)** — simulated success/failure flow (no real payment API)
+**QR workflow** — Admin → Table QR codes → enter table → **Go** → download PNG → guest scans to order.
 
 ---
 
-## Stack
+## Tech stack
 
 | Layer | Technology |
 |-------|------------|
 | UI | React 19, Tailwind CSS 4, Next.js 16 |
-| API | Node.js (Next Route Handlers + optional Express) |
+| API | Node.js (Next.js Route Handlers) |
 | Database | MySQL (`mysql2`) |
 
 ---
 
-## Main API routes (Next.js)
+## API routes
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -204,25 +152,17 @@ Re-print a QR when you need a new guest at the same table — each **Go** click 
 | POST | `/api/orders` | Place order (requires QR session) |
 | GET | `/api/admin/orders` | List orders (admin) |
 | PATCH | `/api/admin/orders/[id]` | Kitchen / payment updates |
-| POST | `/api/admin/table-qr-token` | Issue signed `access` token for a table QR (admin) |
-| GET | `/api/qr/activate` | Validate scan URL and set order session cookie |
-| GET | `/api/qr/session` | Check whether guest has an active QR order session |
-| GET | `/api/qr/ping` | Refresh session activity (15-minute inactivity limit) |
-| POST | `/api/qr/logout` | Clear QR order session cookie |
+| POST | `/api/admin/table-qr-token` | Issue QR `access` token (admin) |
+| GET | `/api/qr/activate` | Validate scan & set session cookie |
+| GET | `/api/qr/session` | Check active QR session |
+| GET | `/api/qr/ping` | Refresh session (15 min inactivity) |
+| POST | `/api/qr/logout` | Clear QR session |
+
+Optional local Express API: `npm run dev:api` → [docs/BACKEND_API.md](docs/BACKEND_API.md)
 
 ---
 
-## Optional: Express API (local only)
-
-```bash
-npm run dev:api
-```
-
-Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md)**.
-
----
-
-## Further documentation
+## Documentation
 
 | Topic | File |
 |-------|------|
@@ -230,3 +170,4 @@ Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md
 | LAN / phone testing | [docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md) |
 | Vercel deployment | [docs/VERCEL.md](docs/VERCEL.md) |
 | Railway MySQL | [docs/RAILWAY.md](docs/RAILWAY.md) |
+| Express API | [docs/BACKEND_API.md](docs/BACKEND_API.md) |
