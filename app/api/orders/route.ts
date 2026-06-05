@@ -3,6 +3,7 @@ import { z } from "zod";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { createOrderRecord } from "@/lib/orders/order-service";
 import { getErrorMessage } from "@/lib/orders/db-errors";
+import { assertQrOrderAllowed } from "@/lib/qr-order-guard";
 import { IntegerTableNumberError } from "@/lib/table";
 import { readRequestJson } from "@/lib/json";
 import { CreateOrderSchema } from "../../../schemas/order.schemas.js";
@@ -31,6 +32,11 @@ export async function POST(request: NextRequest) {
       );
     }
     const parsed = CreateOrderSchema.parse(body);
+
+    await assertQrOrderAllowed(request, {
+      service_type: parsed.service_type,
+      table_number: parsed.table_number ?? null,
+    });
 
     const payment_status =
       parsed.payment_method === "cod"

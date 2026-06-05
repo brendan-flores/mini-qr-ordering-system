@@ -7,6 +7,12 @@ import {
   isAdminHost,
   isCustomerPath,
 } from "@/lib/app-hosts";
+import {
+  attachQrOrderSessionCookie,
+  tryActivateQrOrderSession,
+} from "@/lib/qr-order-activate";
+import { normalizeTableNumber } from "@/lib/table";
+import { MENU_PAGE_PATH } from "@/lib/routes";
 
 const ADMIN_LOGIN = "/admin/login";
 
@@ -37,6 +43,22 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!adminAllowed) {
+    const table = normalizeTableNumber(
+      request.nextUrl.searchParams.get("table")
+    );
+    const access = request.nextUrl.searchParams.get("access")?.trim();
+    if (
+      table &&
+      access &&
+      (pathname === MENU_PAGE_PATH || pathname.startsWith(`${MENU_PAGE_PATH}/`))
+    ) {
+      const sessionToken = await tryActivateQrOrderSession(table, access);
+      if (sessionToken) {
+        const res = NextResponse.next();
+        attachQrOrderSessionCookie(res, sessionToken);
+        return res;
+      }
+    }
     return NextResponse.next();
   }
 

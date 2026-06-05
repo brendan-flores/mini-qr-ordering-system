@@ -79,6 +79,15 @@ export default function MenuPage() {
           ].join(" ")}
         >
           <main className="menu-scroll flex min-h-0 flex-col overflow-y-auto pb-8">
+            {!orderingEnabled ? (
+              <div
+                className={`${UI_MOTION.fadeIn} mt-2 rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary-soft)]/40 px-4 py-3 text-sm text-zinc-800`}
+                role="status"
+              >
+                Scan your table QR code to add items and place an order.
+              </div>
+            ) : null}
+
             <div
               className={`${UI_MOTION.fadeIn} sticky top-0 z-10 space-y-4 bg-[var(--color-background)]/95 pb-2 backdrop-blur-sm`}
             >

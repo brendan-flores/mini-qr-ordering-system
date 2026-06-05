@@ -22,9 +22,11 @@ QR codes are **generated on the admin page**, not the customer menu.
 1. Log in at `/admin` (default: `admin` / `admin12345`).
 2. Open **Table QR codes** in the left sidebar (desktop) or tap **QR** (mobile).
 3. Enter a table number → preview the QR → **Download PNG**.
-4. Print and place at the table. Guests scan to open the menu with `?table=N` for dine-in ordering.
+4. Print and place at the table. Guests **scan** the QR to open the menu and order.
 
 Set `NEXT_PUBLIC_APP_URL` in `.env.local` so QR links point to your deployed menu URL.
+
+**Production security (scan-only ordering on live server):** On your deployed site (e.g. Vercel), each QR encodes a signed, unguessable `access` token (issued from the admin dashboard). Typing `?table=1` in the browser does **not** unlock ordering — guests must scan the printed QR. After a valid scan, the server sets a signed httpOnly cookie; `POST /api/orders` rejects requests without it. **On `localhost` / `127.0.0.1`**, this rule is skipped so you can order freely while developing.
 
 ### Admin dashboard
 

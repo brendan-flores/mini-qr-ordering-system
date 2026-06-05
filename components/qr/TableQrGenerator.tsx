@@ -28,7 +28,6 @@ export function TableQrGenerator({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [scanUrl, setScanUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [tableError, setTableError] = useState<string | null>(null);
 
@@ -53,10 +52,25 @@ export function TableQrGenerator({
     const table = checked.table;
     setGenerating(true);
     try {
+      const tokenRes = await fetch("/api/admin/table-qr-token", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table_number: table }),
+      });
+      if (!tokenRes.ok) {
+        const errBody = (await tokenRes.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        throw new Error(
+          errBody?.error?.message ?? "Could not issue a secure QR code."
+        );
+      }
+      const { access } = (await tokenRes.json()) as { access: string };
       const base =
         process.env.NEXT_PUBLIC_APP_URL ??
         (typeof window !== "undefined" ? `${window.location.origin}/` : "/");
-      const url = menuUrlWithTable(base, table);
+      const url = menuUrlWithTable(base, table, access);
       setScanUrl(url);
       const dataUrl = await QRCode.toDataURL(url, {
         margin: 1,
@@ -85,17 +99,6 @@ export function TableQrGenerator({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function copyLink() {
-    if (!scanUrl) return;
-    try {
-      await navigator.clipboard.writeText(scanUrl);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* ignore */
-    }
-  }
 
   return (
     <div className={className}>
@@ -223,35 +226,16 @@ export function TableQrGenerator({
         </div>
       </div>
 
-      {scanUrl && canUseTable ? (
-        <div className="mt-3 space-y-2">
-          <p
-            className={[
-              "font-bold uppercase tracking-wider text-zinc-400",
-              isSidebar ? "text-[10px]" : "text-xs",
-            ].join(" ")}
-          >
-            Scan link
-          </p>
-          <p
-            className="break-all rounded-lg bg-zinc-50 px-2.5 py-2 font-mono text-[10px] leading-snug text-zinc-600 ring-1 ring-[var(--color-surface-line)]"
-            title={scanUrl}
-          >
-            {scanUrl}
-          </p>
-          <button
-            type="button"
-            onClick={() => void copyLink()}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[var(--color-surface-line)] bg-white py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
-          >
-            <MaterialIcon
-              name={copied ? "check" : "content_copy"}
-              filled={false}
-              className="text-base"
-            />
-            {copied ? "Copied" : "Copy link"}
-          </button>
-        </div>
+      {canUseTable ? (
+        <p
+          className={[
+            "mt-3 text-center font-medium text-[var(--color-text-muted)]",
+            isSidebar ? "text-[10px]" : "text-xs",
+          ].join(" ")}
+        >
+          Guests must scan this QR — typing a table number in the browser will
+          not unlock ordering.
+        </p>
       ) : null}
 
       <div className={isSidebar ? "mt-3" : "mt-4"}>

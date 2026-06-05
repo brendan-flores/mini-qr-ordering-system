@@ -11,14 +11,13 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   allowsMenuOrderingWithoutTable,
-  hasOrderingSession,
   hasTableFromQr,
+  isQrOrderEnforcedOnClient,
   markMenuOrderingSession,
   markOrderingSessionFromQr,
   normalizeTableNumber,
   resolveTableNumber,
   subscribeToOrdering,
-  tableNumberFromUrl,
 } from "@/lib/table";
 
 type TableContextValue = {
@@ -31,17 +30,15 @@ type TableContextValue = {
 
 const TableContext = createContext<TableContextValue | null>(null);
 
-function readOrderingEnabled(
-  tableFromUrl: string | null,
-  pathname: string
-): boolean {
-  if (tableFromUrl) return true;
-  if (allowsMenuOrderingWithoutTable(pathname)) return true;
-  return hasOrderingSession();
+function readOrderingEnabled(): boolean {
+  if (!isQrOrderEnforcedOnClient()) return true;
+  return hasTableFromQr();
 }
 
 function readHasTableFromQr(tableFromUrl: string | null): boolean {
-  if (tableFromUrl) return true;
+  if (!isQrOrderEnforcedOnClient()) {
+    return hasTableFromQr() || !!tableFromUrl;
+  }
   return hasTableFromQr();
 }
 
@@ -49,34 +46,73 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("table");
+  const accessFromUrl = searchParams.get("access")?.trim() ?? null;
   const tableFromUrl = normalizeTableNumber(fromUrl);
 
   useEffect(() => {
-    if (tableFromUrl) {
-      markOrderingSessionFromQr(tableFromUrl);
-      return;
+    let cancelled = false;
+
+    async function syncSession() {
+      if (!isQrOrderEnforcedOnClient()) {
+        if (tableFromUrl) {
+          markOrderingSessionFromQr(tableFromUrl);
+          return;
+        }
+        if (allowsMenuOrderingWithoutTable(pathname) && !hasTableFromQr()) {
+          markMenuOrderingSession();
+        }
+        return;
+      }
+
+      if (tableFromUrl && accessFromUrl) {
+        const params = new URLSearchParams({
+          table: tableFromUrl,
+          access: accessFromUrl,
+        });
+        const res = await fetch(`/api/qr/activate?${params}`, {
+          credentials: "include",
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = (await res.json()) as { ok?: boolean };
+          if (data.ok) markOrderingSessionFromQr(tableFromUrl);
+        }
+        return;
+      }
+
+      const res = await fetch("/api/qr/session", { credentials: "include" });
+      if (cancelled || !res.ok) return;
+      const data = (await res.json()) as { active?: boolean; table?: string };
+      if (data.active && data.table) {
+        markOrderingSessionFromQr(data.table);
+      }
     }
-    if (allowsMenuOrderingWithoutTable(pathname) && !hasTableFromQr()) {
-      markMenuOrderingSession();
-    }
-  }, [tableFromUrl, pathname]);
+
+    void syncSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [tableFromUrl, accessFromUrl, pathname]);
 
   const orderingEnabled = useSyncExternalStore(
     subscribeToOrdering,
-    () => readOrderingEnabled(tableFromUrl, pathname),
-    () => !!tableFromUrl
+    () => readOrderingEnabled(),
+    () => process.env.NODE_ENV === "development"
   );
 
   const tableFromQr = useSyncExternalStore(
     subscribeToOrdering,
     () => readHasTableFromQr(tableFromUrl),
-    () => !!tableFromUrl
+    () => process.env.NODE_ENV === "development"
   );
 
   const tableNumber = useSyncExternalStore(
     subscribeToOrdering,
-    () => (tableFromQr ? resolveTableNumber(fromUrl) : ""),
-    () => tableNumberFromUrl(fromUrl) ?? ""
+    () =>
+      tableFromQr || !isQrOrderEnforcedOnClient()
+        ? resolveTableNumber(fromUrl)
+        : "",
+    () => ""
   );
 
   const value = useMemo(
@@ -85,7 +121,9 @@ export function TableProvider({ children }: { children: ReactNode }) {
       hasTableFromQr: tableFromQr,
       tableNumber,
       setTableNumber: (value: string) => {
-        markOrderingSessionFromQr(value);
+        if (!isQrOrderEnforcedOnClient()) {
+          markOrderingSessionFromQr(value);
+        }
       },
     }),
     [orderingEnabled, tableFromQr, tableNumber]

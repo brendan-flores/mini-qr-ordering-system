@@ -13,9 +13,14 @@ export function isLocalhostClient(): boolean {
   return host === "localhost" || host === "127.0.0.1";
 }
 
-/** Local dev: dine-in at checkout without a QR scan (no table badge on menu). */
+/** Localhost only — skip QR scan requirement (live server still enforces). */
+export function isQrOrderEnforcedOnClient(): boolean {
+  return !isLocalhostClient();
+}
+
+/** Localhost: dine-in at checkout without a QR scan (manual table input). */
 export function allowsDevDineInWithoutQr(): boolean {
-  return process.env.NODE_ENV === "development" && isLocalhostClient();
+  return !isQrOrderEnforcedOnClient();
 }
 
 export function isMenuPagePath(pathname: string): boolean {
@@ -197,12 +202,16 @@ export function resolveTableNumber(
 
 export function menuUrlWithTable(
   baseUrl: string,
-  tableNumber: string
+  tableNumber: string,
+  accessToken?: string
 ): string {
   const table = parseIntegerTableNumber(tableNumber);
   const url = new URL(baseUrl);
   url.pathname = MENU_PAGE_PATH;
   url.search = "";
   url.searchParams.set("table", table);
+  if (accessToken?.trim()) {
+    url.searchParams.set("access", accessToken.trim());
+  }
   return url.toString();
 }
