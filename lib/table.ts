@@ -13,7 +13,10 @@ export function isLocalhostClient(): boolean {
   return host === "localhost" || host === "127.0.0.1";
 }
 
-/** Localhost only — skip QR scan requirement (live server still enforces). */
+/**
+ * Client-side mirror of server QR enforcement.
+ * Bypassed on localhost / 127.0.0.1 only; LAN IPs (192.168.x.x) still require a scan.
+ */
 export function isQrOrderEnforcedOnClient(): boolean {
   return !isLocalhostClient();
 }
@@ -231,15 +234,3 @@ export function menuUrlWithTable(
   return url.toString();
 }
 
-/** Short scan code URL — reliable for phone QR cameras. */
-export function menuUrlWithScanCode(baseUrl: string, scanCode: string): string {
-  const code = scanCode.trim();
-  if (!code) {
-    throw new Error("Scan code is required.");
-  }
-  const url = new URL(baseUrl);
-  url.pathname = MENU_PAGE_PATH;
-  url.search = "";
-  url.searchParams.set("code", code);
-  return url.toString();
-}

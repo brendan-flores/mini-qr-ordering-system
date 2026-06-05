@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Allow phones/other devices on the LAN to load dev JS when using the network URL.
+  allowedDevOrigins: ["192.168.1.10"],
   serverExternalPackages: ["mysql2"],
   // Stable project root (path has spaces on some machines)
   turbopack: {

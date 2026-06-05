@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
 import { getErrorMessage } from "@/lib/orders/db-errors";
-import { createQrScanCode } from "@/lib/mysql/qr-scan-codes";
 import { createTableQrAccessToken } from "@/lib/table-qr-access";
 import { normalizeTableNumber } from "@/lib/table";
 
@@ -31,22 +30,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const issued = await createTableQrAccessToken(table);
-    const scanCode = await createQrScanCode(
-      issued.table,
-      issued.jti,
-      issued.access
-    );
     return NextResponse.json({
       table_number: issued.table,
-      scan_code: scanCode,
+      access_token: issued.access,
     });
   } catch (e: unknown) {
-    const message = getErrorMessage(e);
-    const hint = message.includes("qr_scan_codes")
-      ? " Run mysql/patch-qr-access-bindings.sql on your database."
-      : "";
     return NextResponse.json(
-      { error: { message: `${message}${hint}` } },
+      { error: { message: getErrorMessage(e) } },
       { status: 500 }
     );
   }

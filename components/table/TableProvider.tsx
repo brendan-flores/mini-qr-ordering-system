@@ -78,7 +78,6 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("table");
   const accessFromUrl = searchParams.get("access")?.trim() ?? null;
-  const codeFromUrl = searchParams.get("code")?.trim() ?? null;
   const tableFromUrl = normalizeTableNumber(fromUrl);
   const [qrActivationMessage, setQrActivationMessage] = useState<string | null>(
     null
@@ -106,12 +105,10 @@ export function TableProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const hasQrCredential =
-        Boolean(codeFromUrl) || Boolean(tableFromUrl && accessFromUrl);
+      const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
 
       if (hasQrCredential) {
         const params = new URLSearchParams();
-        if (codeFromUrl) params.set("code", codeFromUrl);
         if (tableFromUrl) params.set("table", tableFromUrl);
         if (accessFromUrl) params.set("access", accessFromUrl);
 
@@ -145,11 +142,6 @@ export function TableProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        if (data?.error?.includes("another device")) {
-          clearOrderingSession();
-          return;
-        }
-
         clearOrderingSession();
         return;
       }
@@ -173,7 +165,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [tableFromUrl, accessFromUrl, codeFromUrl, pathname]);
+  }, [tableFromUrl, accessFromUrl, pathname]);
 
   const orderingEnabled = useSyncExternalStore(
     subscribeToOrdering,

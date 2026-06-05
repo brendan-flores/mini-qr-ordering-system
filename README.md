@@ -4,7 +4,7 @@ Single repo with:
 
 - **Frontend**: Next.js (React) + Tailwind — customer menu, cart, checkout, order tracking, admin kitchen dashboard
 - **Backend**: Next.js API routes (`app/api/`) and optional Express REST API (`server.js`, port 4000)
-- **Database**: MySQL 8 (`mysql/schema.sql`)
+- **Database**: MySQL 8 — `mysql/schema.sql` (`admin_users`, `products`, `orders`)
 
 ## Features
 
@@ -26,13 +26,13 @@ QR codes are **generated on the admin page**, not the customer menu.
 
 Set `NEXT_PUBLIC_APP_URL` in `.env.local` (and on Vercel) so QR links point to your deployed menu URL, e.g. `https://your-menu.vercel.app`.
 
-Each generated QR encodes a **short** URL like:
+Each generated QR encodes a signed URL like:
 
 ```text
-/menu-page?code=Ab12Cd34Ef56
+/menu-page?table=1&access=<signed-token>
 ```
 
-The `code` maps server-side to a signed access token. Short URLs scan reliably on phone cameras (long `access=` links are easy to truncate and fail silently).
+The `access` value is HMAC-signed with `ADMIN_SESSION_SECRET` — guests cannot forge a table link by typing `?table=` alone.
 
 #### Scan-only ordering (live server)
 
@@ -43,21 +43,29 @@ On your **deployed** customer site (e.g. Vercel), ordering is locked until a gue
 | Open menu without `?table=` | Browse only — no cart |
 | Type `?table=1` in the address bar | Browse only — no cart |
 | Change `?table=` after scanning another table | Ordering locks — cart disabled |
-| **Scan** a QR from the admin dashboard | Cart and checkout unlock on **that device only** |
-| Copy/share the QR link to another phone | **Denied** — link is bound to the first device that scanned |
+| **Scan** a QR from the admin dashboard | Cart and checkout unlock (session cookie set) |
+| Copy/share the full QR URL to another phone | That phone can also activate (cookie-only model — no DB device lock) |
 | Place order without a valid scan session | `POST /api/orders` returns **403** |
 
-After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie**. The **first device** to scan a printed QR owns that link; opening the same URL on another device is rejected. The table number is also **locked to that scan** — changing `?table=` in the address bar clears ordering on the live site, and dine-in orders always use the table from the cookie (not what the browser sends). Checkout still offers **take-out** (pickup) for guests who scanned on their own device.
+After a valid scan, the server sets a signed **httpOnly cookie** tied to the guest’s device id. Orders require that cookie on LAN and production. The table number is **locked to the scan** — dine-in orders use the table from the cookie, not a value typed in the address bar.
 
 **Inactivity timeout (live server):** If the guest does nothing for **15 minutes** (no taps, scrolls, or cart changes), the ordering session ends. They must **scan the table QR again** to order. Activity is tracked in the browser and on the server (`/api/qr/ping`).
 
-**Database:** run `mysql/patch-qr-access-bindings.sql` on existing Railway/local DB (or re-import `mysql/schema.sql` for fresh installs).
+**Database:** run `mysql/schema.sql` in MySQL Workbench. Creates `admin_users`, `products`, and `orders`. See **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**.
 
 **Re-print QRs** when you need a new guest at the same table — each admin **Go** click issues a new `access` token.
 
-#### Localhost (development)
+#### Localhost vs local network (development)
 
-On `http://localhost:3000` or `127.0.0.1`, the scan-only rule is **disabled** so you can test ordering without printing QRs. You can add to cart, check out, and enter a table number manually at checkout.
+| URL | QR scan required? |
+|-----|-------------------|
+| `http://localhost:3000` or `127.0.0.1` | **No** — dev bypass for quick testing |
+| `http://192.168.x.x:3000` (LAN IP) | **Yes** — same rules as production |
+| Deployed (Vercel) | **Yes** |
+
+On **localhost only**, you can order without printing QRs (manual table at checkout). On **LAN IP** or production, scan-only ordering and `POST /api/orders` cookie checks apply.
+
+For LAN setup (`allowedDevOrigins`, `NEXT_PUBLIC_APP_URL`, phone testing): **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
 
 Requires `ADMIN_SESSION_SECRET` in `.env.local` / Vercel — used to sign QR `access` tokens and order session cookies.
 
@@ -74,15 +82,20 @@ Requires `ADMIN_SESSION_SECRET` in `.env.local` / Vercel — used to sign QR `ac
 
 ## Quick start
 
-### 1) MySQL schema
+### 1) MySQL (MySQL Workbench)
 
-```bash
-mysql -u root -p < mysql/schema.sql
-```
+1. Connect in Workbench (local: `127.0.0.1` · Railway: public host + port from **Connect**).
+2. **File → Open SQL Script** → `mysql/schema.sql`.
+3. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
+4. Refresh **Schemas** → `mini_qr_ordering` → **Tables** — you must see **3 tables**:
 
-Or open `mysql/schema.sql` in **MySQL Workbench** and execute it.
+   `admin_users` · `products` · `orders`
 
-Details: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
+Default admin: `admin` / `admin12345`
+
+Details: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)** · LAN + QR security: **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
+
+**Another machine:** clone repo → run `mysql/schema.sql` on that PC’s MySQL → copy `.env.local` → `npm install` && `npm run dev`.
 
 ### 2) Environment
 
@@ -90,7 +103,7 @@ Details: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
 copy .env.example .env.local
 ```
 
-Set MySQL connection variables and `ADMIN_SESSION_SECRET`.
+Set MySQL connection variables (`MYSQL_HOST` stays `127.0.0.1` even for LAN guests) and `ADMIN_SESSION_SECRET`. For phone testing on Wi‑Fi, set `NEXT_PUBLIC_APP_URL` to your LAN IP (e.g. `http://192.168.1.10:3000`).
 
 Default admin (after schema): username `admin`, password `admin12345`.
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import {
   IntegerTableNumberError,
-  menuUrlWithScanCode,
+  menuUrlWithTable,
   validateIntegerTableNumber,
 } from "@/lib/table";
 import { tableQrDownloadLabel } from "@/lib/qr-download-image";
@@ -66,13 +66,13 @@ export function TableQrGenerator({
           errBody?.error?.message ?? "Could not issue a secure QR code."
         );
       }
-      const { scan_code: scanCode } = (await tokenRes.json()) as {
-        scan_code: string;
+      const { access_token: accessToken } = (await tokenRes.json()) as {
+        access_token: string;
       };
       const base =
         process.env.NEXT_PUBLIC_APP_URL ??
         (typeof window !== "undefined" ? `${window.location.origin}/` : "/");
-      const url = menuUrlWithScanCode(base, scanCode);
+      const url = menuUrlWithTable(base, table, accessToken);
       setScanUrl(url);
       const dataUrl = await QRCode.toDataURL(url, {
         margin: 2,

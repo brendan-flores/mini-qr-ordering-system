@@ -14,12 +14,11 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("table")
   );
   const access = request.nextUrl.searchParams.get("access")?.trim();
-  const scanCode = request.nextUrl.searchParams.get("code")?.trim();
   const deviceId = normalizeDeviceId(
     request.nextUrl.searchParams.get("device_id")
   );
 
-  if (!scanCode && (!table || !access)) {
+  if (!table || !access) {
     return NextResponse.json(
       { ok: false, error: "Scan a table QR code to order." },
       { status: 400 }
@@ -37,24 +36,15 @@ export async function GET(request: NextRequest) {
     const result = await tryActivateQrOrderSession({
       tableNumber: table,
       accessToken: access,
-      scanCode,
       deviceId: deviceId ?? "local-dev",
-      enforceDeviceBinding: isQrOrderEnforcedOnRequest(request),
     });
 
     if (!result.ok) {
-      const message =
-        result.reason === "device_mismatch"
-          ? "This QR link is registered to another device. Scan the code on your own phone to order."
-          : "Invalid or expired table QR code.";
       return NextResponse.json(
         {
           ok: false,
-          error: message,
-          code:
-            result.reason === "device_mismatch"
-              ? "DEVICE_MISMATCH"
-              : "INVALID_QR",
+          error: "Invalid or expired table QR code.",
+          code: "INVALID_QR",
         },
         { status: 403 }
       );
@@ -64,12 +54,8 @@ export async function GET(request: NextRequest) {
     attachQrOrderSessionCookie(res, result.sessionToken);
     return res;
   } catch (error: unknown) {
-    const message = getErrorMessage(error);
-    const hint = message.includes("qr_scan_codes")
-      ? " Database migration required: run mysql/patch-qr-access-bindings.sql"
-      : "";
     return NextResponse.json(
-      { ok: false, error: `${message}${hint}` },
+      { ok: false, error: getErrorMessage(error) },
       { status: 500 }
     );
   }

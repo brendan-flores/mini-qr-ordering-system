@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import { isQrSessionInactive, QR_ORDER_INACTIVITY_MESSAGE } from "@/lib/qr-inactivity";
-import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
 type OrderCreateInput = {
@@ -52,11 +51,7 @@ async function assertQrSessionForDevice(
   }
 
   const normalizedDeviceId = normalizeDeviceId(deviceId);
-  if (
-    !normalizedDeviceId ||
-    session.deviceId !== normalizedDeviceId ||
-    !(await isDeviceAuthorizedForQrAccess(session.jti, normalizedDeviceId))
-  ) {
+  if (!normalizedDeviceId || session.deviceId !== normalizedDeviceId) {
     throw qrDeviceMismatchError();
   }
 
