@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ active: false });
   }
 
-  if (!isQrOrderEnforcedOnRequest(request)) {
+  if (!isQrOrderEnforcedOnRequest()) {
     return NextResponse.json({ active: true, table: session.table });
   }
 

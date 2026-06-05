@@ -1,6 +1,6 @@
 # Deploy to Vercel
 
-This project is a **Next.js** app. Vercel runs the UI and API routes (`app/api/*`) as serverless functions. The separate Express server (`server.js`) is for **local development only** and is not deployed.
+This project is a **Next.js** app. Vercel runs the UI and API routes (`app/api/*`) as serverless functions.
 
 ## Prerequisites
 

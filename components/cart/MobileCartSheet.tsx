@@ -23,7 +23,6 @@ export function MobileCartSheet({
   const router = useRouter();
   const { hasTableFromQr, tableNumber } = useTable();
   const { items, pieceCount, setQty, remove } = useCart();
-  const [error, setError] = useState<string | null>(null);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
   const total = useMemo(() => cartTotal(subtotal), [subtotal]);
@@ -168,9 +167,6 @@ export function MobileCartSheet({
               {formatMoney(total)}
             </span>
           </div>
-          {error ? (
-            <p className="mt-2 text-sm text-rose-800">{error}</p>
-          ) : null}
           <Button
             type="button"
             className="mt-4 w-full py-3"

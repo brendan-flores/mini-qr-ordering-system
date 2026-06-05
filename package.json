@@ -10,17 +10,12 @@
     "start": "next start",
     "lint": "eslint",
     "icons": "node scripts/generate-favicons.mjs",
-    "dev:api": "node --watch server.js",
     "vercel-build": "next build"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cors": "^2",
     "dotenv": "^16",
-    "express": "^4",
-    "helmet": "^7",
     "jspdf": "^4.2.1",
-    "morgan": "^1",
     "mysql2": "^3",
     "next": "16.2.7",
     "qrcode": "^1.5.4",

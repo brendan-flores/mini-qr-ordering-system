@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { OrderingGuard } from "../../components/ordering/OrderingGuard";
-import CheckoutClient from "./CheckoutClient";
+import CheckoutClient from "@/components/checkout/CheckoutClient";
 
 export default function CheckoutPage() {
   return (

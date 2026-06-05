@@ -47,7 +47,8 @@ function applyCartAction(state: CartState, action: CartAction): CartState {
       const existing = state.items[k];
       if (!existing) return state;
       if (action.quantity <= 0) {
-        const { [k]: _removed, ...rest } = state.items;
+        const rest = { ...state.items };
+        delete rest[k];
         return { items: rest };
       }
       return {
@@ -59,7 +60,8 @@ function applyCartAction(state: CartState, action: CartAction): CartState {
     }
     case "remove": {
       const k = key(action.productId);
-      const { [k]: _removed, ...rest } = state.items;
+      const rest = { ...state.items };
+      delete rest[k];
       return { items: rest };
     }
     case "clear":

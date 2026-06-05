@@ -69,7 +69,6 @@ export function KitchenStatusTabs({
         tabs={tabs}
         active={active}
         onChange={onChange}
-        getTone={(id) => KITCHEN_STATUS_TONES[id]}
         kitchenProgress={kitchenProgress}
       />
     );

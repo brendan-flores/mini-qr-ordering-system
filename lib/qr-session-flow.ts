@@ -1,10 +1,4 @@
-import { MENU_PAGE_PATH } from "@/lib/routes";
-
-export function isMenuPagePath(pathname: string): boolean {
-  return (
-    pathname === MENU_PAGE_PATH || pathname.startsWith(`${MENU_PAGE_PATH}/`)
-  );
-}
+import { isMenuPagePath } from "@/lib/table";
 
 /** Routes where an in-progress QR scan session may continue (checkout/orders, or menu with scan link). */
 export function isQrOrderingFlowPath(pathname: string): boolean {

@@ -18,14 +18,6 @@ export function cartCheckoutUrl(
   return `/checkout?${params.toString()}`;
 }
 
-export function confirmationUrl(orderId: string | number, returnTo: string) {
-  const params = new URLSearchParams({
-    orderId: String(orderId),
-    return: returnTo,
-  });
-  return `/checkout/confirmation?${params.toString()}`;
-}
-
 /** Primary post-checkout destination: live order tracking. */
 export function orderTrackUrl(
   orderId: string | number,

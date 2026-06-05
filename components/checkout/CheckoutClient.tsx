@@ -22,7 +22,7 @@ import {
   orderTrackUrl,
 } from "../../lib/checkout-url";
 import { useCart } from "../cart/CartContext";
-import { cartSubtotal, cartTotal, formatMoney } from "../cart/cartUtils";
+import { cartSubtotal, cartTotal } from "../cart/cartUtils";
 import { BrandLogo } from "../brand/BrandLogo";
 import {
   CheckoutSectionHeader,
@@ -218,14 +218,6 @@ export default function CheckoutClient() {
       setGcashOverlay(null);
       setSubmitting(false);
     }
-  }
-
-  function checkoutUrlWithReturn(id: Order["id"]) {
-    const q = new URLSearchParams({
-      orderId: String(id),
-      return: returnTo?.startsWith("/") ? returnTo : MENU_PAGE_PATH,
-    });
-    return `/checkout?${q.toString()}`;
   }
 
   async function submitGcashRetry() {

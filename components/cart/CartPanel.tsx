@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cartCheckoutUrl } from "../../lib/checkout-url";
 import { MENU_PAGE_PATH } from "@/lib/routes";
 import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
@@ -16,7 +16,6 @@ export function CartPanel() {
   const router = useRouter();
   const { hasTableFromQr, tableNumber } = useTable();
   const { items, lineCount, setQty, remove } = useCart();
-  const [error, setError] = useState<string | null>(null);
 
   const subtotal = useMemo(
     () => cartSubtotal(items),
@@ -124,12 +123,6 @@ export function CartPanel() {
             {formatMoney(total)}
           </span>
         </div>
-
-        {error ? (
-          <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">
-            {error}
-          </div>
-        ) : null}
 
         <Button
           type="button"

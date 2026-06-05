@@ -25,11 +25,6 @@ export function isMenuPagePath(pathname: string): boolean {
   );
 }
 
-/** Menu route (ordering requires a fresh QR scan link or active checkout/orders flow). */
-export function allowsMenuOrderingWithoutTable(pathname: string): boolean {
-  return isMenuPagePath(pathname);
-}
-
 export const INTEGER_TABLE_ERROR_MESSAGE =
   "Table number must be a whole number (digits only, no letters).";
 
@@ -92,21 +87,6 @@ export function normalizeTableNumber(
   if (!value) return null;
   const result = validateIntegerTableNumber(value);
   return result.ok ? result.table : null;
-}
-
-export function getTableFromSearchParam(
-  search: string | URLSearchParams
-): string | null {
-  const params =
-    typeof search === "string" ? new URLSearchParams(search) : search;
-  return normalizeTableNumber(params.get("table"));
-}
-
-export function persistTableNumber(table: string) {
-  if (typeof window === "undefined") return;
-  const normalized = parseIntegerTableNumber(table);
-  window.sessionStorage.setItem(TABLE_STORAGE_KEY, normalized);
-  window.dispatchEvent(new Event(TABLE_UPDATE_EVENT));
 }
 
 export function subscribeToTable(onStoreChange: () => void) {

@@ -76,7 +76,7 @@ export async function assertQrOrderAllowed(
   input: OrderCreateInput,
   deviceId?: string | null
 ): Promise<void> {
-  if (!isQrOrderEnforcedOnRequest(request)) return;
+  if (!isQrOrderEnforcedOnRequest()) return;
 
   const session = await assertQrSessionForDevice(request, deviceId);
 
@@ -95,7 +95,7 @@ export async function authorizedDineInTableNumber(
   clientTable: string | null | undefined,
   deviceId?: string | null
 ): Promise<string | null> {
-  if (!isQrOrderEnforcedOnRequest(request)) {
+  if (!isQrOrderEnforcedOnRequest()) {
     return clientTable?.trim() || null;
   }
 

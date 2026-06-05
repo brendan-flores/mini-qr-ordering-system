@@ -19,7 +19,7 @@ import {
 } from "@/lib/qr-order-session";
 
 export async function GET(request: NextRequest) {
-  if (!isQrOrderEnforcedOnRequest(request)) {
+  if (!isQrOrderEnforcedOnRequest()) {
     return NextResponse.json({ ok: true });
   }
 

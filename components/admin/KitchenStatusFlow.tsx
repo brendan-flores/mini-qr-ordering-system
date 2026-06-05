@@ -7,7 +7,6 @@ import {
   type KitchenStepProgress,
 } from "@/lib/kitchen-step-progress";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import type { StatusTone } from "./adminStatusStyles";
 
 export type KitchenFlowTab = {
   id: AdminKitchenStatus;
@@ -33,8 +32,6 @@ export function KitchenStatusFlow({
   tabs: KitchenFlowTab[];
   active: AdminKitchenStatus;
   onChange(status: AdminKitchenStatus): void;
-  /** @deprecated Kept for API compatibility with KitchenStatusTabs */
-  getTone?: (id: AdminKitchenStatus) => StatusTone;
   kitchenProgress?: KitchenStepProgress | null;
   ariaLabel?: string;
 }) {
