@@ -6,16 +6,25 @@ import type { OrderItem } from "../../client/services/orders";
 import { formatMoney } from "../cart/cartUtils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
-export function GcashLogoMark({ size = 48 }: { size?: number }) {
+export function GcashLogoMark({
+  size = 48,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <span
-      className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#007dfe]/25"
+      className={[
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#007dfe]/20",
+        className,
+      ].join(" ")}
       style={{ width: size, height: size }}
     >
       <img
         src="/gcash-logo.png"
         alt="GCash"
-        className="h-[82%] w-[82%] object-contain"
+        className="h-[78%] w-[78%] object-contain"
         decoding="async"
       />
     </span>

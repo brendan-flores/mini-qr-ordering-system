@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useSyncExternalStore,
 } from "react";
+import { useMounted } from "@/hooks/useMounted";
 import type { Product } from "../../client/services/products";
 import type { CartItem, CartState } from "./cartTypes";
 import { touchOrderingActivity } from "@/lib/ordering-activity";
@@ -87,11 +88,13 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const mounted = useMounted();
   const cart = useSyncExternalStore(
     subscribeToCart,
     getCartSnapshot,
     getEmptyCart
   );
+  const snapshot = mounted ? cart : getEmptyCart();
 
   const commit = useCallback((next: CartState) => {
     saveCartToStorage(next);
@@ -100,11 +103,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<CartContextValue>(() => {
-    const items = Object.values(cart.items);
+    const items = Object.values(snapshot.items);
     return {
       items,
-      lineCount: cartLineCount(cart),
-      pieceCount: cartItemCount(cart),
+      lineCount: cartLineCount(snapshot),
+      pieceCount: cartItemCount(snapshot),
       add: (product) => commit(applyCartAction(cart, { type: "add", product })),
       setQty: (productId, quantity) =>
         commit(applyCartAction(cart, { type: "setQty", productId, quantity })),
@@ -116,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         touchOrderingActivity();
       },
     };
-  }, [cart, commit]);
+  }, [cart, snapshot, commit]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

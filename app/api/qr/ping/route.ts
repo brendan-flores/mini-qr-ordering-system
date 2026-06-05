@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import { isQrSessionInactive } from "@/lib/qr-inactivity";
+import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import { attachQrOrderSessionCookie } from "@/lib/qr-order-activate";
 import {
   getQrOrderSessionFromRequest,
@@ -24,7 +25,11 @@ export async function GET(request: NextRequest) {
   const deviceId = normalizeDeviceId(
     request.nextUrl.searchParams.get("device_id")
   );
-  if (!deviceId || session.deviceId !== deviceId) {
+  if (
+    !deviceId ||
+    session.deviceId !== deviceId ||
+    !(await isDeviceAuthorizedForQrAccess(session.jti, deviceId))
+  ) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
 

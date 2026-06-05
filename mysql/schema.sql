@@ -1,14 +1,9 @@
 -- =============================================================================
--- BrenCravings — run the ENTIRE file in MySQL Workbench → Execute (⚡)
--- Use on local PC, LAN testing, Railway, and Vercel production.
+-- BrenCravings — single database schema (local, LAN, Railway, Vercel)
+-- Run the ENTIRE file in MySQL Workbench → Execute (⚡)
 -- =============================================================================
--- After running, mini_qr_ordering must contain exactly these 3 tables:
---   1. admin_users
---   2. products
---   3. orders
--- Safe to re-run: drops legacy tables, CREATE IF NOT EXISTS, seed only when empty.
--- QR security uses signed ?table=&access= URLs + httpOnly session cookies
--- (no extra QR tables).
+-- Tables: admin_users, products, orders, qr_access_bindings
+-- Safe to re-run: drops legacy tables, CREATE IF NOT EXISTS, seed when empty.
 -- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS mini_qr_ordering
@@ -17,8 +12,6 @@ CREATE DATABASE IF NOT EXISTS mini_qr_ordering
 
 USE mini_qr_ordering;
 
--- Remove tables from older schemas (no longer used by the app)
-DROP TABLE IF EXISTS qr_access_bindings;
 DROP TABLE IF EXISTS qr_scan_codes;
 DROP TABLE IF EXISTS restaurant_tables;
 
@@ -58,6 +51,14 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS qr_access_bindings (
+  access_jti CHAR(36) NOT NULL PRIMARY KEY,
+  table_number VARCHAR(32) NOT NULL,
+  device_id VARCHAR(64) NOT NULL,
+  bound_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_qr_access_device (device_id)
+);
+
 -- Admin: username admin / password admin12345
 INSERT INTO admin_users (id, username, password_hash)
 SELECT * FROM (
@@ -79,5 +80,4 @@ SELECT * FROM (
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM products LIMIT 1);
 
--- Verify (should list 3 tables — refresh Schemas in Workbench if needed)
 SHOW TABLES;

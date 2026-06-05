@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
 import { isQrSessionInactive, QR_ORDER_INACTIVITY_MESSAGE } from "@/lib/qr-inactivity";
+import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
 type OrderCreateInput = {
@@ -51,7 +52,11 @@ async function assertQrSessionForDevice(
   }
 
   const normalizedDeviceId = normalizeDeviceId(deviceId);
-  if (!normalizedDeviceId || session.deviceId !== normalizedDeviceId) {
+  if (
+    !normalizedDeviceId ||
+    session.deviceId !== normalizedDeviceId ||
+    !(await isDeviceAuthorizedForQrAccess(session.jti, normalizedDeviceId))
+  ) {
     throw qrDeviceMismatchError();
   }
 
@@ -63,7 +68,7 @@ async function assertQrSessionForDevice(
 }
 
 /**
- * Production: reject order creation unless a valid table-QR session cookie exists.
+ * Reject order creation unless a valid table-QR session cookie exists.
  * Dine-in table_number must match the table encoded in the QR session.
  */
 export async function assertQrOrderAllowed(
@@ -84,7 +89,7 @@ export async function assertQrOrderAllowed(
   }
 }
 
-/** Live server dine-in: always use the table from the QR session cookie. */
+/** Dine-in: always use the table from the QR session cookie. */
 export async function authorizedDineInTableNumber(
   request: NextRequest,
   clientTable: string | null | undefined,

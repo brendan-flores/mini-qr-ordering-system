@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useMounted } from "@/hooks/useMounted";
 import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
 import { getOrCreateDeviceId } from "@/lib/device-session";
 import {
@@ -18,8 +19,6 @@ import {
   clearOrderingSession,
   getStoredTableNumber,
   hasTableFromQr,
-  isQrOrderEnforcedOnClient,
-  markMenuOrderingSession,
   markOrderingSessionFromQr,
   normalizeTableNumber,
   resolveScannedTableNumber,
@@ -37,7 +36,6 @@ type TableContextValue = {
 const TableContext = createContext<TableContextValue | null>(null);
 
 function readOrderingEnabled(): boolean {
-  if (!isQrOrderEnforcedOnClient()) return true;
   return hasTableFromQr();
 }
 
@@ -79,6 +77,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const fromUrl = searchParams.get("table");
   const accessFromUrl = searchParams.get("access")?.trim() ?? null;
   const tableFromUrl = normalizeTableNumber(fromUrl);
+  const mounted = useMounted();
   const [qrActivationMessage, setQrActivationMessage] = useState<string | null>(
     null
   );
@@ -93,19 +92,15 @@ export function TableProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function syncSession() {
-      if (!isQrOrderEnforcedOnClient()) {
+      const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
+
+      // Menu page without QR activation should not show table state,
+      // even if a previous QR cookie/session exists in this browser.
+      if (allowsMenuOrderingWithoutTable(pathname) && !hasQrCredential) {
+        clearOrderingSession();
         setQrActivationMessage(null);
-        if (tableFromUrl) {
-          markOrderingSessionFromQr(tableFromUrl);
-          return;
-        }
-        if (allowsMenuOrderingWithoutTable(pathname) && !hasTableFromQr()) {
-          markMenuOrderingSession();
-        }
         return;
       }
-
-      const hasQrCredential = Boolean(tableFromUrl && accessFromUrl);
 
       if (hasQrCredential) {
         const params = new URLSearchParams();
@@ -142,6 +137,11 @@ export function TableProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        if (data?.error?.includes("another device")) {
+          clearOrderingSession();
+          return;
+        }
+
         clearOrderingSession();
         return;
       }
@@ -170,13 +170,13 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const orderingEnabled = useSyncExternalStore(
     subscribeToOrdering,
     () => readOrderingEnabled(),
-    () => process.env.NODE_ENV === "development"
+    () => false
   );
 
   const tableFromQr = useSyncExternalStore(
     subscribeToOrdering,
     () => readHasTableFromQr(),
-    () => process.env.NODE_ENV === "development"
+    () => false
   );
 
   const tableNumber = useSyncExternalStore(
@@ -187,17 +187,13 @@ export function TableProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      orderingEnabled,
-      hasTableFromQr: tableFromQr,
-      tableNumber,
+      orderingEnabled: mounted && orderingEnabled,
+      hasTableFromQr: mounted && tableFromQr,
+      tableNumber: mounted && tableFromQr ? tableNumber : "",
       qrActivationMessage,
-      setTableNumber: (value: string) => {
-        if (!isQrOrderEnforcedOnClient()) {
-          markOrderingSessionFromQr(value);
-        }
-      },
+      setTableNumber: () => {},
     }),
-    [orderingEnabled, tableFromQr, tableNumber, qrActivationMessage]
+    [mounted, orderingEnabled, tableFromQr, tableNumber, qrActivationMessage]
   );
 
   return (

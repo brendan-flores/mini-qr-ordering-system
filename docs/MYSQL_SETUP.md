@@ -1,68 +1,30 @@
 # MySQL setup
 
-The app stores all persistent data in **MySQL 8+** on the machine where the Next.js server runs. Browsers never connect to MySQL directly — they call `/api/*`, and the server uses `MYSQL_*` env vars.
+The app uses **one schema file only**: `mysql/schema.sql` — for local PC, LAN testing, Railway, and Vercel. Do not use separate local/live/patch SQL files.
 
-## Schema file
-
-Use **`mysql/schema.sql`** everywhere — local PC, LAN testing, Railway, and Vercel.
-
-## Required tables (3)
-
-After running `mysql/schema.sql`, database `mini_qr_ordering` must contain:
+## Required tables (4)
 
 | # | Table | Purpose |
 |---|--------|---------|
-| 1 | `admin_users` | Admin login (`admin` / `admin12345` by default) |
-| 2 | `products` | Menu items (category, price, image) |
-| 3 | `orders` | Customer orders (items JSON, payment, kitchen status) |
+| 1 | `admin_users` | Admin login |
+| 2 | `products` | Menu items |
+| 3 | `orders` | Customer orders |
+| 4 | `qr_access_bindings` | One device per QR link — blocks link sharing |
 
-QR security does **not** use extra tables — signed `?table=&access=` URLs and httpOnly session cookies handle scan-only ordering.
+## Import
 
-The script is **safe to re-run**: it drops legacy tables (`qr_scan_codes`, `qr_access_bindings`, `restaurant_tables`), uses `CREATE TABLE IF NOT EXISTS`, and seeds only when a table is empty.
+1. MySQL Workbench → **File → Open SQL Script** → `mysql/schema.sql`
+2. Select all (Ctrl+A) → **Execute** (⚡)
+3. Confirm **4 tables** under `mini_qr_ordering`
 
-## Import into MySQL
+CLI: `mysql -u root -p < mysql/schema.sql`
 
-### Option A — MySQL Workbench (recommended)
+Default admin: `admin` / `admin12345`
 
-1. Install MySQL 8+ and open **MySQL Workbench**.
-2. Connect to your local instance (usually `127.0.0.1:3306`, user `root`).
-3. **File → Open SQL Script** → select `mysql/schema.sql`.
-4. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
-5. Refresh **Schemas** → `mini_qr_ordering` → **Tables** — confirm all **3** tables appear.
+## Environment
 
-### Option B — Command line
+Copy `.env.example` to `.env.local` and set `MYSQL_*` and `ADMIN_SESSION_SECRET`.
 
-```bash
-mysql -u root -p < mysql/schema.sql
-```
+## Another machine
 
-### Default admin (after schema)
-
-| Field | Value |
-|-------|--------|
-| Username | `admin` |
-| Password | `admin12345` |
-
-## Configure the app
-
-Copy `.env.example` to `.env.local` and set `MYSQL_*` and `ADMIN_SESSION_SECRET`, then:
-
-```bash
-npm install
-npm run dev
-```
-
-## Localhost vs local network
-
-`MYSQL_HOST=127.0.0.1` on the dev PC even when phones use `http://192.168.x.x:3000`. See **[LOCAL_NETWORK.md](./LOCAL_NETWORK.md)** for LAN and QR setup.
-
-## Setting up on another machine
-
-1. Clone repo, install Node.js 20+ and MySQL 8+.
-2. Run **`mysql/schema.sql`** on that machine’s MySQL.
-3. Copy `.env.local` with that machine’s `MYSQL_*` credentials.
-4. `npm install` && `npm run dev`.
-
-## Production (Railway + Vercel)
-
-**[RAILWAY.md](./RAILWAY.md)** · **[VERCEL.md](./VERCEL.md)**
+Clone repo → run `mysql/schema.sql` → configure `.env.local` → `npm install` && `npm run dev`.

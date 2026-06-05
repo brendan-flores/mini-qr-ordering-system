@@ -13,17 +13,14 @@ export function isLocalhostClient(): boolean {
   return host === "localhost" || host === "127.0.0.1";
 }
 
-/**
- * Client-side mirror of server QR enforcement.
- * Bypassed on localhost / 127.0.0.1 only; LAN IPs (192.168.x.x) still require a scan.
- */
+/** Client-side mirror of server QR enforcement (localhost, LAN, production). */
 export function isQrOrderEnforcedOnClient(): boolean {
-  return !isLocalhostClient();
+  return true;
 }
 
-/** Localhost: dine-in at checkout without a QR scan (manual table input). */
+/** Dine-in without a QR scan is never allowed when QR enforcement is on. */
 export function allowsDevDineInWithoutQr(): boolean {
-  return !isQrOrderEnforcedOnClient();
+  return false;
 }
 
 export function isMenuPagePath(pathname: string): boolean {

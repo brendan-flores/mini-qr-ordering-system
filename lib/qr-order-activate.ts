@@ -3,12 +3,13 @@ import {
   qrOrderSessionCookieOptions,
   QR_ORDER_SESSION_COOKIE,
 } from "@/lib/qr-order-session";
+import { bindQrAccessToDevice } from "@/lib/mysql/qr-access-bindings";
 import { resolveQrActivateCredentials } from "@/lib/qr-resolve-access";
 import type { NextResponse } from "next/server";
 
 export type QrActivateResult =
   | { ok: true; sessionToken: string; table: string }
-  | { ok: false; reason: "invalid" };
+  | { ok: false; reason: "invalid" | "device_mismatch" };
 
 export async function tryActivateQrOrderSession(input: {
   tableNumber?: string | null;
@@ -22,6 +23,15 @@ export async function tryActivateQrOrderSession(input: {
   if (!resolved) return { ok: false, reason: "invalid" };
 
   const { table, access } = resolved;
+
+  const bindResult = await bindQrAccessToDevice(
+    access.jti,
+    table,
+    input.deviceId
+  );
+  if (bindResult === "denied") {
+    return { ok: false, reason: "device_mismatch" };
+  }
 
   const sessionToken = await createQrOrderSessionToken(
     table,

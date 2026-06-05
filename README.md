@@ -4,7 +4,7 @@ Single repo with:
 
 - **Frontend**: Next.js (React) + Tailwind — customer menu, cart, checkout, order tracking, admin kitchen dashboard
 - **Backend**: Next.js API routes (`app/api/`) and optional Express REST API (`server.js`, port 4000)
-- **Database**: MySQL 8 — `mysql/schema.sql` (`admin_users`, `products`, `orders`)
+- **Database**: MySQL 8 — `mysql/schema.sql` (`admin_users`, `products`, `orders`, `qr_access_bindings`)
 
 ## Features
 
@@ -43,27 +43,27 @@ On your **deployed** customer site (e.g. Vercel), ordering is locked until a gue
 | Open menu without `?table=` | Browse only — no cart |
 | Type `?table=1` in the address bar | Browse only — no cart |
 | Change `?table=` after scanning another table | Ordering locks — cart disabled |
-| **Scan** a QR from the admin dashboard | Cart and checkout unlock (session cookie set) |
-| Copy/share the full QR URL to another phone | That phone can also activate (cookie-only model — no DB device lock) |
+| **Scan** a QR from the admin dashboard | Cart and checkout unlock on **that device only** |
+| Copy/share the QR link to another phone | **Denied** — link is bound to the first device that scanned |
 | Place order without a valid scan session | `POST /api/orders` returns **403** |
 
-After a valid scan, the server sets a signed **httpOnly cookie** tied to the guest’s device id. Orders require that cookie on LAN and production. The table number is **locked to the scan** — dine-in orders use the table from the cookie, not a value typed in the address bar.
+After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie**. The **first device** to scan owns that link; opening the same URL on another device is rejected. Enforced on **localhost**, LAN, and production.
 
 **Inactivity timeout (live server):** If the guest does nothing for **15 minutes** (no taps, scrolls, or cart changes), the ordering session ends. They must **scan the table QR again** to order. Activity is tracked in the browser and on the server (`/api/qr/ping`).
 
-**Database:** run `mysql/schema.sql` in MySQL Workbench. Creates `admin_users`, `products`, and `orders`. See **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**.
+**Database:** run `mysql/schema.sql` in MySQL Workbench. Creates `admin_users`, `products`, `orders`, and `qr_access_bindings`. See **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**.
 
 **Re-print QRs** when you need a new guest at the same table — each admin **Go** click issues a new `access` token.
 
-#### Localhost vs local network (development)
+#### Localhost, LAN, and production
 
-| URL | QR scan required? |
-|-----|-------------------|
-| `http://localhost:3000` or `127.0.0.1` | **No** — dev bypass for quick testing |
-| `http://192.168.x.x:3000` (LAN IP) | **Yes** — same rules as production |
-| Deployed (Vercel) | **Yes** |
+| URL | QR scan required? | Share link to 2nd device? |
+|-----|-------------------|---------------------------|
+| `http://localhost:3000` | **Yes** | **Denied** |
+| `http://192.168.x.x:3000` (LAN IP) | **Yes** | **Denied** |
+| Deployed (Vercel) | **Yes** | **Denied** |
 
-On **localhost only**, you can order without printing QRs (manual table at checkout). On **LAN IP** or production, scan-only ordering and `POST /api/orders` cookie checks apply.
+Device binding and scan-only ordering apply everywhere — no localhost bypass.
 
 For LAN setup (`allowedDevOrigins`, `NEXT_PUBLIC_APP_URL`, phone testing): **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
 
@@ -84,12 +84,14 @@ Requires `ADMIN_SESSION_SECRET` in `.env.local` / Vercel — used to sign QR `ac
 
 ### 1) MySQL (MySQL Workbench)
 
+Use **`mysql/schema.sql` only** — one file for local, LAN, and production.
+
 1. Connect in Workbench (local: `127.0.0.1` · Railway: public host + port from **Connect**).
 2. **File → Open SQL Script** → `mysql/schema.sql`.
 3. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
-4. Refresh **Schemas** → `mini_qr_ordering` → **Tables** — you must see **3 tables**:
+4. Refresh **Schemas** → `mini_qr_ordering` → **Tables** — you must see **4 tables**:
 
-   `admin_users` · `products` · `orders`
+   `admin_users` · `products` · `orders` · `qr_access_bindings`
 
 Default admin: `admin` / `admin12345`
 

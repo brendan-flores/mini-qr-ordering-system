@@ -18,7 +18,10 @@ export function CartPanel() {
   const { items, lineCount, setQty, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
 
-  const subtotal = useMemo(() => cartSubtotal(items), [items]);
+  const subtotal = useMemo(
+    () => cartSubtotal(items),
+    [items]
+  );
   const total = useMemo(() => cartTotal(subtotal), [subtotal]);
 
   function onCheckout() {
