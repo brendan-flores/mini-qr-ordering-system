@@ -14,13 +14,11 @@ export function QrDownloadModal({
   tableNumber,
   scanUrl,
   onClose,
-  onDownloaded,
 }: {
   qrDataUrl: string;
   tableNumber: string;
   scanUrl?: string | null;
   onClose(): void;
-  onDownloaded?(dataUrl: string, tableNumber: string): void;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [building, setBuilding] = useState(true);
@@ -55,7 +53,6 @@ export function QrDownloadModal({
     setError(null);
     try {
       triggerQrPngDownload(previewUrl, tableNumber);
-      onDownloaded?.(previewUrl, tableNumber);
       setDone(true);
       window.setTimeout(() => onClose(), 1200);
     } catch {
@@ -100,38 +97,24 @@ export function QrDownloadModal({
         </div>
 
         <div className="bg-[var(--color-surface-subtle)] px-5 py-5">
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-white shadow-sm">
-            <div className="border-b border-[var(--color-surface-line)] bg-[var(--color-primary-soft)]/40 px-4 py-3 text-center">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                BrenCravings
-              </p>
-              <p className="mt-1 text-2xl font-bold text-[var(--color-primary)]">
-                {label}
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center px-6 py-5">
-              {building ? (
-                <div className="flex h-[220px] w-[220px] items-center justify-center">
-                  <MaterialIcon
-                    name="progress_activity"
-                    className="animate-spin text-4xl text-[var(--color-primary)]"
-                  />
-                </div>
-              ) : previewUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={previewUrl}
-                  alt={`Printable QR for ${label}`}
-                  className="max-h-[min(420px,60vh)] w-full object-contain"
+          <div className="mx-auto flex max-w-[280px] flex-col items-center justify-center rounded-2xl border border-[var(--color-surface-line)] bg-white p-3 shadow-sm sm:max-w-[320px]">
+            {building ? (
+              <div className="flex aspect-[440/568] w-full items-center justify-center">
+                <MaterialIcon
+                  name="progress_activity"
+                  className="animate-spin text-4xl text-[var(--color-primary)]"
                 />
-              ) : (
-                <p className="py-12 text-sm text-rose-700">{error}</p>
-              )}
-              <p className="mt-3 text-center text-sm text-[var(--color-text-muted)]">
-                Scan to order
-              </p>
-            </div>
+              </div>
+            ) : previewUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={previewUrl}
+                alt={`Printable QR for ${label}`}
+                className="block h-auto w-full rounded-lg"
+              />
+            ) : (
+              <p className="py-12 text-center text-sm text-rose-700">{error}</p>
+            )}
           </div>
 
           {scanUrl ? (
@@ -154,22 +137,26 @@ export function QrDownloadModal({
             Download started
           </div>
         ) : (
-          <div className="flex gap-2 border-t border-[var(--color-surface-line)] px-5 py-4">
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--color-surface-line)] px-5 py-4 sm:flex-row">
             <Button
               type="button"
               variant="ghost"
-              className="flex-1"
+              className="w-full sm:flex-1"
               onClick={onClose}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              className="flex-1 gap-2"
+              className="w-full whitespace-nowrap sm:flex-1"
               disabled={!previewUrl || building || downloading}
               onClick={() => void handleDownload()}
             >
-              <MaterialIcon name="download" filled={false} className="text-lg" />
+              <MaterialIcon
+                name="download"
+                filled={false}
+                className="shrink-0 text-lg"
+              />
               {downloading ? "Saving…" : "Download PNG"}
             </Button>
           </div>

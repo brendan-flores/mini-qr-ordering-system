@@ -85,15 +85,6 @@ export function rememberOrderId(id: string | number) {
   writeEntries(entries);
 }
 
-export function setStoredOrderIds(ids: string[]) {
-  const now = Date.now();
-  const entries = [...new Set(ids.map(String).filter(Boolean))].map((id) => ({
-    id,
-    at: now,
-  }));
-  writeEntries(entries);
-}
-
 export function forgetOrderId(id: string | number) {
   const key = String(id);
   writeEntries(readEntries().filter((e) => e.id !== key));

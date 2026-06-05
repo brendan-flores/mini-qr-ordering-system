@@ -12,8 +12,6 @@ export function itemsSummary(order: Order, maxItems = 3) {
   return `${shown}, +${parts.length - maxItems} more`;
 }
 
-export type PaymentFilter = "all" | Order["payment_status"];
-
 export {
   canMarkKitchenCompleted,
   isOrderCancelled,
@@ -26,13 +24,3 @@ export function orderLocationLabel(order: Order) {
   return table ? `Table ${table}` : "—";
 }
 
-export function orderGroupKey(order: Order) {
-  if (order.service_type === "takeout") return "Take out";
-  return order.table_number?.trim() || "—";
-}
-
-export function tableSectionTitle(tableKey: string) {
-  if (tableKey === "Take out") return "Take out";
-  if (tableKey === "—") return "Unassigned";
-  return `Table ${tableKey}`;
-}

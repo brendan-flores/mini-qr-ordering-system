@@ -17,7 +17,7 @@ import {
   isOrderCancelled,
   orderNeedsStatusPolling,
 } from "../../lib/orders/order-rules";
-import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
+import { saveStoredOrder } from "../../client/services/payOrder";
 import { notifyOrderUpdated } from "../../lib/order-events";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import {

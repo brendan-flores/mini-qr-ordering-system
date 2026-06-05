@@ -7,12 +7,6 @@ const TABLE_FROM_QR_KEY = "brencravings-table-from-qr";
 export const TABLE_UPDATE_EVENT = "brencravings-table-update";
 export const ORDERING_UPDATE_EVENT = "brencravings-ordering-update";
 
-export function isLocalhostClient(): boolean {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname.toLowerCase();
-  return host === "localhost" || host === "127.0.0.1";
-}
-
 /** Client-side mirror of server QR enforcement (localhost, LAN, production). */
 export function isQrOrderEnforcedOnClient(): boolean {
   return true;
@@ -182,13 +176,6 @@ export function hasTableFromQr(): boolean {
   if (typeof window === "undefined") return false;
   if (window.sessionStorage.getItem(TABLE_FROM_QR_KEY) !== "1") return false;
   return getStoredTableNumber() !== null;
-}
-
-/** Server snapshot: no ordering without ?table= in URL. */
-export function tableNumberFromUrl(
-  fromUrl: string | null | undefined
-): string | null {
-  return normalizeTableNumber(fromUrl ?? null);
 }
 
 export function getStoredTableNumber(): string | null {

@@ -19,13 +19,10 @@ import { QrDownloadModal } from "./QrDownloadModal";
 
 export function TableQrGenerator({
   initialTable,
-  onDownload,
   layout = "default",
   className = "",
 }: {
   initialTable?: string;
-  /** Called after user confirms download in the preview modal. */
-  onDownload?(dataUrl: string, tableNumber: string): void;
   layout?: "default" | "sidebar";
   className?: string;
 }) {
@@ -281,13 +278,18 @@ export function TableQrGenerator({
       <div className={isSidebar ? "mt-3" : "mt-4"}>
         <Button
           type="button"
-          className={["w-full gap-2", isSidebar ? "py-2.5 text-sm" : ""].join(
-            " "
-          )}
+          className={[
+            "w-full whitespace-nowrap",
+            isSidebar ? "py-2.5 text-xs" : "",
+          ].join(" ")}
           disabled={!qrDataUrl || !canUseTable}
           onClick={() => setDownloadOpen(true)}
         >
-          <MaterialIcon name="download" filled={false} className="text-lg" />
+          <MaterialIcon
+            name="download"
+            filled={false}
+            className="shrink-0 text-lg"
+          />
           Download PNG
         </Button>
       </div>
@@ -298,7 +300,6 @@ export function TableQrGenerator({
           tableNumber={displayTable}
           scanUrl={scanUrl}
           onClose={() => setDownloadOpen(false)}
-          onDownloaded={onDownload}
         />
       ) : null}
     </div>

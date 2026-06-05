@@ -1,7 +1,7 @@
 "use client";
 
 import type { AdminKitchenStatus } from "@/client/services/orders";
-import { adminStaggerMs } from "@/lib/admin-motion";
+import { uiStaggerMs } from "@/lib/ui-motion";
 import {
   kitchenStepState,
   type KitchenStepProgress,
@@ -81,7 +81,7 @@ export function KitchenStatusFlow({
             <li
               key={tab.id}
               className="admin-animate-fade-up relative min-w-0"
-              style={{ animationDelay: adminStaggerMs(index) }}
+              style={{ animationDelay: uiStaggerMs(index) }}
             >
               <button
                 type="button"

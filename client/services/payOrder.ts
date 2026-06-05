@@ -1,8 +1,4 @@
-import {
-  updateOrderPaymentStatus,
-  type Order,
-  type PaymentStatus,
-} from "./orders";
+import type { Order } from "./orders";
 import { rememberOrderId } from "./order-history";
 import { notifyOrderUpdated } from "../../lib/order-events";
 
@@ -37,29 +33,4 @@ export function saveStoredOrder(
   if (shouldNotify) {
     notifyOrderUpdated();
   }
-}
-
-export function resolvePendingOrder(orders: Order[]): Order | null {
-  const stored = getStoredOrder();
-  if (stored?.payment_status === "Pending") {
-    const match = orders.find((o) => String(o.id) === String(stored.id));
-    return match ?? stored;
-  }
-  return (
-    orders.find(
-      (o) =>
-        o.payment_method === "gcash" &&
-        (o.payment_status === "Pending" || o.payment_status === "Failed")
-    ) ?? null
-  );
-}
-
-/** Retry GCash mock payment on an existing pending/failed order */
-export async function payOrder(
-  orderId: Order["id"],
-  payment_status: Extract<PaymentStatus, "Paid" | "Failed">
-) {
-  const { data } = await updateOrderPaymentStatus(orderId, payment_status);
-  saveStoredOrder(data);
-  return data;
 }

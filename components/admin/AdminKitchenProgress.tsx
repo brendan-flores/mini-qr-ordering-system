@@ -1,7 +1,7 @@
 "use client";
 
 import type { Order, OrderStatus } from "@/client/services/orders";
-import { adminStaggerMs } from "@/lib/admin-motion";
+import { uiStaggerMs } from "@/lib/ui-motion";
 import { orderStatusLabel } from "@/client/services/orders";
 import { CUSTOMER_KITCHEN_STEPS } from "@/lib/customer-order-flow";
 import {
@@ -89,7 +89,7 @@ export function AdminKitchenProgress({
               <li
                 key={step.key}
                 className="admin-animate-fade-up relative flex gap-3"
-                style={{ animationDelay: adminStaggerMs(index, 35) }}
+                style={{ animationDelay: uiStaggerMs(index, 35) }}
                 aria-current={state === "active" ? "step" : undefined}
               >
                 <div className="flex w-8 shrink-0 flex-col items-center">
@@ -191,7 +191,7 @@ export function AdminKitchenProgress({
                       ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-zinc-900 ring-1 ring-[var(--color-primary)]/25"
                       : "border-[var(--color-surface-line)] bg-white text-zinc-500",
                 ].join(" ")}
-                style={{ animationDelay: adminStaggerMs(index, 40) }}
+                style={{ animationDelay: uiStaggerMs(index, 40) }}
                 aria-current={state === "active" ? "step" : undefined}
               >
                 <span

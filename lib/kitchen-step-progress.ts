@@ -2,7 +2,6 @@ import type { OrderStatus } from "@/client/services/orders";
 import {
   CUSTOMER_KITCHEN_STEPS,
   customerKitchenStepIndex,
-  type CustomerKitchenStepKey,
 } from "@/lib/customer-order-flow";
 
 export type KitchenStepProgress = {
@@ -13,18 +12,6 @@ export type KitchenStepProgress = {
   /** Index of the next step in the flow (-1 when there is no next step). */
   activeStepIndex: number;
 };
-
-const STEP_INDEX: Record<CustomerKitchenStepKey, number> = {
-  received: 0,
-  preparing: 1,
-  serving: 2,
-  served: 3,
-  completed: 4,
-};
-
-export function kitchenStepIndexForKey(key: CustomerKitchenStepKey): number {
-  return STEP_INDEX[key];
-}
 
 /** Completed = current step checked; active = next step only. */
 export function getKitchenStepProgress(
