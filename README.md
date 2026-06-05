@@ -1,10 +1,101 @@
 # Mini QR Restaurant Ordering System (React + Node.js + MySQL)
 
-Single repo with:
+**BrenCravings** — a QR-based restaurant ordering app with a customer menu and an admin kitchen dashboard.
 
-- **Frontend**: Next.js (React) + Tailwind — customer menu, cart, checkout, order tracking, admin kitchen dashboard
-- **Backend**: Next.js API routes (`app/api/`) and optional Express REST API (`server.js`, port 4000)
-- **Database**: MySQL 8 — `mysql/schema.sql` (`admin_users`, `products`, `orders`, `qr_access_bindings`)
+## Live website
+
+| App | Link |
+|-----|------|
+| **Customer menu** (order after scanning a table QR) | [https://brencravings.vercel.app](https://brencravings.vercel.app) |
+| **Admin dashboard** (kitchen, orders, QR generator) | [https://brencravings-admin.vercel.app](https://brencravings-admin.vercel.app) |
+
+Default admin login: `admin` / `admin12345`
+
+## Use on your local network
+
+You can run the same app on your Wi‑Fi for testing on phones and other devices:
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the site from any device on the same network using your PC’s LAN IP, for example:
+
+- Customer menu: `http://192.168.1.10:3000`
+- Admin: `http://192.168.1.10:3000/admin`
+
+Replace `192.168.1.10` with your computer’s actual IP (`ipconfig` on Windows, `ifconfig` / `ip addr` on Mac/Linux).
+
+More LAN tips: **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
+
+---
+
+## Installation guide
+
+Follow these steps in order to run the project on your own machine.
+
+### Prerequisites
+
+- **Node.js** 18 or newer
+- **MySQL** 8 (MySQL Workbench recommended)
+- **Git**
+
+### Step 1 — Clone the project
+
+```bash
+git clone <your-repo-url>
+cd mini-qr-ordering-system
+```
+
+### Step 2 — Install dependencies
+
+```bash
+npm install
+```
+
+### Step 3 — Set up the database
+
+1. Open **MySQL Workbench** and connect to your local MySQL server.
+2. **File → Open SQL Script** → select `mysql/schema.sql` in this project.
+3. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
+4. Refresh **Schemas** → open `mini_qr_ordering` → **Tables**. You should see **4 tables**:
+
+   `admin_users` · `products` · `orders` · `qr_access_bindings`
+
+More detail: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**
+
+### Step 4 — Start the app
+
+```bash
+npm run dev
+```
+
+Open in your browser:
+
+- Customer menu: [http://localhost:3000](http://localhost:3000)
+- Admin dashboard: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+---
+
+## How ordering works (important)
+
+Guests **must scan a table QR code** from the admin dashboard before they can add items to the cart or place an order.
+
+| What the guest does | What happens |
+|---------------------|--------------|
+| Opens the menu page **without** scanning a QR | Can **browse** the menu only — **cannot order** |
+| Types `?table=1` in the browser address bar | Still **cannot order** — the link must come from a valid QR scan |
+| **Scans** a table QR printed from the admin page | Cart and checkout **unlock** on that device |
+
+**This is intentional.** It protects the restaurant from fake, spam, or scam orders from random visitors on the internet. Only guests at a real table (with a printed QR) can place orders.
+
+After a valid scan:
+
+- The QR link is bound to **one device** — sharing the link to another phone is blocked.
+- If the guest is inactive for **15 minutes**, they must scan the QR again.
+
+---
 
 ## Features
 
@@ -15,118 +106,36 @@ Single repo with:
 - Checkout with computed total
 - Dine-in or takeout; order tracking page
 
-### QR codes (Admin dashboard)
+### QR codes (admin dashboard)
 
 QR codes are **generated on the admin page**, not the customer menu.
 
-1. Log in at `/admin` (default: `admin` / `admin12345`).
+1. Log in at `/admin`.
 2. Open **Table QR codes** in the left sidebar (desktop) or tap **QR** (mobile).
 3. Enter a table number → click **Go** → preview the QR → **Download PNG**.
 4. Print and place at the table. Guests **scan** the QR to open the menu and order.
 
-Set `NEXT_PUBLIC_APP_URL` in `.env.local` (and on Vercel) so QR links point to your deployed menu URL, e.g. `https://your-menu.vercel.app`.
-
-Each generated QR encodes a signed URL like:
+Each QR encodes a signed URL like:
 
 ```text
 /menu-page?table=1&access=<signed-token>
 ```
 
-The `access` value is HMAC-signed with `ADMIN_SESSION_SECRET` — guests cannot forge a table link by typing `?table=` alone.
-
-#### Scan-only ordering (live server)
-
-On your **deployed** customer site (e.g. Vercel), ordering is locked until a guest scans a valid table QR:
-
-| Guest action | Result |
-|--------------|--------|
-| Open menu without `?table=` | Browse only — no cart |
-| Type `?table=1` in the address bar | Browse only — no cart |
-| Change `?table=` after scanning another table | Ordering locks — cart disabled |
-| **Scan** a QR from the admin dashboard | Cart and checkout unlock on **that device only** |
-| Copy/share the QR link to another phone | **Denied** — link is bound to the first device that scanned |
-| Place order without a valid scan session | `POST /api/orders` returns **403** |
-
-After a valid scan, the server registers the QR `access` token to the guest’s **device id** (stored in browser `localStorage`) and sets a signed **httpOnly cookie**. The **first device** to scan owns that link; opening the same URL on another device is rejected. Enforced on **localhost**, LAN, and production.
-
-**Inactivity timeout (live server):** If the guest does nothing for **15 minutes** (no taps, scrolls, or cart changes), the ordering session ends. They must **scan the table QR again** to order. Activity is tracked in the browser and on the server (`/api/qr/ping`).
-
-**Database:** run `mysql/schema.sql` in MySQL Workbench. Creates `admin_users`, `products`, `orders`, and `qr_access_bindings`. See **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)**.
-
-**Re-print QRs** when you need a new guest at the same table — each admin **Go** click issues a new `access` token.
-
-#### Localhost, LAN, and production
-
-| URL | QR scan required? | Share link to 2nd device? |
-|-----|-------------------|---------------------------|
-| `http://localhost:3000` | **Yes** | **Denied** |
-| `http://192.168.x.x:3000` (LAN IP) | **Yes** | **Denied** |
-| Deployed (Vercel) | **Yes** | **Denied** |
-
-Device binding and scan-only ordering apply everywhere — no localhost bypass.
-
-For LAN setup (`allowedDevOrigins`, `NEXT_PUBLIC_APP_URL`, phone testing): **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
-
-Requires `ADMIN_SESSION_SECRET` in `.env.local` / Vercel — used to sign QR `access` tokens and order session cookies.
+Re-print a QR when you need a new guest at the same table — each **Go** click issues a new `access` token.
 
 ### Admin dashboard
 
 - View live orders (payment + kitchen status)
+- New-order notification bell
 - Update payment status and kitchen workflow
-- Table QR generator (above)
+- Table QR generator
 
 ### Payment simulation
 
 - **Pay at counter (cash)** — order sent to kitchen; pay when served
 - **GCash (mock)** — simulated success/failure flow (no real payment API)
 
-## Quick start
-
-### 1) MySQL (MySQL Workbench)
-
-Use **`mysql/schema.sql` only** — one file for local, LAN, and production.
-
-1. Connect in Workbench (local: `127.0.0.1` · Railway: public host + port from **Connect**).
-2. **File → Open SQL Script** → `mysql/schema.sql`.
-3. Select **all** lines (Ctrl+A) → click **Execute** (⚡).
-4. Refresh **Schemas** → `mini_qr_ordering` → **Tables** — you must see **4 tables**:
-
-   `admin_users` · `products` · `orders` · `qr_access_bindings`
-
-Default admin: `admin` / `admin12345`
-
-Details: **[docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md)** · LAN + QR security: **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
-
-**Another machine:** clone repo → run `mysql/schema.sql` on that PC’s MySQL → copy `.env.local` → `npm install` && `npm run dev`.
-
-### 2) Environment
-
-```bash
-copy .env.example .env.local
-```
-
-Set MySQL connection variables (`MYSQL_HOST` stays `127.0.0.1` even for LAN guests) and `ADMIN_SESSION_SECRET`. For phone testing on Wi‑Fi, set `NEXT_PUBLIC_APP_URL` to your LAN IP (e.g. `http://192.168.1.10:3000`).
-
-Default admin (after schema): username `admin`, password `admin12345`.
-
-### 3) Run Next.js
-
-```bash
-npm install
-npm run dev
-```
-
-- Customer app: `http://localhost:3000`
-- Admin: `http://localhost:3000/admin` (or admin subdomain if configured)
-
-### 4) Optional Express API
-
-```bash
-copy backend.env.example .env
-npm run dev:api
-```
-
-Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md)**.
+---
 
 ## Stack
 
@@ -136,13 +145,15 @@ Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md
 | API | Node.js (Next Route Handlers + optional Express) |
 | Database | MySQL (`mysql2`) |
 
+---
+
 ## Main API routes (Next.js)
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/products` | Menu products |
-| POST | `/api/orders` | Place order (live server requires QR session cookie) |
-| GET | `/api/orders` | List orders (admin) |
+| POST | `/api/orders` | Place order (requires QR session) |
+| GET | `/api/admin/orders` | List orders (admin) |
 | PATCH | `/api/admin/orders/[id]` | Kitchen / payment updates |
 | POST | `/api/admin/table-qr-token` | Issue signed `access` token for a table QR (admin) |
 | GET | `/api/qr/activate` | Validate scan URL and set order session cookie |
@@ -150,4 +161,23 @@ Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md
 | GET | `/api/qr/ping` | Refresh session activity (15-minute inactivity limit) |
 | POST | `/api/qr/logout` | Clear QR order session cookie |
 
-Deployment notes: **[docs/VERCEL.md](docs/VERCEL.md)**
+---
+
+## Optional: Express API (local only)
+
+```bash
+npm run dev:api
+```
+
+Runs on `http://localhost:4000`. See **[docs/BACKEND_API.md](docs/BACKEND_API.md)**.
+
+---
+
+## Further documentation
+
+| Topic | File |
+|-------|------|
+| MySQL setup | [docs/MYSQL_SETUP.md](docs/MYSQL_SETUP.md) |
+| LAN / phone testing | [docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md) |
+| Vercel deployment | [docs/VERCEL.md](docs/VERCEL.md) |
+| Railway MySQL | [docs/RAILWAY.md](docs/RAILWAY.md) |
