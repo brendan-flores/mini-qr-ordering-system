@@ -14,8 +14,11 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useMounted } from "@/hooks/useMounted";
 import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
 import { useQrSessionLifecycle } from "@/hooks/useQrSessionLifecycle";
+import { useQrSessionWatch } from "@/hooks/useQrSessionWatch";
+import { QrSessionAlert } from "@/components/qr/QrSessionAlert";
 import { getOrCreateDeviceId } from "@/lib/device-session";
 import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/qr-inactivity";
+import { fetchQrSessionSnapshot } from "@/lib/qr-session-client";
 import {
   clearLocalOrderingSession,
   endQrOrderingSession,
@@ -63,28 +66,17 @@ type QrSessionSyncResult =
 async function syncQrSessionFromServer(
   tableFromUrl: string | null
 ): Promise<QrSessionSyncResult> {
-  const params = new URLSearchParams();
-  const deviceId = getOrCreateDeviceId();
-  if (deviceId) params.set("device_id", deviceId);
+  const snapshot = await fetchQrSessionSnapshot();
+  if (snapshot.status === "terminated") return { status: "terminated" };
+  if (snapshot.status === "inactive" || !snapshot.table) {
+    return { status: "inactive" };
+  }
+  if (tableFromUrl && snapshot.table !== tableFromUrl) {
+    return { status: "inactive" };
+  }
 
-  const res = await fetch(
-    `/api/qr/session${params.size ? `?${params}` : ""}`,
-    { credentials: "include" }
-  );
-  if (!res.ok) return { status: "inactive" };
-
-  const data = (await res.json()) as {
-    active?: boolean;
-    table?: string;
-    terminated?: boolean;
-  };
-
-  if (data.terminated) return { status: "terminated" };
-  if (!data.active || !data.table) return { status: "inactive" };
-  if (tableFromUrl && data.table !== tableFromUrl) return { status: "inactive" };
-
-  markOrderingSessionFromQr(data.table);
-  return { status: "active", table: data.table };
+  markOrderingSessionFromQr(snapshot.table);
+  return { status: "active", table: snapshot.table };
 }
 
 export function TableProvider({ children }: { children: ReactNode }) {
@@ -98,11 +90,12 @@ export function TableProvider({ children }: { children: ReactNode }) {
     null
   );
 
-  const handleSessionExpired = useCallback((message: string) => {
+  const handleSessionEnded = useCallback((message: string) => {
     setQrActivationMessage(message);
   }, []);
 
-  useOrderingInactivity(handleSessionExpired);
+  useOrderingInactivity(handleSessionEnded);
+  useQrSessionWatch(handleSessionEnded);
   useQrSessionLifecycle();
 
   useEffect(() => {
@@ -247,7 +240,14 @@ export function TableProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <TableContext.Provider value={value}>{children}</TableContext.Provider>
+    <TableContext.Provider value={value}>
+      {qrActivationMessage ? (
+        <QrSessionAlert message={qrActivationMessage} />
+      ) : null}
+      <div className={qrActivationMessage ? "pt-14 sm:pt-16" : undefined}>
+        {children}
+      </div>
+    </TableContext.Provider>
   );
 }
 

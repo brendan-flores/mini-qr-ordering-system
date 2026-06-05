@@ -11,6 +11,9 @@ export const QR_ACTIVITY_PING_THROTTLE_MS = 15_000;
 /** How often the client checks whether the 2-minute inactivity window has elapsed. */
 export const QR_INACTIVITY_CHECK_INTERVAL_MS = 10_000;
 
+/** How often the guest app polls for admin session termination while ordering. */
+export const QR_SESSION_WATCH_INTERVAL_MS = 2_000;
+
 /**
  * Server-side: if no heartbeat updates `last_active_at` for this long, the binding
  * is treated as abandoned (tab/browser closed without a successful unload logout).
