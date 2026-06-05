@@ -20,12 +20,20 @@ npm install
 npm run dev
 ```
 
-Then open the site from any device on the same network using your PC’s LAN IP, for example:
+After `npm run dev`, the terminal prints your **Network** URL. Use that IP on any device on the same Wi‑Fi (replace `192.168.1.10` with your actual address from the terminal):
 
-- Customer menu: `http://192.168.1.10:3000`
-- Admin: `http://192.168.1.10:3000/admin`
+- **Customer menu:** `http://192.168.1.10:3000`
+- **Admin dashboard:** `http://192.168.1.10:3000/admin`
 
-Replace `192.168.1.10` with your computer’s actual IP (`ipconfig` on Windows, `ifconfig` / `ip addr` on Mac/Linux).
+Example (from terminal output):
+
+```text
+- Network:  http://192.168.1.10:3000
+```
+
+→ Menu: `http://192.168.1.10:3000` · Admin: `http://192.168.1.10:3000/admin`
+
+Find your IP with `ipconfig` (Windows) or `ifconfig` / `ip addr` (Mac/Linux) if needed. Do not use `http://0.0.0.0:3000`.
 
 More LAN tips: **[docs/LOCAL_NETWORK.md](docs/LOCAL_NETWORK.md)**
 
@@ -80,7 +88,7 @@ npm run dev
 Open in your browser:
 
 - **On this PC:** [http://localhost:3000](http://localhost:3000) (menu) · [http://localhost:3000/admin](http://localhost:3000/admin) (admin)
-- **On your phone / another laptop (same Wi‑Fi):** use the **Network** URL printed in the terminal (e.g. `http://192.168.1.25:3000`)
+- **On your phone / another laptop (same Wi‑Fi):** use the **Network** line from the terminal, e.g. `http://192.168.1.10:3000` (menu) and `http://192.168.1.10:3000/admin` (admin)
 
 If the menu or admin page loads but shows no data, check that `mysql/schema.sql` was executed and that `MYSQL_PASSWORD` in `.env.local` matches your MySQL server.
 

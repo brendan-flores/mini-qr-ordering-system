@@ -7,7 +7,7 @@ npm install
 npm run dev
 ```
 
-The dev server listens on **all interfaces** (`0.0.0.0`). In the terminal, use the **Network** URL (e.g. `http://192.168.1.25:3000`) on phones or another laptop on the same Wi‑Fi.
+The dev server listens on all interfaces, but the terminal prints your real **Network** URL (e.g. `http://192.168.1.25:3000`). Use that on phones or another laptop on the same Wi‑Fi — do **not** use `http://0.0.0.0:3000`.
 
 `next.config.ts` automatically allows your machine’s LAN IP and common private ranges (`192.168.*`, `10.*`, etc.) so client JavaScript loads correctly. No manual IP edit is required.
 
