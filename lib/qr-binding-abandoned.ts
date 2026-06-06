@@ -1,3 +1,4 @@
+import { deviceHasAwaitingOrders } from "@/lib/mysql/device-awaiting-orders";
 import { QR_BINDING_HEARTBEAT_STALE_SEC } from "@/lib/qr-inactivity";
 import { isQrBindingInactive } from "@/lib/qr-binding-inactivity";
 
@@ -24,4 +25,19 @@ export function isQrBindingAbandoned(
     isQrBindingHeartbeatStale(lastActiveAt) ||
     isQrBindingInactive(lastActiveAt)
   );
+}
+
+/**
+ * Tab/browser close still abandons via heartbeat stale (~45s).
+ * Two-minute idle is waived while the guest waits on a checked-out order.
+ */
+export async function isQrBindingAbandonedForDevice(
+  lastActiveAt: string | Date | null | undefined,
+  deviceId: string,
+  tableNumber: string
+): Promise<boolean> {
+  if (isQrBindingHeartbeatStale(lastActiveAt)) return true;
+  if (!isQrBindingInactive(lastActiveAt)) return false;
+  const awaiting = await deviceHasAwaitingOrders(deviceId, tableNumber);
+  return !awaiting;
 }

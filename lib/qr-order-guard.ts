@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
-import { isQrSessionInactive, QR_ORDER_INACTIVITY_MESSAGE } from "@/lib/qr-inactivity";
+import { QR_ORDER_INACTIVITY_MESSAGE } from "@/lib/qr-inactivity";
+import { shouldExpireQrSessionForInactivity } from "@/lib/qr-session-inactivity-policy";
 import { isDeviceAuthorizedForQrAccess } from "@/lib/mysql/qr-access-bindings";
 import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
 
@@ -60,7 +61,9 @@ async function assertQrSessionForDevice(
     throw qrDeviceMismatchError();
   }
 
-  if (isQrSessionInactive(session.lastActive)) {
+  if (
+    await shouldExpireQrSessionForInactivity(session, normalizedDeviceId)
+  ) {
     throw qrSessionInactiveError();
   }
 

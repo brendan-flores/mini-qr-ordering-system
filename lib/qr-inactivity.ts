@@ -1,4 +1,7 @@
-/** End QR ordering session after this many minutes without user activity. */
+/**
+ * End QR ordering session after this many minutes without user activity.
+ * Suspended from checkout until admin marks the order Completed.
+ */
 export const QR_ORDER_INACTIVITY_MINUTES = 2;
 
 export const QR_ORDER_INACTIVITY_SEC = QR_ORDER_INACTIVITY_MINUTES * 60;

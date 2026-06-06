@@ -1,6 +1,7 @@
 import type { Order } from "./orders";
 import { rememberOrderId } from "./order-history";
 import { notifyOrderUpdated } from "../../lib/order-events";
+import { refreshOrderingInactivitySuspend } from "@/lib/ordering-inactivity-suspend";
 
 const LAST_ORDER_KEY = "brencravings-last-order";
 
@@ -29,6 +30,7 @@ export function saveStoredOrder(
   const changed = prev !== serialized;
   window.sessionStorage.setItem(LAST_ORDER_KEY, serialized);
   rememberOrderId(order.id);
+  void refreshOrderingInactivitySuspend();
   const shouldNotify = options?.notify !== false && changed;
   if (shouldNotify) {
     notifyOrderUpdated();

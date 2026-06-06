@@ -8,6 +8,12 @@ import {
   touchOrderingActivity,
 } from "@/lib/ordering-activity";
 import {
+  isOrderingInactivitySuspended,
+  refreshOrderingInactivitySuspend,
+} from "@/lib/ordering-inactivity-suspend";
+import { subscribeToOrderUpdates } from "@/lib/order-events";
+import { LIVE_ORDER_POLL_MS } from "@/lib/order-polling";
+import {
   QR_ACTIVITY_PING_THROTTLE_MS,
   QR_INACTIVITY_CHECK_INTERVAL_MS,
 } from "@/lib/qr-inactivity";
@@ -70,6 +76,7 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
 
     async function expireIfNeeded() {
       if (!hasTableFromQr()) return;
+      if (isOrderingInactivitySuspended()) return;
       if (!isClientOrderingInactive()) return;
       await endOrderingSessionDueToInactivity();
       onExpired(QR_ORDER_INACTIVITY_MESSAGE);
@@ -107,13 +114,17 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
     document.addEventListener("visibilitychange", onVisible);
 
     const inactivityCheck = window.setInterval(() => {
+      if (isOrderingInactivitySuspended()) return;
       void expireIfNeeded();
     }, QR_INACTIVITY_CHECK_INTERVAL_MS);
 
     const tabHeartbeat = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       if (!hasTableFromQr()) return;
-      if (isClientOrderingInactive()) {
+      if (
+        !isOrderingInactivitySuspended() &&
+        isClientOrderingInactive()
+      ) {
         void expireIfNeeded();
         return;
       }
@@ -123,6 +134,16 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
         void pingServerActivity();
       }
     }, TAB_HEARTBEAT_INTERVAL_MS);
+
+    void refreshOrderingInactivitySuspend();
+    const unsubOrders = subscribeToOrderUpdates(() => {
+      void refreshOrderingInactivitySuspend();
+    });
+    const orderPoll = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshOrderingInactivitySuspend();
+      }
+    }, LIVE_ORDER_POLL_MS);
 
     return () => {
       window.removeEventListener("pointerdown", onUserActivity);
@@ -136,6 +157,8 @@ export function useOrderingInactivity(onExpired: (message: string) => void) {
       document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(inactivityCheck);
       window.clearInterval(tabHeartbeat);
+      window.clearInterval(orderPoll);
+      unsubOrders();
     };
   }, [onExpired]);
 }

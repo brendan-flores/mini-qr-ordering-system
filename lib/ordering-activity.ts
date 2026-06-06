@@ -1,3 +1,4 @@
+import { isOrderingInactivitySuspended } from "@/lib/ordering-inactivity-suspend-state";
 import { QR_ORDER_INACTIVITY_MS } from "@/lib/qr-inactivity";
 import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
 
@@ -17,6 +18,7 @@ export function clearOrderingActivity() {
 export function isClientOrderingInactive(): boolean {
   if (typeof window === "undefined") return false;
   if (!isQrOrderEnforcedOnClient() || !hasTableFromQr()) return false;
+  if (isOrderingInactivitySuspended()) return false;
 
   const raw = window.sessionStorage.getItem(LAST_ACTIVITY_KEY);
   if (!raw) return true;

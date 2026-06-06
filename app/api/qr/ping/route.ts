@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { normalizeDeviceId } from "@/lib/device-id";
 import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
-import { isQrSessionInactive } from "@/lib/qr-inactivity";
+import { shouldExpireQrSessionForInactivity } from "@/lib/qr-session-inactivity-policy";
 import {
   getQrAccessBinding,
   isDeviceAuthorizedForQrAccess,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
 
-  if (isQrSessionInactive(session.lastActive)) {
+  if (await shouldExpireQrSessionForInactivity(session, deviceId)) {
     await releaseQrOrderSessionBinding(session, deviceId);
     const res = NextResponse.json({ ok: false, inactive: true }, { status: 403 });
     clearQrOrderSessionCookie(res);

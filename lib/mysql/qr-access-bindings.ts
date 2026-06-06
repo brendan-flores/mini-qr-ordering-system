@@ -1,5 +1,5 @@
 import type { RowDataPacket } from "mysql2";
-import { isQrBindingAbandoned } from "@/lib/qr-binding-abandoned";
+import { isQrBindingAbandonedForDevice } from "@/lib/qr-binding-abandoned";
 import {
   isQrAccessRevokedForDevice,
   revokeQrAccessForDevice,
@@ -69,7 +69,12 @@ export async function getActiveQrAccessBindingForTable(
   tableNumber: string
 ): Promise<QrAccessBindingRow | null> {
   for (const binding of await getQrAccessBindingsForTable(tableNumber)) {
-    if (!isQrBindingAbandoned(binding.last_active_at)) {
+    const abandoned = await isQrBindingAbandonedForDevice(
+      binding.last_active_at,
+      binding.device_id,
+      binding.table_number
+    );
+    if (!abandoned) {
       return binding;
     }
   }
@@ -80,7 +85,12 @@ async function purgeAbandonedBindingsForTable(
   tableNumber: string
 ): Promise<void> {
   for (const binding of await getQrAccessBindingsForTable(tableNumber)) {
-    if (isQrBindingAbandoned(binding.last_active_at)) {
+    const abandoned = await isQrBindingAbandonedForDevice(
+      binding.last_active_at,
+      binding.device_id,
+      binding.table_number
+    );
+    if (abandoned) {
       await releaseQrAccessBinding(binding.access_jti, binding.device_id);
     }
   }
@@ -96,7 +106,12 @@ async function collapseDuplicateActiveTableBindings(): Promise<void> {
   const byTable = new Map<string, QrAccessBindingRow[]>();
   for (const row of rows) {
     const mapped = mapRow(row);
-    if (isQrBindingAbandoned(mapped.last_active_at)) continue;
+    const abandoned = await isQrBindingAbandonedForDevice(
+      mapped.last_active_at,
+      mapped.device_id,
+      mapped.table_number
+    );
+    if (abandoned) continue;
     const list = byTable.get(mapped.table_number) ?? [];
     list.push(mapped);
     byTable.set(mapped.table_number, list);
@@ -152,7 +167,13 @@ export async function bindQrAccessToDevice(
     }
 
     // Another device holds this exact QR token — deny until abandoned or released.
-    if (!isQrBindingAbandoned(existing.last_active_at)) {
+    if (
+      !(await isQrBindingAbandonedForDevice(
+        existing.last_active_at,
+        existing.device_id,
+        existing.table_number
+      ))
+    ) {
       return "denied";
     }
 
@@ -195,7 +216,13 @@ export async function bindQrAccessToDevice(
       await touchQrAccessBinding(accessJti, deviceId);
       return "renewed";
     }
-    if (isQrBindingAbandoned(raced.last_active_at)) {
+    if (
+      await isQrBindingAbandonedForDevice(
+        raced.last_active_at,
+        raced.device_id,
+        raced.table_number
+      )
+    ) {
       await releaseQrAccessBinding(raced.access_jti, raced.device_id);
       return bindQrAccessToDevice(accessJti, tableNumber, deviceId);
     }
@@ -210,7 +237,13 @@ export async function isDeviceAuthorizedForQrAccess(
   const binding = await getQrAccessBinding(accessJti);
   if (!binding || binding.device_id !== deviceId) return false;
 
-  if (isQrBindingAbandoned(binding.last_active_at)) {
+  if (
+    await isQrBindingAbandonedForDevice(
+      binding.last_active_at,
+      binding.device_id,
+      binding.table_number
+    )
+  ) {
     await releaseQrAccessBinding(accessJti, deviceId);
     return false;
   }
@@ -254,7 +287,12 @@ export async function purgeAbandonedQrAccessBindings(): Promise<number> {
   let purged = 0;
   for (const row of rows) {
     const mapped = mapRow(row);
-    if (!isQrBindingAbandoned(mapped.last_active_at)) continue;
+    const abandoned = await isQrBindingAbandonedForDevice(
+      mapped.last_active_at,
+      mapped.device_id,
+      mapped.table_number
+    );
+    if (!abandoned) continue;
 
     await query(`DELETE FROM qr_access_bindings WHERE access_jti = ?`, [
       mapped.access_jti,
