@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { normalizeDeviceId } from "@/lib/device-id";
-import { isQrOrderEnforcedOnRequest } from "@/lib/qr-order-env";
-import { shouldExpireQrSessionForInactivity } from "@/lib/qr-session-inactivity-policy";
+import { normalizeDeviceId } from "@/lib/client/device/device-id";
+import { isQrOrderEnforcedOnRequest } from "@/lib/shared/config/qr-order-env";
+import { shouldExpireQrSessionForInactivity } from "@/lib/server/qr/qr-session-inactivity-policy";
 import {
   getQrAccessBinding,
   isDeviceAuthorizedForQrAccess,
   touchQrAccessBinding,
-} from "@/lib/mysql/qr-access-bindings";
+} from "@/lib/server/db/qr-access-bindings";
 import {
   clearQrOrderSessionCookie,
   releaseQrOrderSessionBinding,
-} from "@/lib/qr-order-end-session";
-import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
+} from "@/lib/server/qr/qr-order-end-session";
+import { getQrOrderSessionFromRequest } from "@/lib/server/qr/qr-order-session";
 
 export async function GET(request: NextRequest) {
   const session = await getQrOrderSessionFromRequest(request);

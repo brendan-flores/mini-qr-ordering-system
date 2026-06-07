@@ -3,13 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { cartCheckoutUrl } from "../../lib/checkout-url";
-import { MENU_PAGE_PATH } from "@/lib/routes";
-import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
+import { cartCheckoutUrl } from "@/lib/client/checkout/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
+import { cartSubtotal, cartTotal, formatMoney } from "@/lib/client/cart/cart-utils";
 import { useTable } from "../table/TableProvider";
 import { useCart } from "./CartContext";
 import { QuantityStepper } from "../ui/QuantityStepper";
-import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
+import { UI_MOTION, uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 import { Button } from "../ui/Button";
 
 export function CartPanel() {

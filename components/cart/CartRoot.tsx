@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
-import { isAdminPath } from "@/lib/routes";
+import { isAdminPath } from "@/lib/shared/config/routes";
 import { CartProvider } from "./CartContext";
 import { TableProvider } from "../table/TableProvider";
 

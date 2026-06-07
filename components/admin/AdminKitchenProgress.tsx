@@ -1,14 +1,14 @@
 "use client";
 
-import type { Order, OrderStatus } from "@/client/services/orders";
-import { uiStaggerMs } from "@/lib/ui-motion";
-import { orderStatusLabel } from "@/client/services/orders";
-import { CUSTOMER_KITCHEN_STEPS } from "@/lib/customer-order-flow";
+import type { Order, OrderStatus } from "@/lib/client/api/orders";
+import { uiStaggerMs } from "@/lib/shared/utils/ui-motion";
+import { orderStatusLabel } from "@/lib/client/api/orders";
+import { CUSTOMER_KITCHEN_STEPS } from "@/lib/shared/orders/customer-order-flow";
 import {
   getKitchenStepProgress,
   kitchenStepState,
-} from "@/lib/kitchen-step-progress";
-import { isOrderCancelled } from "@/lib/orders/order-rules";
+} from "@/lib/shared/orders/kitchen-step-progress";
+import { isOrderCancelled } from "@/lib/shared/orders/order-rules";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 const STEP_ICONS: Partial<Record<OrderStatus, string>> = {

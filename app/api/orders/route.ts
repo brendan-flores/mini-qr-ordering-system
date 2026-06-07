@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { createOrderRecord } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/db-errors";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { createOrderRecord } from "@/lib/server/services/order-service";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
 import {
   assertQrOrderAllowed,
   authorizedDineInTableNumber,
-} from "@/lib/qr-order-guard";
-import { IntegerTableNumberError } from "@/lib/table";
-import { readRequestJson } from "@/lib/json";
-import { CreateOrderSchema } from "../../../schemas/order.schemas.js";
+} from "@/lib/server/qr/qr-order-guard";
+import { IntegerTableNumberError } from "@/lib/client/session/table";
+import { readRequestJson } from "@/lib/shared/utils/json";
+import { CreateOrderSchema } from "@/schemas/order.schemas.js";
 
 export async function GET(request: NextRequest) {
   if (!(await isAdminRequest(request))) {

@@ -4,18 +4,18 @@ import type {
   AdminKitchenStatus,
   Order,
   PaymentStatus,
-} from "../../client/services/orders";
+} from "@/types/order";
 import {
   effectivePaymentStatus,
   isOrderCancelled,
-} from "../../lib/orders/order-rules";
-import { formatMoney } from "../cart/cartUtils";
+} from "@/lib/shared/orders/order-rules";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import {
   isOrderLocked,
   itemsSummary,
   orderLocationLabel,
   shortOrderId,
-} from "./adminUtils";
+} from "@/lib/client/admin/admin-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import {

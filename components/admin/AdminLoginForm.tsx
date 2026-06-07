@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import { ApiError } from "@/client/services/api";
-import { parseJsonText } from "@/lib/json";
+import { ApiError } from "@/lib/client/api/api";
+import { parseJsonText } from "@/lib/shared/utils/json";
 
 const BG_IMAGE = "/admin-login-background.png";
 

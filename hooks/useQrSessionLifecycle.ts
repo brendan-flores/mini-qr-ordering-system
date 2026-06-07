@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   endQrOrderingSession,
   releaseQrSessionOnUnload,
-} from "@/lib/qr-session-end";
-import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
+} from "@/lib/client/qr/qr-session-end";
+import { isQrOrderingFlowPath } from "@/lib/client/qr/qr-session-flow";
 import {
   hasActiveQrBinding,
   hasTableFromQr,
   isQrOrderEnforcedOnClient,
-} from "@/lib/table";
+} from "@/lib/client/session/table";
 
 function sessionShouldEnd(): boolean {
   return hasTableFromQr() || hasActiveQrBinding();

@@ -1,10 +1,12 @@
 "use client";
 
-import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
+import { UI_MOTION, uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 
-const tabs = ["All Items", "Starters", "Mains", "Desserts", "Beverages"] as const;
-export type CategoryTab = (typeof tabs)[number];
-export type ProductCategory = Exclude<CategoryTab, "All Items">;
+import type { CategoryTab, ProductCategory } from "@/types/product";
+
+export type { CategoryTab, ProductCategory };
+
+const tabs = ["All Items", "Starters", "Mains", "Desserts", "Beverages"] as const satisfies readonly CategoryTab[];
 
 export function CategoryTabs({
   value,

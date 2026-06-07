@@ -2,30 +2,30 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getOrCreateDeviceId } from "@/lib/device-session";
+import { getOrCreateDeviceId } from "@/lib/client/device/device-session";
 import {
   isClientOrderingInactive,
   touchOrderingActivity,
-} from "@/lib/ordering-activity";
+} from "@/lib/client/qr/ordering-activity";
 import {
   isOrderingInactivitySuspended,
   refreshOrderingInactivitySuspend,
-} from "@/lib/ordering-inactivity-suspend";
-import { subscribeToOrderUpdates } from "@/lib/order-events";
-import { LIVE_ORDER_POLL_MS } from "@/lib/order-polling";
+} from "@/lib/client/qr/ordering-inactivity-suspend";
+import { subscribeToOrderUpdates } from "@/lib/client/orders/order-events";
+import { LIVE_ORDER_POLL_MS } from "@/lib/shared/orders/order-polling";
 import {
   QR_ACTIVITY_PING_THROTTLE_MS,
   QR_INACTIVITY_CHECK_INTERVAL_MS,
-} from "@/lib/qr-inactivity";
-import { isQrOrderingFlowPath } from "@/lib/qr-session-flow";
+} from "@/lib/client/qr/qr-inactivity";
+import { isQrOrderingFlowPath } from "@/lib/client/qr/qr-session-flow";
 import {
   endOrderingSessionDueToInactivity,
   handleQrSessionTerminated,
   QR_ORDER_INACTIVITY_MESSAGE,
   QR_SESSION_TERMINATED_MESSAGE,
-} from "@/lib/qr-session-end";
-import { isAdminPath } from "@/lib/routes";
-import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/table";
+} from "@/lib/client/qr/qr-session-end";
+import { isAdminPath } from "@/lib/shared/config/routes";
+import { hasTableFromQr, isQrOrderEnforcedOnClient } from "@/lib/client/session/table";
 
 /** Keep server `last_active_at` fresh while the tab is open and the guest is active. */
 const TAB_HEARTBEAT_INTERVAL_MS = 30_000;

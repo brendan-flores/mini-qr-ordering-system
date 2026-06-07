@@ -12,17 +12,17 @@ import {
   type OrderItem,
   type PaymentMethod,
   type ServiceType,
-} from "../../client/services/orders";
+} from "@/lib/client/api/orders";
 import { useTable } from "../table/TableProvider";
 import { TableBadge } from "../table/TableBadge";
-import { getStoredOrder, saveStoredOrder } from "../../client/services/payOrder";
+import { getStoredOrder, saveStoredOrder } from "@/lib/client/api/pay-order";
 import {
   cartCheckoutUrl,
   isOrderConfirmed,
   orderTrackUrl,
-} from "../../lib/checkout-url";
+} from "@/lib/client/checkout/checkout-url";
 import { useCart } from "../cart/CartContext";
-import { cartSubtotal, cartTotal } from "../cart/cartUtils";
+import { cartSubtotal, cartTotal } from "@/lib/client/cart/cart-utils";
 import { BrandLogo } from "../brand/BrandLogo";
 import {
   CheckoutSectionHeader,
@@ -37,14 +37,14 @@ import { GcashPaymentOverlay } from "./GcashPaymentOverlay";
 import {
   runGcashPaymentFlow,
   type GcashOverlayState,
-} from "../../lib/gcash-payment-flow";
+} from "@/lib/client/checkout/gcash-payment-flow";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 import {
   allowsDevDineInWithoutQr,
   validateIntegerTableNumber,
-} from "@/lib/table";
+} from "@/lib/client/session/table";
 
 type GcashSimResult = "success" | "failure";
 

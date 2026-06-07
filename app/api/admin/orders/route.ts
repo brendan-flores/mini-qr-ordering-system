@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { listAllOrders } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/db-errors";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { listAllOrders } from "@/lib/server/services/order-service";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
 
 export async function GET(request: Request) {
   if (!(await isAdminRequest(request as import("next/server").NextRequest))) {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { listOrdersForDeviceHistory } from "@/lib/orders/order-service";
-import { getErrorMessage } from "@/lib/orders/db-errors";
-import { readRequestJson } from "@/lib/json";
+import { listOrdersForDeviceHistory } from "@/lib/server/services/order-service";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
+import { readRequestJson } from "@/lib/shared/utils/json";
 import { OrderHistorySchema } from "@/schemas/order.schemas.js";
 
 /** Fetch orders for this device only (ids + device_id must match). */

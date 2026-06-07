@@ -1,6 +1,6 @@
 # MySQL setup
 
-The app uses **one schema file only**: `mysql/schema.sql` — for local PC, LAN testing, Railway, and Vercel. Do not use separate local/live/patch SQL files.
+The app uses **one schema file only**: `database/schema.sql` — for local PC, LAN testing, Railway, and Vercel. Do not use separate local/live/patch SQL files.
 
 ## Required tables (4)
 
@@ -13,11 +13,11 @@ The app uses **one schema file only**: `mysql/schema.sql` — for local PC, LAN 
 
 ## Import
 
-1. MySQL Workbench → **File → Open SQL Script** → `mysql/schema.sql`
+1. MySQL Workbench → **File → Open SQL Script** → `database/schema.sql`
 2. Select all (Ctrl+A) → **Execute** (⚡)
 3. Confirm **4 tables** under `mini_qr_ordering`
 
-CLI: `mysql -u root -p < mysql/schema.sql`
+CLI: `mysql -u root -p < database/schema.sql`
 
 Default admin: `admin` / `admin12345`
 
@@ -27,4 +27,4 @@ Copy `.env.example` to `.env.local` and set `MYSQL_*` if needed. `ADMIN_SESSION_
 
 ## Another machine
 
-Clone repo → run `mysql/schema.sql` → configure `.env.local` → `npm install` && `npm run dev`.
+Clone repo → run `database/schema.sql` → configure `.env.local` → `npm install` && `npm run dev`.

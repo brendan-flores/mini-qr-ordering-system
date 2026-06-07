@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { normalizeDeviceId } from "@/lib/device-id";
-import { getErrorMessage } from "@/lib/orders/db-errors";
-import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/qr-inactivity";
+import { normalizeDeviceId } from "@/lib/client/device/device-id";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
+import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/client/qr/qr-inactivity";
 import {
   attachQrOrderSessionCookie,
   tryActivateQrOrderSession,
-} from "@/lib/qr-order-activate";
-import { normalizeTableNumber } from "@/lib/table";
+} from "@/lib/server/qr/qr-order-activate";
+import { normalizeTableNumber } from "@/lib/client/session/table";
 
 export async function GET(request: NextRequest) {
   const table = normalizeTableNumber(
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     const message = getErrorMessage(error);
     const hint = message.includes("qr_access_bindings")
-      ? " Database setup required: run mysql/schema.sql"
+      ? " Database setup required: run database/schema.sql"
       : "";
     return NextResponse.json(
       { ok: false, error: `${message}${hint}` },

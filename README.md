@@ -26,7 +26,7 @@ npm install
 ### 2. Set up the database
 
 1. Open **MySQL Workbench** and connect to your local MySQL server.
-2. **File → Open SQL Script** → select `mysql/schema.sql`
+2. **File → Open SQL Script** → select `database/schema.sql`
 3. Select all (Ctrl+A) → **Execute** (⚡)
 4. Confirm the database `mini_qr_ordering` has these tables: `admin_users`, `products`, `orders`, `qr_access_bindings`
 
@@ -109,7 +109,7 @@ For production deploy and Railway MySQL: [docs/VERCEL.md](docs/VERCEL.md) · [do
 | Error | Fix |
 |-------|-----|
 | `Access denied for user 'root'@'localhost'` | Set `MYSQL_PASSWORD` in `.env.local` and restart `npm run dev` |
-| Empty menu / API errors | Run `mysql/schema.sql` and confirm MySQL is running |
+| Empty menu / API errors | Run `database/schema.sql` and confirm MySQL is running |
 | Phone cannot connect | Use the LAN IP from the terminal; PC and phone must be on the same Wi‑Fi |
 | QR works locally but not on Vercel | Run `schema.sql` on your **production** database (Railway), not only local MySQL |
 

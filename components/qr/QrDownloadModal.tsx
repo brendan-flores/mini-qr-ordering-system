@@ -5,7 +5,7 @@ import {
   buildTableQrDownloadImage,
   tableQrDownloadLabel,
   triggerQrPngDownload,
-} from "@/lib/qr-download-image";
+} from "@/lib/client/qr/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 

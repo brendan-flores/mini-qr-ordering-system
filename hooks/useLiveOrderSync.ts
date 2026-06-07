@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { subscribeToOrderUpdates } from "@/lib/order-events";
-import { LIVE_ORDER_POLL_MS } from "@/lib/order-polling";
+import { subscribeToOrderUpdates } from "@/lib/client/orders/order-events";
+import { LIVE_ORDER_POLL_MS } from "@/lib/shared/orders/order-polling";
 
 export function useLiveOrderSync(
   onSync: () => void,

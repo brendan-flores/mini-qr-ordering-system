@@ -16,15 +16,15 @@ import { useOrderingInactivity } from "@/hooks/useOrderingInactivity";
 import { useQrSessionLifecycle } from "@/hooks/useQrSessionLifecycle";
 import { useQrSessionWatch } from "@/hooks/useQrSessionWatch";
 import { QrSessionAlert } from "@/components/qr/QrSessionAlert";
-import { getOrCreateDeviceId } from "@/lib/device-session";
-import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/qr-inactivity";
-import { fetchQrSessionSnapshot } from "@/lib/qr-session-client";
+import { getOrCreateDeviceId } from "@/lib/client/device/device-session";
+import { QR_SESSION_TERMINATED_MESSAGE } from "@/lib/client/qr/qr-inactivity";
+import { fetchQrSessionSnapshot } from "@/lib/client/qr/qr-session-client";
 import {
   clearLocalOrderingSession,
   endQrOrderingSession,
   handleQrSessionTerminated,
-} from "@/lib/qr-session-end";
-import { isBareMenuVisit } from "@/lib/qr-session-flow";
+} from "@/lib/client/qr/qr-session-end";
+import { isBareMenuVisit } from "@/lib/client/qr/qr-session-flow";
 import {
   clearOrderingSession,
   getStoredTableNumber,
@@ -33,7 +33,7 @@ import {
   normalizeTableNumber,
   resolveScannedTableNumber,
   subscribeToOrdering,
-} from "@/lib/table";
+} from "@/lib/client/session/table";
 
 type TableContextValue = {
   orderingEnabled: boolean;

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 import { useTable } from "../table/TableProvider";
 
 export function OrderingGuard({ children }: { children: React.ReactNode }) {

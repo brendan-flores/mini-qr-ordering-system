@@ -3,14 +3,14 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { cartCheckoutUrl } from "../../lib/checkout-url";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { cartCheckoutUrl } from "@/lib/client/checkout/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QuantityStepper } from "../ui/QuantityStepper";
-import { cartSubtotal, cartTotal, formatMoney } from "./cartUtils";
+import { cartSubtotal, cartTotal, formatMoney } from "@/lib/client/cart/cart-utils";
 import { useTable } from "../table/TableProvider";
-import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
+import { UI_MOTION, uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 import { useCart } from "./CartContext";
 
 export function MobileCartSheet({

@@ -9,11 +9,11 @@ import {
   type AdminKitchenStatus,
   type Order,
   type PaymentStatus,
-} from "../../client/services/orders";
-import { isOrderCancelled } from "../../lib/orders/order-rules";
-import { formatMoney } from "../cart/cartUtils";
+} from "@/lib/client/api/orders";
+import { isOrderCancelled } from "@/lib/shared/orders/order-rules";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import { isOrderLocked, orderLocationLabel, shortOrderId } from "./adminUtils";
+import { isOrderLocked, orderLocationLabel, shortOrderId } from "@/lib/client/admin/admin-utils";
 import { AdminKitchenProgress } from "./AdminKitchenProgress";
 import { PaymentMethodBadge } from "./PaymentMethodBadge";
 import { KitchenStatusSelect, PaymentStatusSelect } from "./StatusSelect";

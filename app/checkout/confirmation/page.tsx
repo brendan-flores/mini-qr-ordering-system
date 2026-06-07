@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { orderTrackUrl } from "@/lib/checkout-url";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { orderTrackUrl } from "@/lib/client/checkout/checkout-url";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 
 type Props = {
   searchParams: Promise<{ orderId?: string; return?: string }>;

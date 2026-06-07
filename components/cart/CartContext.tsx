@@ -8,9 +8,9 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { useMounted } from "@/hooks/useMounted";
-import type { Product } from "../../client/services/products";
-import type { CartItem, CartState } from "./cartTypes";
-import { touchOrderingActivity } from "@/lib/ordering-activity";
+import type { Product } from "@/types/product";
+import type { CartItem, CartState } from "@/lib/client/cart/cart-types";
+import { touchOrderingActivity } from "@/lib/client/qr/ordering-activity";
 import {
   cartItemCount,
   cartLineCount,
@@ -20,7 +20,7 @@ import {
   getEmptyCart,
   saveCartToStorage,
   subscribeToCart,
-} from "./cartStorage";
+} from "@/lib/client/cart/cart-storage";
 
 function key(id: Product["id"]) {
   return String(id);

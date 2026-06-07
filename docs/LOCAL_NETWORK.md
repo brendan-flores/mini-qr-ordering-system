@@ -11,7 +11,7 @@ The dev server listens on all interfaces, but the terminal prints your real **Ne
 
 `next.config.ts` automatically allows your machine’s LAN IP and common private ranges (`192.168.*`, `10.*`, etc.) so client JavaScript loads correctly. No manual IP edit is required.
 
-**First-time setup on a new PC:** `npm run dev` creates `.env.local` from `.env.example` if missing. Run `mysql/schema.sql` in MySQL Workbench and set `MYSQL_PASSWORD` in `.env.local` if your MySQL root user has a password.
+**First-time setup on a new PC:** `npm run dev` creates `.env.local` from `.env.example` if missing. Run `database/schema.sql` in MySQL Workbench and set `MYSQL_PASSWORD` in `.env.local` if your MySQL root user has a password.
 
 **QR codes for phones:** when you open admin on `localhost:3000`, generated QRs automatically use your PC’s **Network** IP (e.g. `http://192.168.1.25:3000`) so phones on the same Wi‑Fi can scan them. Opening admin on the Network URL works the same way.
 
@@ -49,7 +49,7 @@ Enforced on **localhost**, **LAN IP**, and **production** — no dev bypass.
 
 ## Quick test
 
-1. Run `mysql/schema.sql` (must include `qr_access_bindings`)
+1. Run `database/schema.sql` (must include `qr_access_bindings`)
 2. Admin → generate Table 1 QR → scan on phone A → cart unlocks
 3. Copy URL to phone B → ordering blocked
 4. Repeat on `http://localhost:3000` — same rules apply

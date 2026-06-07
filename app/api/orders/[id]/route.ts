@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   assertOrderOwnedByDevice,
   getOrderById,
-} from "@/lib/orders/order-service";
+} from "@/lib/server/services/order-service";
 
 export async function GET(
   request: NextRequest,

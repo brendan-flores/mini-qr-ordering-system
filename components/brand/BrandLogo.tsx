@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { BRAND_LOGO_PATH } from "@/lib/brand";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { BRAND_LOGO_PATH } from "@/lib/shared/products/brand";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 
 export function BrandLogo({
   href = MENU_PAGE_PATH,

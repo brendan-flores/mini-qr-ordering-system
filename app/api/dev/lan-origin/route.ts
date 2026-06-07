@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDevLanOrigin } from "@/lib/lan-ip";
+import { getDevLanOrigin } from "@/lib/shared/config/lan-ip";
 
 /** Dev-only: LAN origin for QR codes when admin is opened on localhost. */
 export async function GET() {

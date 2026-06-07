@@ -5,9 +5,9 @@ import {
   listAdminQrSessions,
   terminateAdminQrSession,
   type AdminQrSession,
-} from "@/client/services/qr-sessions";
+} from "@/lib/client/api/qr-sessions";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
-import { isQrBindingActiveForAdminDisplay } from "@/lib/qr-admin-session-status";
+import { isQrBindingActiveForAdminDisplay } from "@/lib/server/qr/qr-admin-session-status";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminShell } from "./AdminShell";
 import { LiveOrdersSection } from "./LiveOrdersSection";

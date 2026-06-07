@@ -1,4 +1,4 @@
-import { paymentMethodLabel, type Order } from "../../client/services/orders";
+import { paymentMethodLabel, type Order } from "@/lib/client/api/orders";
 
 export function PaymentMethodBadge({
   method,

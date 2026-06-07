@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { isMysqlConfigured, mysqlConfigError } from "@/lib/mysql/db";
-import { listProducts } from "@/lib/mysql/products";
-import { withResolvedProductDescriptions } from "@/lib/product-descriptions";
-import { withResolvedProductImages } from "@/lib/product-images";
-import { getErrorMessage } from "@/lib/orders/db-errors";
+import { isMysqlConfigured, mysqlConfigError } from "@/lib/server/db/db";
+import { listProducts } from "@/lib/server/db/products";
+import { withResolvedProductDescriptions } from "@/lib/shared/products/product-descriptions";
+import { withResolvedProductImages } from "@/lib/shared/products/product-images";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
 
 export async function GET() {
   try {

@@ -1,9 +1,9 @@
 "use client";
 
-import type { AdminKitchenStatus, Order } from "../../client/services/orders";
-import { orderStatusLabel } from "../../client/services/orders";
-import { getKitchenStepProgress } from "@/lib/kitchen-step-progress";
-import { isOrderCancelled } from "@/lib/orders/order-rules";
+import type { AdminKitchenStatus, Order } from "@/types/order";
+import { orderStatusLabel } from "@/lib/shared/orders/order-labels";
+import { getKitchenStepProgress } from "@/lib/shared/orders/kitchen-step-progress";
+import { isOrderCancelled } from "@/lib/shared/orders/order-rules";
 import { KITCHEN_STATUS_TONES } from "./adminStatusStyles";
 import { FilterTabs } from "./FilterTabs";
 import { KitchenStatusFlow } from "./KitchenStatusFlow";

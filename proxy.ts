@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAdminSessionFromRequest } from "@/lib/admin-session";
+import { getAdminSessionFromRequest } from "@/lib/server/auth/admin-session";
 import {
   canServeAdminRoutes,
   getMenuAppOrigin,
   isAdminHost,
   isCustomerPath,
-} from "@/lib/app-hosts";
+} from "@/lib/shared/config/app-hosts";
 const ADMIN_LOGIN = "/admin/login";
 
 export async function proxy(request: NextRequest) {

@@ -1,11 +1,11 @@
 "use client";
 
-import type { AdminKitchenStatus } from "@/client/services/orders";
-import { uiStaggerMs } from "@/lib/ui-motion";
+import type { AdminKitchenStatus } from "@/lib/client/api/orders";
+import { uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 import {
   kitchenStepState,
   type KitchenStepProgress,
-} from "@/lib/kitchen-step-progress";
+} from "@/lib/shared/orders/kitchen-step-progress";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 export type KitchenFlowTab = {

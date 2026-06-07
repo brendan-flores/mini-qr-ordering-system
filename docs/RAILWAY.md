@@ -66,7 +66,7 @@ Railway **Console** is a **bash** shell (`bash-5.1#`). If you paste `CREATE TABL
 mysql -u root -p"$MYSQL_ROOT_PASSWORD"
 ```
 
-3. When you see the **`mysql>`** prompt (not `bash-5.1#`), paste the **full** contents of `mysql/schema.sql` from your project (all lines from `CREATE DATABASE` through the last `INSERT`).
+3. When you see the **`mysql>`** prompt (not `bash-5.1#`), paste the **full** contents of `database/schema.sql` from your project (all lines from `CREATE DATABASE` through the last `INSERT`).
 4. Press Enter. Wait until it finishes and you get `mysql>` again.
 5. Type `exit` and press Enter.
 
@@ -80,7 +80,7 @@ You should see `products`, `orders`, `admin_users`.
 
 ### Option A — MySQL Workbench (recommended)
 
-Use **Connect** on Railway → public host/port → open `mysql/schema.sql` in Workbench → Execute. Easier than pasting in a terminal.
+Use **Connect** on Railway → public host/port → open `database/schema.sql` in Workbench → Execute. Easier than pasting in a terminal.
 
 ## Troubleshooting
 

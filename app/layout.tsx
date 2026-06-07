@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { BRAND_LOGO_PATH } from "@/lib/brand";
+import { BRAND_LOGO_PATH } from "@/lib/shared/products/brand";
 import { CartRoot } from "../components/cart/CartRoot";
 import "./globals.css";
 

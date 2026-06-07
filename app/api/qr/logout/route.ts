@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { normalizeDeviceId } from "@/lib/device-id";
+import { normalizeDeviceId } from "@/lib/client/device/device-id";
 import {
   clearQrOrderSessionCookie,
   releaseQrOrderSessionBinding,
-} from "@/lib/qr-order-end-session";
-import { getQrOrderSessionFromRequest } from "@/lib/qr-order-session";
+} from "@/lib/server/qr/qr-order-end-session";
+import { getQrOrderSessionFromRequest } from "@/lib/server/qr/qr-order-session";
 
 async function endQrLogout(request: NextRequest) {
   const session = await getQrOrderSessionFromRequest(request);

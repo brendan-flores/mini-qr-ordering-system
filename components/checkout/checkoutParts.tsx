@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { Fragment } from "react";
-import type { OrderItem } from "../../client/services/orders";
-import { formatMoney } from "../cart/cartUtils";
+import type { OrderItem } from "@/types/order";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 export function GcashLogoMark({

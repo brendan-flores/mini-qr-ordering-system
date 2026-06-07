@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { parseJsonText } from "@/lib/json";
-import { cancelOrderByCustomer } from "@/lib/orders/order-service";
+import { parseJsonText } from "@/lib/shared/utils/json";
+import { cancelOrderByCustomer } from "@/lib/server/services/order-service";
 
 const BodySchema = z.object({
   device_id: z.string().min(8).max(64).optional(),

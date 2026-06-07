@@ -3,7 +3,7 @@
 import {
   kitchenStepState,
   type KitchenStepProgress,
-} from "@/lib/kitchen-step-progress";
+} from "@/lib/shared/orders/kitchen-step-progress";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import type { StatusTone } from "./adminStatusStyles";
 

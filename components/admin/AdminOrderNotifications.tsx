@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Order } from "@/client/services/orders";
-import { formatMoney } from "../cart/cartUtils";
+import type { Order } from "@/lib/client/api/orders";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import type { NewOrderNotification } from "@/hooks/useNewOrderNotifications";
-import { orderLocationLabel, shortOrderId } from "./adminUtils";
+import { orderLocationLabel, shortOrderId } from "@/lib/client/admin/admin-utils";
 
 function formatNotificationTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {

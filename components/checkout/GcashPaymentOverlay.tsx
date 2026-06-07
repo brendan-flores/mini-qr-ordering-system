@@ -1,9 +1,9 @@
 "use client";
 
-import { formatMoney } from "../cart/cartUtils";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { GcashLogoMark } from "./checkoutParts";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import type { GcashOverlayState } from "../../lib/gcash-payment-flow";
+import type { GcashOverlayState } from "@/lib/client/checkout/gcash-payment-flow";
 
 function StatusIcon({
   phase,

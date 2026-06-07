@@ -1,4 +1,4 @@
-import type { AdminKitchenStatus } from "../../client/services/orders";
+import type { AdminKitchenStatus } from "@/types/order";
 import type { PaymentTab } from "./PaymentStatusTabs";
 
 /** Shared tab / badge styling using app tokens from globals.css */

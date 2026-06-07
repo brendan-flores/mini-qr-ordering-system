@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { fileURLToPath } from "url";
-import { getAllowedDevOrigins } from "./lib/dev-allowed-origins";
+import { getAllowedDevOrigins } from "./lib/shared/config/dev-allowed-origins";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 

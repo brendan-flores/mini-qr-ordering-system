@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { getErrorMessage } from "@/lib/orders/db-errors";
-import { getOrCreateTableQrAccessToken } from "@/lib/table-qr-access";
-import { normalizeTableNumber } from "@/lib/table";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
+import { getOrCreateTableQrAccessToken } from "@/lib/server/qr/table-qr-access";
+import { normalizeTableNumber } from "@/lib/client/session/table";
 
 export async function POST(request: NextRequest) {
   if (!(await isAdminRequest(request))) {

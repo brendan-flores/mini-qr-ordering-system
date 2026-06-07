@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { BrandLogo } from "../brand/BrandLogo";
 import { TableBadge } from "../table/TableBadge";
 import { useTable } from "../table/TableProvider";
-import { MENU_PAGE_PATH } from "@/lib/routes";
-import { UI_MOTION } from "@/lib/ui-motion";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
+import { UI_MOTION } from "@/lib/shared/utils/ui-motion";
 
 const navItems = [
   { href: MENU_PAGE_PATH, label: "Menu" },

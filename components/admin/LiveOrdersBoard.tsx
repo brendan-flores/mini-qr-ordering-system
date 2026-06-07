@@ -5,8 +5,8 @@ import type {
   AdminKitchenStatus,
   Order,
   PaymentStatus,
-} from "../../client/services/orders";
-import { orderStatusLabel } from "../../client/services/orders";
+} from "@/types/order";
+import { orderStatusLabel } from "@/lib/shared/orders/order-labels";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { AdminOrderCard } from "./AdminOrderCard";
 import {

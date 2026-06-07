@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { readRequestJson } from "@/lib/json";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { readRequestJson } from "@/lib/shared/utils/json";
 import {
   getOrderById,
   patchOrderPayment,
-} from "@/lib/orders/order-service";
-import { UpdatePaymentSchema } from "../../../../../schemas/order.schemas.js";
+} from "@/lib/server/services/order-service";
+import { UpdatePaymentSchema } from "@/schemas/order.schemas.js";
 
 const CustomerGcashPaymentSchema = z.object({
   payment_status: z.enum(["Paid", "Failed"]),

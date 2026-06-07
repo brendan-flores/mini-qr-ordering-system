@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { canServeAdminRoutes } from "@/lib/app-hosts";
+import { canServeAdminRoutes } from "@/lib/shared/config/app-hosts";
 
 export const metadata: Metadata = {
   title: "BrenCravings Admin Page",

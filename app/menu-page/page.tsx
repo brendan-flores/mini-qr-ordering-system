@@ -2,14 +2,14 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { CartPanel } from "../../components/cart/CartPanel";
-import { CategoryTabs, type CategoryTab } from "../../components/menu/CategoryTabs";
+import { CategoryTabs, type CategoryTab } from "@/components/menu/CategoryTabs";
 import { MobileMenuView } from "../../components/menu/MobileMenuView";
 import { ProductCard } from "../../components/menu/ProductCard";
 import { DesktopHeader } from "../../components/layout/DesktopHeader";
-import { getProducts, type Product } from "../../client/services/products";
+import { getProducts, type Product } from "@/lib/client/api/products";
 import { QrOneDeviceNotice } from "../../components/qr/QrOneDeviceNotice";
 import { useTable } from "../../components/table/TableProvider";
-import { UI_MOTION } from "@/lib/ui-motion";
+import { UI_MOTION } from "@/lib/shared/utils/ui-motion";
 
 export default function MenuPage() {
   const { orderingEnabled, qrActivationMessage } = useTable();

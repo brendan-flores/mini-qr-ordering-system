@@ -1,4 +1,4 @@
-import { TABLE_QR_ONE_DEVICE_INSTRUCTION } from "@/lib/qr-download-image";
+import { TABLE_QR_ONE_DEVICE_INSTRUCTION } from "@/lib/client/qr/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 export function QrOneDeviceNotice({ className = "" }: { className?: string }) {

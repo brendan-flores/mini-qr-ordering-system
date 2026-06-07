@@ -8,26 +8,26 @@ import {
   paymentMethodLabel,
   serviceTypeLabel,
   type Order,
-} from "../../client/services/orders";
-import { fetchOrdersFromHistory } from "../../client/services/order-history-fetch";
+} from "@/lib/client/api/orders";
+import { fetchOrdersFromHistory } from "@/lib/client/api/order-history-fetch";
 import {
   canCustomerCancel,
   showCustomerCancelButton,
   effectivePaymentStatus,
   isOrderCancelled,
   orderNeedsStatusPolling,
-} from "../../lib/orders/order-rules";
-import { saveStoredOrder } from "../../client/services/payOrder";
-import { notifyOrderUpdated } from "../../lib/order-events";
+} from "@/lib/shared/orders/order-rules";
+import { saveStoredOrder } from "@/lib/client/api/pay-order";
+import { notifyOrderUpdated } from "@/lib/client/orders/order-events";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import {
   checkoutUrl,
   orderNeedsCheckout,
   orderTrackUrl,
-} from "../../lib/checkout-url";
-import { shortOrderId } from "@/lib/customer-order-flow";
-import { MENU_PAGE_PATH } from "@/lib/routes";
-import { formatMoney } from "../cart/cartUtils";
+} from "@/lib/client/checkout/checkout-url";
+import { shortOrderId } from "@/lib/shared/orders/customer-order-flow";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 
 /** Refresh in-progress orders only; completed/cancelled stay static. */

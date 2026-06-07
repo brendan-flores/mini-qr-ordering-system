@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { readRequestJson } from "@/lib/json";
-import { patchOrderStatus } from "@/lib/orders/order-service";
-import { UpdateOrderStatusSchema } from "../../../../../schemas/order.schemas.js";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { readRequestJson } from "@/lib/shared/utils/json";
+import { patchOrderStatus } from "@/lib/server/services/order-service";
+import { UpdateOrderStatusSchema } from "@/schemas/order.schemas.js";
 
 export async function PATCH(
   request: NextRequest,

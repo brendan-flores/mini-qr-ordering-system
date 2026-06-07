@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { readRequestJson } from "@/lib/json";
+import { readRequestJson } from "@/lib/shared/utils/json";
 import {
   ADMIN_SESSION_COOKIE,
   adminSessionCookieOptions,
   createAdminSessionToken,
-} from "@/lib/admin-session";
-import { verifyAdminCredentials } from "@/lib/admin-users";
+} from "@/lib/server/auth/admin-session";
+import { verifyAdminCredentials } from "@/lib/server/auth/admin-users";
 
 const LoginSchema = z.object({
   username: z.string().min(1).max(64),

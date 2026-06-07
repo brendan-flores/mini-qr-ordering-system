@@ -3,22 +3,22 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import type { Product } from "../../client/services/products";
+import type { Product } from "@/types/product";
 import type { CategoryTab, ProductCategory } from "./CategoryTabs";
 import { MobileCategoryTabs } from "./MobileCategoryTabs";
 import { useCart } from "../cart/CartContext";
 import { MobileCartSheet } from "../cart/MobileCartSheet";
 import { MobileOrdersPanel } from "./MobileOrdersPanel";
-import { formatMoney } from "../cart/cartUtils";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { BrandLogo } from "../brand/BrandLogo";
 import { QrOneDeviceNotice } from "../qr/QrOneDeviceNotice";
 import { TableBadge } from "../table/TableBadge";
-import { MENU_PAGE_PATH } from "@/lib/routes";
-import { useActiveOrderCount } from "../orders/useActiveOrderCount";
-import { getProductDescription } from "@/lib/product-descriptions";
-import { resolveProductImageUrl } from "@/lib/product-images";
-import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
+import { useActiveOrderCount } from "@/hooks/useActiveOrderCount";
+import { getProductDescription } from "@/lib/shared/products/product-descriptions";
+import { resolveProductImageUrl } from "@/lib/shared/products/product-images";
+import { UI_MOTION, uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 
 const POPULAR_NAME = "Dark Chocolate Lava Cake";
 

@@ -4,15 +4,15 @@ import { useEffect } from "react";
 import {
   QR_SESSION_TERMINATED_MESSAGE,
   QR_SESSION_WATCH_INTERVAL_MS,
-} from "@/lib/qr-inactivity";
-import { fetchQrSessionSnapshot } from "@/lib/qr-session-client";
-import { handleQrSessionTerminated } from "@/lib/qr-session-end";
-import { isAdminPath } from "@/lib/routes";
+} from "@/lib/client/qr/qr-inactivity";
+import { fetchQrSessionSnapshot } from "@/lib/client/qr/qr-session-client";
+import { handleQrSessionTerminated } from "@/lib/client/qr/qr-session-end";
+import { isAdminPath } from "@/lib/shared/config/routes";
 import {
   hasActiveQrBinding,
   hasTableFromQr,
   isQrOrderEnforcedOnClient,
-} from "@/lib/table";
+} from "@/lib/client/session/table";
 
 /**
  * Polls the server so admin-terminated sessions end on the guest device within

@@ -8,29 +8,29 @@ import {
   getOrder,
   paymentMethodLabel,
   type Order,
-} from "@/client/services/orders";
-import { getStoredOrder, saveStoredOrder } from "@/client/services/payOrder";
-import { isOrderConfirmed, orderNeedsCheckout } from "@/lib/checkout-url";
+} from "@/lib/client/api/orders";
+import { getStoredOrder, saveStoredOrder } from "@/lib/client/api/pay-order";
+import { isOrderConfirmed, orderNeedsCheckout } from "@/lib/client/checkout/checkout-url";
 import {
   confirmationHeadline,
   confirmationMessage,
   shortOrderId,
-} from "@/lib/customer-order-flow";
+} from "@/lib/shared/orders/customer-order-flow";
 import {
   canCustomerCancel,
   showCustomerCancelButton,
   orderNeedsStatusPolling,
-} from "@/lib/orders/order-rules";
-import { notifyOrderUpdated } from "@/lib/order-events";
+} from "@/lib/shared/orders/order-rules";
+import { notifyOrderUpdated } from "@/lib/client/orders/order-events";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 import { TableBadge } from "../table/TableBadge";
 import { BrandLogo } from "../brand/BrandLogo";
-import { formatMoney } from "../cart/cartUtils";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
 import { OrderLineItem, GcashLogoMark } from "../checkout/checkoutParts";
 import { Button } from "../ui/Button";
 import { MaterialIcon } from "../ui/MaterialIcon";
-import { downloadOrderReceipt } from "@/lib/order-receipt-pdf";
+import { downloadOrderReceipt } from "@/lib/client/orders/order-receipt-pdf";
 import { OrderStatusStepper } from "./OrderStatusStepper";
 
 export function OrderTrackingClient({ orderId }: { orderId: string }) {

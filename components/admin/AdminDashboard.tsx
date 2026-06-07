@@ -8,15 +8,15 @@ import {
   type AdminKitchenStatus,
   type Order,
   type PaymentStatus,
-} from "../../client/services/orders";
+} from "@/lib/client/api/orders";
 import {
   canMarkKitchenCompleted,
   effectivePaymentStatus,
   isOrderCancelled,
   KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE,
   matchesAdminPaymentTab,
-} from "../../lib/orders/order-rules";
-import { notifyOrderUpdated } from "../../lib/order-events";
+} from "@/lib/shared/orders/order-rules";
+import { notifyOrderUpdated } from "@/lib/client/orders/order-events";
 import { useLiveOrderSync } from "@/hooks/useLiveOrderSync";
 import { useNewOrderNotifications } from "@/hooks/useNewOrderNotifications";
 import { MaterialIcon } from "../ui/MaterialIcon";
@@ -30,7 +30,7 @@ import {
   FlatLiveOrdersBoard,
   KitchenLiveOrdersBoard,
 } from "./LiveOrdersBoard";
-import { isOrderLocked } from "./adminUtils";
+import { isOrderLocked } from "@/lib/client/admin/admin-utils";
 
 export function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);

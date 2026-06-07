@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { adminUnauthorized, isAdminRequest } from "@/lib/admin-auth";
-import { adminForceReleaseQrAccessBinding } from "@/lib/mysql/qr-access-bindings";
-import { getErrorMessage } from "@/lib/orders/db-errors";
+import { adminUnauthorized, isAdminRequest } from "@/lib/server/auth/admin-auth";
+import { adminForceReleaseQrAccessBinding } from "@/lib/server/db/qr-access-bindings";
+import { getErrorMessage } from "@/lib/server/services/db-errors";
 
 type RouteContext = { params: Promise<{ access_jti: string }> };
 

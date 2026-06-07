@@ -1,5 +1,5 @@
-import type { OrderStatus } from "../../client/services/orders";
-import { orderStatusLabel } from "../../client/services/orders";
+import type { OrderStatus } from "@/types/order";
+import { orderStatusLabel } from "@/lib/shared/orders/order-labels";
 import { KITCHEN_BADGE_STYLES } from "./adminStatusStyles";
 
 const styles: Record<OrderStatus, string> = {

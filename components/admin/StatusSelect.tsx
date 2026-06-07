@@ -4,13 +4,13 @@ import type {
   AdminKitchenStatus,
   Order,
   PaymentStatus,
-} from "../../client/services/orders";
-import { orderStatusLabel } from "../../client/services/orders";
+} from "@/types/order";
+import { orderStatusLabel } from "@/lib/shared/orders/order-labels";
 import {
   canMarkKitchenCompleted,
   effectivePaymentStatus,
   KITCHEN_COMPLETED_REQUIRES_PAID_MESSAGE,
-} from "../../lib/orders/order-rules";
+} from "@/lib/shared/orders/order-rules";
 
 const PAYMENT_OPTIONS: PaymentStatus[] = ["Pending", "Paid"];
 

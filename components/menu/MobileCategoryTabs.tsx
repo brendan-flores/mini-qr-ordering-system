@@ -1,6 +1,6 @@
 "use client";
 
-import { UI_MOTION, uiStaggerMs } from "@/lib/ui-motion";
+import { UI_MOTION, uiStaggerMs } from "@/lib/shared/utils/ui-motion";
 import type { CategoryTab } from "./CategoryTabs";
 
 const mobileTabs: { label: string; value: CategoryTab }[] = [

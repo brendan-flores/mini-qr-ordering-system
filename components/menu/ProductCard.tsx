@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import type { Product } from "../../client/services/products";
+import type { Product } from "@/types/product";
 import { useCart } from "../cart/CartContext";
-import { formatMoney } from "../cart/cartUtils";
-import { getProductDescription } from "@/lib/product-descriptions";
-import { resolveProductImageUrl } from "@/lib/product-images";
-import { UI_MOTION } from "@/lib/ui-motion";
+import { formatMoney } from "@/lib/client/cart/cart-utils";
+import { getProductDescription } from "@/lib/shared/products/product-descriptions";
+import { resolveProductImageUrl } from "@/lib/shared/products/product-images";
+import { UI_MOTION } from "@/lib/shared/utils/ui-motion";
 import { Button } from "../ui/Button";
 
 export function ProductCard({

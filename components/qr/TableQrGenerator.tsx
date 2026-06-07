@@ -6,13 +6,13 @@ import {
   IntegerTableNumberError,
   menuUrlWithTable,
   validateIntegerTableNumber,
-} from "@/lib/table";
-import { resolveMenuBaseUrlForQr } from "@/lib/app-hosts";
+} from "@/lib/client/session/table";
+import { resolveMenuBaseUrlForQr } from "@/lib/shared/config/app-hosts";
 import {
   getAdminQrTableNumber,
   setAdminQrTableNumber,
-} from "@/lib/admin-qr-table";
-import { tableQrDownloadLabel } from "@/lib/qr-download-image";
+} from "@/lib/client/session/admin-qr-table";
+import { tableQrDownloadLabel } from "@/lib/client/qr/qr-download-image";
 import { MaterialIcon } from "../ui/MaterialIcon";
 import { Button } from "../ui/Button";
 import { QrDownloadModal } from "./QrDownloadModal";

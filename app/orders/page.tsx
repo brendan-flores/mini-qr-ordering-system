@@ -6,7 +6,7 @@ import { OrderingGuard } from "../../components/ordering/OrderingGuard";
 import { OrdersList } from "../../components/orders/OrdersList";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { MaterialIcon } from "../../components/ui/MaterialIcon";
-import { MENU_PAGE_PATH } from "@/lib/routes";
+import { MENU_PAGE_PATH } from "@/lib/shared/config/routes";
 
 export default function OrdersPage() {
   return (
